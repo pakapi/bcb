@@ -1,0 +1,16 @@
+#!/bin/sh
+
+echo "===========copy dbgen executable and dists.dss ==========="
+cp ../src/dbgen/dbgen .
+cp ../src/dbgen/dists.dss .
+
+echo "===========generate all data files ======================"
+dbgen -s 1 -T a
+
+echo "===========remove dbgen and dists.dss ==========="
+rm dbgen
+rm dists.dss
+ 
+echo "===========Done, Following is the data files generated ==========="
+ls -l *.tbl
+

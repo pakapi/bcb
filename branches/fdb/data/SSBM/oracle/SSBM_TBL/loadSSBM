@@ -1,0 +1,21 @@
+#! /bin/csh
+# batch file for Oracle/UNIX load of SSBM  tables, Oracle 8i's version
+# example of use: "loadSSBM username/passwd"
+
+# first create tables with sqlplus:
+sqlplus $1 < createSSBM.sql
+
+# then load them with sqlldr, Oracle 8i's version of sqlload:
+echo "----------loading the part table------------";
+sqlldr $1 SILENT=FEEDBACK control=part.ctl
+echo "----------loading the supplier table------------";
+sqlldr $1 SILENT=FEEDBACK control=supplier.ctl 
+echo "----------loading the customer table------------";
+sqlldr $1 SILENT=FEEDBACK control=customer.ctl
+echo "----------loading the date table------------";
+sqlldr $1 SILENT=FEEDBACK control=dwdate.ctl 
+echo "----------loading the lineorder table------------";
+sqlldr $1 SILENT=FEEDBACK control=lineorder.ctl
+
+# enforce foreign key constraint
+sqlplus $1 <constrainSSBM.sql

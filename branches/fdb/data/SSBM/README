@@ -1,0 +1,47 @@
+This document describles the SSBM directory layout.
+
+src/dbgen subdirectory 
+     contains the SSBM dbgen source code
+oracle subdirectory 
+     contains sql scripts for loading data to oracle
+     database, generating constraints and indexes, performing queries.
+sybaseIQ subdirectory 
+     will contain similar scripts for sybaseIQ comparing to the oracle.
+data subdirectory
+     contains the script to generate the data files.
+
+In general, user should compile the SSBM dbgen first and then run
+GEN_DATA script in data/ directory to generate all data files. Then
+apply scripts in oracle/sybaseIQ for loading data and so on.
+
+Please refer the README files under each directory for details.   
+
+Run on Linux (originally developed on Sun Solaris)  The makefile
+in src/dbgen is as used for the Linux run.
+
+1. Scale 1: works fine 
+[xuedchen@sorrel dbgen]$ time dbgen -s 1 -T a
+SSBM (Star Schema Benchmark) Population Generator
+(Version 1.0.0)
+Copyright Transaction Processing Performance Council
+1994 - 2000
+
+real    1m17.841s
+user    1m15.741s
+sys     0m1.740s
+
+2. Scale 10: needs fix for Linux 2GB limit (open file with
+O_LARGEFILE, fdopen to convert to FILE *)
+
+time dbgen -s 10 -T a
+SSBM (Star Schema Benchmark) Population Generator
+(Version 1.0.0)
+Copyright Transaction Processing Performance Council
+1994 - 2000
+File size limit exceeded 
+
+real    4m44.797s
+user    4m36.373s
+sys     0m6.832s
+
+

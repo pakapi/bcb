@@ -1,0 +1,684 @@
+{\rtf1\mac\ansicpg10000\uc1 \deff0\deflang1033\deflangfe1033{\upr{\fonttbl{\f0\fnil\fcharset256\fprq2{\*\panose 00020206030504050203}Times New Roman;}{\f6\fnil\fcharset256\fprq2{\*\panose 00020005000000000000}Courier;}
+}{\*\ud{\fonttbl{\f0\fnil\fcharset256\fprq2{\*\panose 00020206030504050203}Times New Roman;}{\f6\fnil\fcharset256\fprq2{\*\panose 00020005000000000000}Courier;}}}}{\colortbl;\red0\green0\blue0;\red0\green0\blue255;\red0\green255\blue255;
+\red0\green255\blue0;\red255\green0\blue255;\red255\green0\blue0;\red255\green255\blue0;\red255\green255\blue255;\red0\green0\blue128;\red0\green128\blue128;\red0\green128\blue0;\red128\green0\blue128;\red128\green0\blue0;\red128\green128\blue0;
+\red128\green128\blue128;\red192\green192\blue192;}{\stylesheet{\ri-720\widctlpar\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 \f6\lang1033\cgrid \snext0 Normal;}{\s2\sa60\keepn\widctlpar\aspalpha\aspnum\faauto\adjustright\rin0\lin0\itap0 
+\b\f6\fs30\lang1033\cgrid \sbasedon0 \snext0 heading 2;}{\*\cs10 \additive Default Paragraph Font;}{\s34\ri-720\widctlpar\tqc\tx4320\tqr\tx8640\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 \f6\lang1033\cgrid \sbasedon0 \snext34 footer;}}{\info
+{\title Ideas}{\author Pat O'Neil}{\operator Patrick O'Neil}{\creatim\yr2005\mo9\dy5\hr10\min28}{\revtim\yr2005\mo9\dy5\hr10\min28}{\version2}{\edmins0}{\nofpages15}{\nofwords4827}{\nofchars27517}{\*\company O'Neil Consulting}{\nofcharsws33792}
+{\vern16561}}\margl1440\margr2160 \widowctrl\ftnbj\aenddoc\ftnrstpg\sprstsp\otblrul\brkfrm\sprstsm\truncex\nolead\msmcap\lytprtmet\hyphcaps0\horzdoc\dghspace120\dgvspace120\dghorigin1701\dgvorigin1984\dghshow0\dgvshow0
+\jexpand\viewkind1\viewscale100\bdrrlswsix\nolnhtadjtbl \fet0\sectd \pgnrestart\footery900\sectdefaultcl {\footer \pard\plain \s34\qc\ri-720\widctlpar\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 \f6\lang1033\cgrid {-}{\field{\*\fldinst { PAGE  }
+}{\fldrslt {\lang1024 15}}}{-
+\par }}{\*\pnseclvl1\pnucrm\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl2\pnucltr\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl3\pndec\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl4\pnlcltr\pnstart1\pnindent720\pnhang{\pntxta )}}
+{\*\pnseclvl5\pndec\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl6\pnlcltr\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl7\pnlcrm\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl8
+\pnlcltr\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl9\pnlcrm\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}\pard\plain \qc\ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 
+\f6\lang1033\cgrid {\b\fs36\ul Star Schema Data Warehouse Benchmark
+\par First Draft, for comment
+\par }\pard \qc\ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\fs28 
+\par September 5, 2005}{\b\ul 
+\par }\pard \qc\ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \qc\ri-800\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-800\lin0\itap0 {Pat O'Neil, Betty O'Neil, Xuedong Chen, Huimin Guo, Selim Mimaroglu
+\par UMass/Boston
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard\plain \s2\sa60\keepn\widctlpar\aspalpha\aspnum\faauto\outlinelevel1\adjustright\rin0\lin0\itap0 \b\f6\fs30\lang1033\cgrid {1. Introduction: Star Schema Based on TPC-H
+\par }\pard\plain \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 \f6\lang1033\cgrid {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {This is a draft of a benchmark we call the }{\i Star Schema benchmark}{ or }{\i SSBM}{
+ for use in evaluating Vertica performance in comparison to other major database products used in data warehousing. SSBM is based on the TPC-H benchmark, but we modify TPC-H in a number of ways, as explained in this section and in greater detail in 
+Section 2. We expect to use the SSBM benchmark to compare perfor\-mance of Vertica against products such as Oracle, Sybase IQ, and possibly DB2 UDB. Any publication that comes out of this compari\-son will not name these competing products, of course.
+
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {Here are a few ground rules. First, the columns in the SSBM tables can be compressed by whatever means available in the database sys\-
+tem used, as long as reported data retrieved by queries has the values specified in our schemas: e.g., we report values: M
+onday, Tuesday,..., Sunday, rather than 1, 2,..., 7. Second, the authors are not attempting to make this benchmark bulletproof by listing numerous tuning approaches that are illegal. However, any product capability used in one product database design 
+to improve perform\-ance must be matched in the database design for other products by an attempt to use the same type of capability, assuming such a capability exists and improves performance.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+In outline form, here are some of the schema changes we use to change the Normalized TPC-H schema to an efficient star schema. More detailed explanations of Schema for tables will be provided in Section 2.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 { 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {1. We combine the lineitem and orders tables into one sales fact table that we name }{\i lineorder}{.  This denormalization is standard 
+in warehousing, as explained in [Kimball], pg. 121, and makes many joins unnecessary in common queries.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {2. We drop the partsupp table because it would belong to a differ\-ent data mart than the orders and lineitem information, as ex\-
+plained in Section 2.1.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+3. We drop the comment attribute of a lineitem (27 chars), the comment for an order (49 chars), and the shipping instructions for a lineitem (25 chars), because a warehouse does not store such in\-formation in a fact table (it can\rquote 
+t be aggregated, and takes sig\-nificant storage).  See [Kimball], pg. 18.  Note that this change tends to favor row stores, but it is needed for fidelity to ware\-house design principles.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {4. We drop the tables, NATION and REGION, that are outboard to the dimensions CUSTOMER, PART, and SUPPLIER in TPC-H.  Such tables are appro\-
+priate in an OLTP system, to enforce integrity, but not in a ware\-house system, where the data is cleaned on the way in.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {5. We drop the dates (and attributes) of events later than the or\-derdate of an item, 
+such as shipdate, receiptdate, and returnflag. Clearly the order information must be queryable prior to the ship\-
+ping event many days later. The way such a sequence of dates is normally handled in data warehousing is in a sequence of tables as in [KIMBALL], pg. 94. We retain the commitdate (commit to ship) in SSBM, since it is part of the sale negotiation.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {6. We add the DATE dimension table, as is standard for a warehouse on sales.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {The result of the table simplifications is a proper star schema data mart, with the fact table lineorder in the middle and dimen\-
+sion tables for customer, part, supplier, and date. A series of tables of the types mentioned in point 5, above could easily be constructed, but that is much too complicated a venture for our current benchmark.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+As regards queries we support in SSBM, we concentrate on queries that select from the lineorder table exactly once (no self-joins or subqueries or table queries also involving lineorder). The classic warehouse query selects from the fact table w
+ith restric\-tions on the dimension table attributes.  We also support queries that appear in TPC-H and restrict on fact table attributes. We de\-part from the TPC-H query format for a number of reasons, most commonly to make an attempt to provide the }{
+\i Functional Coverage}{ and }{\i Selectivity Coverage}{ features explained in [SETQ].
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Functional Coverage}{
+. The benchmark queries should be chosen to span the tasks performed by an important set of Star Schema queries, so that prospective users can derive a performance rating from the weighted subset they expect to use in practice.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+It is difficult to provide true functional coverage with a small number of queries, but we at least try to provide queries that have 1, 2, 3, and 4 dimensional restrictions.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Selectivity Coverage}{
+. The idea here is that the total number of fact table rows retrieved will be determined by the selectivity (i.e., total Filter Factor FF) of restrictions on dimensions. We wish to vary this selectivity from queries where a lot of fact table rows are retr
+ieved (though the data reported out is normally aggre\-gated) to queries where a relatively small number of rows are re\-trieved.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {The SSBM Queries are specified in Section 3.1, and a short analy\-
+sis showing how multiple sort-orders for lineitems will make for efficient queries is provided in Section 3.1.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+One other issue arises in running the Star Schema Benchmark queries, and that is the caching effect that reduces the number of disk accesses necessary when query Q2 follows query Q1, because of overlap of d
+ata accessed between Q1 and Q2. The approach we will try to take is to minimize this overlap. In situations where this cannot be done, if such arise, we will take whatever steps are needed to reduce caching effects of one query on another.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+Reporting requirements for SSBM would certainly require elapsed time for all queries as well as geometric mean and arithmetic mean of the elapsed times (and the geometric mean of these two as a single measure).
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {For ourselves we will certainly want to measure lots of oth
+er things: numbers of rows accessed, CPU time in queries, query plans, etc. We need to decide if this information is to be pub\-lished -- I vote yes.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard\plain \s2\sa60\keepn\widctlpar\aspalpha\aspnum\faauto\outlinelevel1\adjustright\rin0\lin0\itap0 \b\f6\fs30\lang1033\cgrid {2. Star Schema Table Specifications
+\par }\pard\plain \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 \f6\lang1033\cgrid {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+In this section, we will specify the schemas of the various tables to be used in the Star Schema. Note that in Appendix A, we provide a listing of the original TPC-H tables on which the definitions that follow are based.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\ul 2.1 We will drop the PARTSUPP table
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {I give the following argument why this is appropriate, based on pr
+inciples in [KIMBALL]. The problem is that the LINEITEM and ORDERS tables (combined in our SSBM to make a LINEORDER table) have the finest Transaction Level grain, while the PARTSUPP table has what is called a Peri\-
+odic Snapshot grain. Basically, this means that transactions that add new rows over time to LINEORDER do not add rows to PARTSUPP, which is frozen in time (presumably at the CURRENT date).
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {Now this is OK as long as PARTSUPP and LINEORDER are treated as SEPARATE FACT TABLES (i.e., separate Data M
+arts in terms of Kimball), queried separately and not joined together. This is done in all but one of the Queries where PARTSUPP is in the WHERE clause: Q1, Q11, Q16 and Q20, but not in Q9, where PARTSUPP, ORDERS, and LINEITEM all appear. Query Q9 is inte
+nded to find, for each nation and year, the profits for certain parts ordered that year. Profit is calculated as the sum of [(l_extendedprice*(1-l_discount) - (ps_supplycost*l_quantity)], and the sum is grouped by the o_orderdate for the lineitem columns 
+and the s_nationkey for the part supplied to the order by the PARTSUPP table.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+The problem, of course, is that it is beyond the bounds of reason that the ps_supplycost would have remained constant during all these past years. This difference in grain between PARTSUPP and LINEORDER is what causes the problem.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+The presence of a Snapshot PARTSUPP table in this design seems suspicious anyway, as if placed there to require a non-trivial normalized join schema; it is very much what we would expect in an update tra
+nsactional design, where in adding an order lineitem for some part, we would access PARTSUPP to find the minimal cost sup\-pli\-er, perhaps in some restricted region, and would then correct ps_availqty after filling the order. In the TPC-H benchmark, how
+\-ever, ps_availqty is never updated, not even during the Refresh that inserts new ORDERS. In a Star Schema data warehouse, it is more reasonable to leave out the PARTSUPP table from our Data Mart, and create a column supplycost for each LINE\-
+ORDER Fact row to answer such a question. A data ware\-
+house, of course, contains derived data only, so there is no reason to normalize to guarantee fact in one place -- the next order for the same part and supplier might repeat this price, and if we delete the last part of
+ some kind we might lose the price charged, but that's fine since we are trying to simplify queries. In fact, we add the lo_profit column to the LINEORDER table to simplify cal\-cula\-
+tions of this type even further. In general, there will be a number of modifications.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {Here is the current Draft proposed layout for SSBM (the layout of the various tables may change as we learn more). }{\b\ul 
+See Appendix A for listing of Original TPC-H Table Layouts}{.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\ul 2.2 Layout of LINEORDER Fact table}{ Column List follows,
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {We combine the lineitem and orders tables into one sales fact table that we name }{\i lineorder}{
+.  This denormalization is standard in warehousing, as explained in [Kimball], pg. 121, and makes many joins unnecessary in common queries.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\fs20 LINEORDER Table Layout}{\fs20  SF*6,000,000}{\b\fs20 
+\par }{\fs20 LO_ORDERKEY identifier{\*\bkmkstart OLE_LINK2} (int up to SF 300){\*\bkmkend OLE_LINK2} first 8 of each 32 keys populated
+\par LO_LINENUMBER integer  Max of 7
+\par LO_CUSTKEY identifier Foreign key reference to C_CUSTKEY
+\par LO_PARTKEY identifier Foreign key reference to P_PARTKEY
+\par LO_SUPPKEY identifier Foreign key reference to S_SUPPKEY
+\par LO_ORDERDATE Foreign key reference to D_DATE (can be int, but see D_)
+\par LO_ORDERPRIORITY unique 1-5 (See pg 91 Priorities: Print as 1-URGENT, etc.)
+\par LO_SHIPPRIORITY fixed text, size 1 (int in spec, set to 0)
+\par LO_QUANTITY {\*\bkmkstart OLE_LINK3}unique 1-50 (for PART){\*\bkmkend OLE_LINK3}
+\par LO_EXTENDEDPRICE int 90-55,450 (for PART)
+\par LO_ORDTOTALPRICE int MAX about 388,000 (for ORDER)
+\par LO_DISCOUNT int (for PART, can be short int: 0.00-0.10)
+\par LO_REVENUE int (for PART, int: (lo_extendedprice{\*\bkmkstart OLE_LINK4}*(1-lo_discnt))){\*\bkmkend OLE_LINK4}
+\par LO_SUPPLYCOST int (for PART, cost from supplier, can be int)
+\par LO_TAX int (for PART: 0.00-0.08)
+\par LO_COMMITDATE Foreign Key reference to D_DATE
+\par LO_SHIPMODE unique value 1-7 (Values from 4.2.2.12 Modes: REG AIR, AIR, etc.)
+\par }{\b\fs20 Compound Primary Key}{\fs20 : LO_ORDERKEY, LO_LINENUMBER
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-800\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-800\lin0\itap0 {\b NOTES}{. }{\b (a)}{ We drop all 
+columns in ORDERS and LINEITEMS that make us wait to insert a Fact row after an order is placed on ORDERDATE, For example, we don't want to wait until we know when the order is shipped, when it is received, and whether it is returned before we can query t
+he existence of an order: see pg 96 and 97 of the TPC-H Spec. Thus we drop L_RETURNFLAG, L_LINESTATUS, L_SHIPDATE, L_RECEIPTDATE, and O_ORDERSTATUS. We keep L_COMMITDATE since that is the delivery date promised to the customer at ship time. }{\b (b)}{
+ We drop O_COMMENT (text string [49]), L_COMMENT (text string[27]), and L_SHIPINSTRUCT (text string [25]), since data warehouse queries typically do not parse comments and cannot aggregate them; simi\-larly we drop }{\fs20 LO_CLERK (text string[15]); }{
+columns such as these are only useful in an operational venue, though some abstraction of this information might well be made available in a data warehouse in a form where a query can return quantitative results. }{\b (c)}{
+ We also add LO_SUPPLYCOST for PART, LO_ORDSUPPLYCOST summing for ORDERS, and bring over O_TOTALPRICE as LO_ORDTOTALPRICE.}{\fs20 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+Note that if our primary sort order key of the LINEORDER table in Vertica is LO_ORDERKEY, then LINEORDER rows for parts that belong to an Order (no more than 7) will be achieved. Other sort keys can be concatenated in second position with little loss of e
+fficiency.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\ul 2.3 Layout of Part Dimension Table}{ Column List Follows}{\ul 
+\par 
+\par }{\b\fs20 PART Table Layout}{\fs20  }{200,000*floor(1+log}{\fs18\dn4 2}{SF)}{\fs20  populated:(}{\b\fs20\ul WE CHANGED THIS}{\fs20 )}{\b\fs20 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\fs20 P_PARTKEY identifier (can be int)
+\par P_NAME variable text, size 22 (Not unique per PART but never was)
+\par P_MFGR fixed text, size 6 (MFGR#1-5, CARD = 5) ROLL-UP of P_CATEGORY
+\par P_CATEGORY fixed text, size 6 ('MFGR#'||1-5||1-5: CARD = 25)
+\par P_BRAND1 fixed text, size  (P_CATEGORY||1-40: CARD = 1000)
+\par P_COLOR variable text, size 11 (CARD = 94)
+\par P_TYPE variable text, size 25 (CARD = 150)
+\par P_SIZE unique values 1-50 (CARD = 50) 
+\par P_CONTAINER fixed text, size 10 (CARD = 40)
+\par }{\b\fs20 Primary Key}{\fs20 : P_PARTKEY
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b NOTES}{. }{\b (a)}{ P_NAME is as long as 55 bytes in TPC-H, which is un\-reasonably large. We reduce it to 22 by limiting to a concatena\-
+tion of two colors (see [TPC-H], pg 94). We also add a new column named P_COLOR that could be used in queries where currently a color must be chosen by substring from P_NAME. }{\b (b)}{
+ P_MFGR is fixed text, size 25 in TPC-D; we change the values to ["MFGR",M], where M = random value [1,5], e.g.: "MFGR#2", a total of 6 characters. }{\b (c)}{
+ We add a new column P_CATEGORY as a division of P_MFGR (to take the place of P_BRAND in [TPC-H], which has 25 values, an un\-reasonably small number
+ of brands; we add a new column P_BRAND1, a division of P_CATEGORY (see [KIMBALL], pg 21, paragraph 3: P_CATEGORY might be 'Paper Products' and P_BRAND1 is a true Brand such as 'Snap-On'). }{\b (d)}{
+ We drop P_RETAILPRICE (this is likely to change too frequently to be in a dimension; the part price is bet\-ter determined for an order many days old as LO_EXTENDEDPRICE/LO_QUANTITY. }{\b (e)}{
+ We drop P_COMMENT; as with O_COMMENT, we have no use for an unparsed com\-ment in a data ware\-house query. }{\b (f)}{ While PARTS (or PRODUCTS) typ\-
+ically form a large dimension, they do not grow so fast that they remain in the ratio 2/15 to the number of rows in a large ORDERS table (as they would with SF*200,000 rows). Thus We change the scaling factor to 200,000*floor(1+log}{\fs18\dn4 2}{SF). }{
+\b\fs36 <== NOTE WELL!}{ Thus 200,000 parts for 6,000,000 lineorder rows (SF =1), jumping to 400,000 parts when there are 12,000,000 lineorder rows (SF = 2), to 600,000 parts when there are 24,000,000 lineor\-
+der rows (SF = 4), and so on. Note that sublinear scaling is also a feature of the planned benchmark presented in [TPC-DS].
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {[[[Betty thinks that log grows too slowly, and a power law might be more realistic. Pat thinks there are a limited number of possi\-
+ble brands that even the largest business can deal with.]]]
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\ul 2.4 Layout of Supplier Dimension Table}{ Column List Follows.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\fs20 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\fs20 SUPPLIER Table Layout}{\fs20  (SF*2,000 are populated): (}{\b\fs20\ul WE CHANGED THIS}{\fs20 )}{\b\fs20 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\fs20 S_SUPPKEY identifier
+\par S_NAME unique value 'Supplier'||S_SUPPKEY
+\par S_ADDRESS variable text, size 25 (city below)
+\par {\*\bkmkstart OLE_LINK5}S_CITY fixed text, size 10 (10/nation: S_NATION_PREFIX||(0-9)
+\par {\*\bkmkend OLE_LINK5}S_NATION fixed text, size 15 (25 values, longest UNITED KINGDOM)
+\par S_REGION fixed text, size 12 (5 values: longest MIDDLE EAST)
+\par S_PHONE fixed text, size 15
+\par }{\b\fs20 Primary Key}{\fs20 : S_SUPPKEY
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {NOTES. }{\b (a)}{ We reduce the number of suppliers so as to not have too many suppliers per customer. }{\b (b)}{ The S_CITY column is created us\-
+ing the first 9 charac\-ters of the S_NATION (blank extended if there are fewer than 9) followed by a digit 0-9. This column is added because there is no other column that
+ can be restricted to result in a reasonably small filter factor, an unnatural situation in real applications.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\ul 2.5 Layout of Customer Dimension Table}{ Column List Follows
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }{\b\fs20 CUSTOMER Table Layout}{\fs20  (SF*30,000 are populated) (}{\b\fs20\ul WE CHANGED THIS}{\fs20 )}{\b\fs20 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\fs20 C_CUSTKEY identifier 
+\par C_NAME unique value 'Customer'||C_CUSTKEY
+\par C_ADDRESS variable text, size 25 (city below)
+\par {\*\bkmkstart OLE_LINK5_1}S_CITY fixed text, size 10 (10/nation: C_NATION_PREFIX||(0-9)
+\par {\*\bkmkend OLE_LINK5_1}S_NATION fixed text, size 15 (25 values, longest UNITED KINGDOM)
+\par S_REGION fixed text, size 12 (5 values: longest MIDDLE EAST)
+\par C_PHONE unique value (format: 43-617-354-1222)
+\par C_MKTSEGMENT unique value 1-5
+\par }{\b\fs20 Primary Key}{\fs20 : C_CUSTKEY
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b NOTES}{. }{\b (a)}{ We drop C_ACCTBAL, which does not match the grain of LINEORDER. }{\b (b)}{
+ With SF*150,000 customers and 1,500,000 orders, this means we expect the average customer to place 10 orders in 7 years, an unreasonably small number. We change the number of cus\-tomers to SF*30,000, }{\b\fs36 <== NOTE WELL!}{
+ or 50 orders in 7 years, about 7 orders a year.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\ul 2.6 Layout of (NEW) Date Dimension Table}{{\*\bkmkstart OLE_LINK1} Column List Follows}{\ul {\*\bkmkend OLE_LINK1}
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\fs20 DATE Table Layout}{\fs20  (7 years of days)}{\b\fs20 
+\par }{\fs20 D_DATE int (YYYYMMDD) -- e.g. 19980327 (Print as: March 27, 1998)
+\par D_DAYOFWEEK unique value 1-7 (Print as: Sunday, Monday,..., Saturday)
+\par D_MONTH unique values 1-12 (Print as: Jan, Feb,...,Dec)
+\par D_YEAR unique value 1-15 (7 years wrap: Print as: 1992,..., 1998 extendible)
+\par D_YEARMONTH int (YYYYMM) -- e.g. 199803 (Print as MAR1998)
+\par D_DAYNUMINMONTH unique value 1-31
+\par D_DAYNUMINYEAR unique value 1-366
+\par D_MONTHNUMINYEAR unique value 1-12
+\par D_WEEKNUMINYEAR unique value 1-53
+\par D_SELLINGSEASON text, size 12 (Christmas, Summer,...)
+\par D_LASTDAYINWEEKFL 1 bit
+\par D_LASTDAYINMONTHFL 1 bit
+\par D_HOLIDAYFL 1 bit
+\par D_WEEKDAYFL 1 bit
+\par }{\b\fs20 Primary Key}{\fs20 : D_DATEKEY,
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b NOTES}{. See [Kimball] page 39. We leave out Fiscal dates. We keep the DATE dimension in order by date.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard\plain \s2\sa60\keepn\widctlpar\aspalpha\aspnum\faauto\outlinelevel1\adjustright\rin0\lin0\itap0 \b\f6\fs30\lang1033\cgrid {3. Benchmark Queries
+\par }\pard\plain \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 \f6\lang1033\cgrid {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {As in the Set Query Benchmark [O'NEIL93], we strive in this bench\-
+mark to provide functional coverage (different common types of Star Schema queries) and Selectivity Coverage (varying fractions of the lineitem table 
+that must be accessed to answer the queries). We only have a small number of flights to use to provide such coverage, but we do our best. Some model queries will be based on the TPC-H query set, but we need to modify these queries to vary the selectivity,
+ re\-sulting in what we call a }{\b\i Query Flight}{ below. Other queries that we feel are needed will have no counter\-part in TPC-H.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {In Section 3.1, we provide the definitions of queries we propose to use in SSBM. Section 3.1 provides a bit of analysis of the bench
+mark, including an indication of multiple sortorders for lineitem that will provide best efficiency.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }{\b 3.1 Query Definitions}{
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {Many queries in TPC-H will not translate into our schema. For ex\-ample, }{\b TPCQ1}{
+ requires knowledge of all items shipped as of a given date and whether these items were returned. We have decided that our LINEORDER table will only have ordering information, and that other data marts would be needed for shipping, receipt, and return in
+\-formation (see [KIMBALL], pg. 94). Similarly, }{\b TPCQ2}{ asks for the minimum cost supplier for parts in various regions, which requires the PARTSUPP table (assuming it's up-to-date). }{\b TPCQ3}{ requires knowledge that an order is unshipped, }{\b 
+TPCQ4}{ requires knowledge of receipt date by cus\-tomer. And so on. Only a few queries from TPC-H can be implemented on our SSBM scheme with minimal modification.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par Here are the (Draft) query flights we propose.
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q1}{. We want to start with a query flight having restrictions on only one dimension. We base Q1 on TPC-H query }{\b TPCQ6}{, which h
+as rather unusual restrictions on the Fact table as well; however the ra\-tionale for these Fact table restrictions seems reasonable. The query is meant to quantify the amount of revenue increase that would have resulted from eliminat\-
+ing certain company-wide dis\-counts in a giv\-en percentage range for products shipped in a given year. This is a "what if" query to find possible revenue in\-
+creases. Since our LINEORDER table doesn't list shipdate, we will replace shipdate by orderdate in the flight.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }{\b Q1}{\tab select sum(lo_extendedprice*lo_discount) as revenue
+\par \tab \tab \tab from lineorder, date
+\par \tab \tab \tab where lo_orderdate = d_date
+\par \tab \tab \tab and d_year = '[YEAR]'
+\par \tab \tab \tab and lo_discount between [DISCOUNT] - 0.01 and [DISCOUNT]+0.01
+\par \tab \tab \tab and lo_quantity < [QUANTITY];
+\par 
+\par In TPC-H:
+\par d_year = '[YEAR]'  random year in [1993..1997]   FF = 1/7
+\par lo_quantity < [QUANTITY]  random quantity in [24..25]  FF \u8776\'c5 47/100
+\par lo_discount value [DISCOUNT] random [0.02..0.09], FF = 3/11
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {In our Q1 Query flight we will restrict lo_quantity, not just to the lower half of the range, but to different ranges with differ\-
+ent filter factors, with lo_discount in [0.01, 0.02, 0.03]. Query flight }{\b Q1}{ will have three queries.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q1.1}{  year = 1993, lo_quantity < 25, lo_discount in given range. FF = (1/7)*0.5*(3/11) = 0.0194805. Number of LINEORDER rows se\-
+lected, for SF = 1, is 0.0194805*6,000,000 \u8776\'c5 116,883.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q1.2}{ d_yearmonth = 199401, lo_quantity between 26 and 35, lo_discount in given range. FF = (1/84)*(3/11)*0.2 = {\*\bkmkstart OLE_LINK6}0.00064935
+{\*\bkmkend OLE_LINK6}. Number of LINEORDER rows selected, for SF = 1: 0.00064935*6,000,000 \u8776\'c5 3896.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q1.3}{
+ d_weeknuminyear = 6 and YEAR = 1994, lo_quantity between 36 and 40. FF = (1/364)*(3/11)*0.01 = .00027473. Number of LINEORDER rows selected, for SF = 1, is .00027473*6,000,000 \u8776\'c5 450.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b NOTE}{ that each of the selections of these three queries is dis\-
+joint in LINEORDERS and even in restrictions on columns (except for lo_discount), so there should be no overlap where caching might make results vary from cold access.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par 
+\par 
+\par 
+\par 
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q2}{. For a second query flight, we want a query type with restric\-tions on 
+two dimensions. In addition, we want a query to compare revenue for some product classes between two successive years of orders; since TPC-H has no such type of query, we add it here.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }{\b Q2}{\tab select sum(lo_revenue), d_year, p_brand1
+\par \tab \tab \tab from lineorders, date, part
+\par \tab \tab \tab where lo_orderdate = d_date and lo_partkey = p_partkey
+\par \tab \tab \tab and p_category = 'MFGR#12'
+\par \tab \tab \tab and d_year in (1994,1995)
+\par \tab \tab \tab group by d_year, p_brand1
+\par \tab \tab \tab order by d_year, p_brand1;
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q2.1}{ Q2 as written: p_category = 'MFGR#12' FF = 1/25; two years: (2/7). So 
+lineorder FF = (1/25)*(2/7) = 2/175. Number of lineorder rows selected, for SF = 1, is (2/175)*6,000,000 \u8776\'c5 68,571.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q2.2}{
+ Change p_category = 'MFGR#12' to p_brand1 between 'MFGR#2221' and 'MFGR#2228'. So lineorder FF = (1/125)*(2/7) = 2/875. Number of lineorder rows se\-lected, for SF = 1, is (2/875)*6,000,000 \u8776\'c5 13,7714.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q2.3}{ Change p_category = 'MFGR#12' to p_brand1 = MFGR_2339. So li\-neorder FF = (1/1000)*(2/7) = 2/7000. Number of LINEORDER rows se\-
+lected, for SF = 1, is (2/7000)*6,000,000 \u8776\'c5 1714.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b NOTE}{ again, each of the selections of these four queries is dis\-
+joint in LINEORDERS and even in restrictions on columns among themselves and also with flight Q1, so there should be no overlap where caching might make results vary from cold access.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q3}{. In our third query flight, we want to place restrictions on three out of four dimensions, and we base our query on }{\b TPCQ5}{
+. The query is intended, for each Nation in a Region, to provide revenue volume in a given period of lineitem transactions in which the customer purchasing parts and the supplier supplying them are both from the given Nation.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }{\b Q3}{\tab select c_nation, lo_revenue as revenue
+\par \tab \tab \tab from customer, lineorders, supplier, date
+\par \tab \tab \tab where c_nation = s_nation and lo_custkey = c_custkey
+\par \tab \tab \tab \tab and lo_suppkey = s_suppkey and c_region = 'ASIA'
+\par \tab \tab \tab \tab and lo_orderdate = d_datekey and d_year = '1996'
+\par \tab \tab \tab group by c_nation
+\par \tab \tab \tab order by revenue desc;
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q3.1}{ Q3 as written: c_region = 'ASIA' so FF = 1/5, and since s_nation = c_nation, the restriction on supplier in each is FF = 1/25; d
+_year = 1996 so FF = 1/7. Thus lineorder FF = (1/5)*(1/25)*(1/7) = 1/875 and the number of lineorder rows se\-lected, for SF = 1, is (1/875)*6,000,000 \u8776\'c5 6,857.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q3.2}{ Change restriction on customer to c_nation in ('UNITED STATES', 'CANADA'). \line 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\tab \tab select c_nation, lo_revenue as revenue
+\par \tab \tab \tab from customer, lineorder, supplier, date
+\par \tab \tab \tab where c_nation = s_nation and lo_custkey = c_custkey
+\par \tab \tab \tab \tab and lo_suppkey = s_suppkey
+\par \tab \tab \tab \tab and c_nation in ('UNITED STATES','CANADA')
+\par \tab \tab \tab \tab and lo_orderdate = d_datekey and d_year = '1996'
+\par \tab \tab \tab group by c_nation
+\par \tab \tab \tab order by revenue desc;
+\par 
+\par }\pard \ri-800\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-800\lin0\itap0 {Here the c_nation restriction has FF = (2/25); other restric\-
+tions are unchanged, so lineorder FF is (1/25)*(2/25)*(1/7) = 2/4375. The number of lineorder rows selected, for SF = 1, is (1/4375)*6,000,000 \u8776\'c5 2,743.
+\par }\pard \ri-800\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-800\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q3.3}{ Change restriction on customer to two cities in 'AFRICA'; re\-trieve c_city and group by c_city.\line 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\tab \tab select c_city, lo_revenue as revenue
+\par \tab \tab \tab where c_nation = s_nation and lo_custkey = c_custkey
+\par \tab \tab \tab \tab and lo_suppkey = s_suppkey
+\par \tab \tab \tab \tab and c_city in (two cities in 'AFRICA')
+\par \tab \tab \tab \tab and lo_orderdate = d_datekey and d_year = '1996'
+\par \tab \tab \tab group by c_city
+\par \tab \tab \tab order by revenue desc;
+\par 
+\par }\pard \ri-800\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-800\lin0\itap0 {
+Here the c_city restriction has FF = (2/125); other restrictions are unchanged, so lineorder FF is (1/25)*(2/125)*(1/7) = 1/21875. The number of lineorder rows selected, for SF = 1, is (1/21875)*6,000,000 \u8776\'c5 549.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b NOTE}{
+ again, each of the selections of these queries is disjoint in lineorders and also with flights Q1 and Q2, so there should be no overlap where caching might make results vary from cold access. 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q4}{
+. The following query flight represents a "What-If" sequence, of the OLAP type. We start with a group by on two dimensions and rather weak constraints on all four dimensions, and measure the aggregate profit, measured as (lo_revenue - lo_supplycost).
+
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }{\b Q4}{\tab select d_yearmonth, c_nation, 
+\par \tab \tab \tab sum(lo_revenue - lo_supplycost) as profit
+\par \tab \tab from date, customer, supplier, part, lineorder
+\par \tab \tab where c_region = 'AMERICA' and s_region = 'AMERICA'
+\par \tab \tab \tab and d_year in (1997, 1998') and p_mfgr in ('MFGR1', MFGR2)
+\par \tab \tab group by d_yearmonth, c_nation;
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b Q4.1}{
+ Query Q4 as written. Restriction on d_year FF = 2/7, region restriction FFs 1/5 each, p_mfgr restriction 2/5. FF on lineorder = (2/7)*(1/5)(1/5)*(2/5) = 4/875. so number of lineorder rows se\-lected for SF = 1 is (4/875)*6,000,000 \u8776\'c5 27429.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+Assume that in Q4.1 output we find a surprising growth of 40% in profit from year 1997 to year 1998, uniform across month and c_nation. (This need not be true in the data we actually examine.) we would probably want to pivot
+ to group by year, s_nation and a further breakdown by p_category to see where the change arises.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }{\b Q4.2}{ select d_year, s_nation, p_category,
+\par \tab \tab \tab \tab sum(lo_revenue - lo_supplycost) as profit
+\par \tab \tab \tab from date, customer, supplier, part, lineorder
+\par \tab \tab \tab where c_region = 'AMERICA' and s_region = 'AMERICA'
+\par \tab \tab \tab \tab and d_year in (1997, 1998') and p_mfgr in ('MFGR1', MFGR2)
+\par \tab \tab \tab group by d_year, s_nation, p_category;
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {This has the same FF as Q4.1 and accesses the same lineitem data; it simply has a different group by dimension bre
+akout. Assume that as a result of Q4.2, a great percentage of the profit increase from year 1997 to 1998 comes from s_nation = 'United States' and p_category = 'MFGR1#4'. Now we might want to drill down to cities in the United States and into p_brand (wit
+hin p_category). 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }{\b Q4.3}{\tab select d_year, s_city, p_brand,
+\par \tab \tab \tab \tab sum(lo_revenue - lo_supplycost) as profit
+\par \tab \tab \tab from date, customer, supplier, part, lineorder
+\par \tab \tab \tab where c_region = 'AMERICA' and s_nation = 'United States'
+\par \tab \tab \tab \tab and d_year in (1997, 1998') and p_category = 'MFGR1#4'
+\par \tab \tab \tab group by d_year, s_nation, p_brand;
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+The FF for c_region is 1/5. and for s_nation is 1/25; the FF for d_year remains at 2/7, and the restriction on p_category is now 1/25. Thus the lineitem FF is: (1/5)*(1/25)*(2/7)*(1/25) = 2/21875. The number of lineorder rows retrieved for SF = 1 is (2/21
+875)*6,000,000 \u8776\'c5 549.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+The lineorder rows retrieved by query flight Q4 are disjoint from those of Q1, Q2, and Q3. However successive queries of the Q4 flight retrieve subsets of the rows retrieved in th
+e first flight. This is realistic, however, and measures how well lineorder rows are cached and how efficient the new indexing restrictions can be evaluated.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par 
+\par 
+\par 
+\par 
+\par 
+\par 
+\par 
+\par 
+\par 
+\par 
+\par 
+\par 
+\par 
+\par }\pard\plain \s2\sa60\keepn\widctlpar\aspalpha\aspnum\faauto\outlinelevel1\adjustright\rin0\lin0\itap0 \b\f6\fs30\lang1033\cgrid {3.2 Analysis of Queries
+\par }\pard\plain \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 \f6\lang1033\cgrid {
+\par }\pard \ri-720\widctlpar\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {Here is a table of the Filter Factors (FF) of queries given in Section 3.1, providing an analysis of the most restrictive index\-
+able dimension column predicates for each query. 
+\par }\pard \ri-720\widctlpar\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par                                                
+\par }\trowd \trgaph108\trrh343\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800
+\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr
+\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth5480 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Query\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs18 FF lineorder re\-striction
+\par }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard \qc\ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 Dimensions: FFs of indexable predicates
+\par on dimension columns\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 FF Combined on lineorder\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd 
+\trgaph108\trrh343\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth5480 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\trowd 
+\trgaph108\trrh342\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs18 FF time\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs18 FF part:
+\par brand roll-up\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs18 FF supplier:
+\par city roll-up
+\par \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs18 FF customer:
+\par city roll-up\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 \cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd 
+\trgaph108\trrh342\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\trowd 
+\trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt
+\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q1.1\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 .47*3/11\cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 1/7\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 
+.0183\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 
+\clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt\clbrdrt
+\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q1.2\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 .2*3/11\cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20\ul 1/84}{\fs20 \cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 
+.000649\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb
+\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q1.3\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 .1*3/11\cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20\ul 1/364\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 
+\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 
+\clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt\clbrdrt
+\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q2.1\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 2/7\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20\ul 1/25\cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 
+.0011=2/175\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb
+\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q2.2\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 2/7\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20\ul 1/125\cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 
+.0023=2/875\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb
+\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q2.3\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 2/7\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20\ul 1/1000\cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 \cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 
+.00014=1/7000\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb
+\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q3.1\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20\ul 1/7}{\fs20 \cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 1
+\par (1/5*)
+\par (1/25**)\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 1/5\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 .029=1/35 (1/175*) (1/875**)\cell }\pard 
+\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr
+\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt\clbrdrt\brdrhair\brdrw5 
+\clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q3.2\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 1/7\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 1
+\par (2/25*)
+\par (1/25**)\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20\ul 2/25\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 .0011=2/175 (4/4375*) (2/4375**)\cell }\pard 
+\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr
+\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt\clbrdrt\brdrhair\brdrw5 
+\clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q3.3\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 1/7\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 1
+\par (1/25*)\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20\ul 1/250\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 .00057=1/1750
+\par (1/43750*)\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb
+\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q4.1\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 2/7\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 2/5\cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 1/5\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20\ul 1/5\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {
+\fs20 .0046=1/217\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb
+\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q4.2\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 2/7\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 2/5\cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 1/5\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20\ul 1/5\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {
+\fs20 .0046= 1/217\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb
+\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 Q4.3\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 \cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 2/7\cell }\pard \ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20\ul 1/25\cell }\pard 
+\ri-720\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-720\lin0 {\fs20 1/25\cell }\pard \ri4\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin4\lin0 {\fs20 1/5\cell }\pard \ri-76\widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin-76\lin0 
+{\fs20 .000091=1/10900\cell }\pard \widctlpar\intbl\aspalpha\aspnum\faauto\adjustright\rin0\lin0 {\trowd \trgaph108\trleft-28\trkeep\trftsWidth1\trpaddl108\trpaddr108\trpaddfl3\trpaddfr3 \clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb
+\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth828 \cellx800\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1340 \cellx2140\clvertalt
+\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1080 \cellx3220\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1520 \cellx4740\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx6180\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl
+\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 \cltxlrtb\clftsWidth3\clwWidth1440 \cellx7620\clvertalt\clbrdrt\brdrhair\brdrw5 \clbrdrl\brdrhair\brdrw5 \clbrdrb\brdrhair\brdrw5 \clbrdrr\brdrhair\brdrw5 
+\cltxlrtb\clftsWidth3\clwWidth1980 \cellx9600\row }\pard \ri-720\widctlpar\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }{\b Table 3.1. FF Analysis of Queries in Section 3.1
+\par }{
+\par }\pard \ri-720\widctlpar\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {The underlined FF for each query distinguishes the smallest FF over the indexable dimension column predicate. The most valuable way we can speed up a query which has an
+ indexable dimension column restriction is to sort the lineitem by that column; Other\-wise, indexes on such columns will probably not limit the number of disk pages that must be accessed. Note that by breaking ties to avoid the suppl
+ier city roll-up in Table 3.1, we can avoid a lineorder sort by s_city.
+\par }\pard \ri-720\widctlpar\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {The single asterisk FFs in parentheses in Table 3.1 mark cases of column restrictions that are valid but not indexable (in the nor\-
+mal sense of the System R definition). For example, in the Q3 flight, there is a restriction on the customer city roll-up, o
+n c_region (FF = 1/5), c_nation (FF = 1/25), and c_city (FF =1/250), In the c_region restriction, the further restriction c_nation = s_nation implies a restriction on s_region: FF = 1/
+5, or even FF = 1/25 -- with double asterisk -- since s_nation must be in lockstep with c_nation. Neither of these restrictions on s_nation are in\-dexable, although a sophisticated query optimizer might take ad\-
+vantage of it. (A grouping before index restrictions would be re\-quired in the double asterisk case, along with an understanding of roll-up.)
+\par }\pard \ri-720\widctlpar\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {It is interesting to note that we could improve on the indexable predicate FF by providing a \ldblquote helper predicate\rdblquote , s_region = \lquote ASIA\rquote 
+ for Q3.1, though the predicate actually has no effect.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard\plain \s2\sa60\keepn\widctlpar\aspalpha\aspnum\faauto\outlinelevel1\adjustright\rin0\lin0\itap0 \b\f6\fs30\lang1033\cgrid {4. Load and Refresh
+\par }\pard\plain \s34\ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 \f6\lang1033\cgrid {
+\par }\pard\plain \ri-720\widctlpar\tx260\tx360\tx540\tx800\tx1080\tldot\tx7920\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 \f6\lang1033\cgrid {
+There will be an original load, basically as specified in TPC-H, but with data modifications as specified above.
+\par }\pard \ri-720\widctlpar\tx260\tx360\tx540\tx800\tx1080\tldot\tx7920\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx360\tx540\tx800\tx1080\tldot\tx7920\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {Refresh (Insert and Delete multiple LINEORDER rows) must also re\-flect ac\-cumulated changes. As with TPC-H, we will allow con\-
+tinuous in\-serts/deletes, but this will probably affect What-If analysis query sets unless timestamped query transactions are im\-plemented.
+\par }\pard \ri-720\widctlpar\tx260\tx360\tx540\tx800\tx1080\tldot\tx7920\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par 
+\par }\pard\plain \s2\sa60\keepn\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\outlinelevel1\adjustright\rin0\lin0\itap0 \b\f6\fs30\lang1033\cgrid {Appendix A. Original TPC-H Tables, For Ref\-erence
+\par }\pard\plain \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 \f6\lang1033\cgrid {\b\fs20 PART Table Layout
+\par }{\fs20 P_PARTKEY identifier SF*200,000 are populated
+\par P_NAME variable text, size 55
+\par P_MFGR fixed text, size 25
+\par P_BRAND fixed text, size 10
+\par P_TYPE variable text, size 25
+\par P_SIZE integer
+\par P_CONTAINER fixed text, size 10
+\par P_RETAILPRICE decimal
+\par P_COMMENT variable text, size 23
+\par }{\b\fs20 Primary Key}{\fs20 : P_PARTKEY
+\par 
+\par }{\b\fs20 SUPPLIER Table Layout
+\par }{\fs20 S_SUPPKEY identifier SF*10,000 are populated
+\par S_NAME fixed text, size 25
+\par S_ADDRESS variable text, size 40
+\par S_NATIONKEY identifier Foreign key reference to N_NATIONKEY
+\par S_PHONE fixed text, size 15
+\par S_ACCTBAL decimal
+\par S_COMMENT variable text, size 101
+\par }{\b\fs20 Primary Key}{\fs20 : S_SUPPKEY
+\par 
+\par }{\b\fs20 PARTSUPP Table Layout
+\par }{\fs20 PS_PARTKEY identifier Foreign key reference to P_PARTKEY
+\par PS_SUPPKEY identifier Foreign key reference to S_SUPPKEY
+\par PS_AVAILQTY integer
+\par PS_SUPPLYCOST decimal
+\par PS_COMMENT variable text, size 199
+\par }{\b\fs20 Compound Primary Key}{\fs20 : PS_PARTKEY, PS_SUPPKEY
+\par 
+\par }{\b\fs20 CUSTOMER Table Layout
+\par }{\fs20 C_CUSTKEY identifier SF*150,000 are populated
+\par C_NAME variable text, size 25
+\par C_ADDRESS variable text, size 40
+\par C_NATIONKEY identifier Foreign key reference to N_NATIONKEY
+\par C_PHONE fixed text, size 15
+\par C_ACCTBAL decimal
+\par C_MKTSEGMENT fixed text, size 10
+\par C_COMMENT variable text, size 117
+\par }{\b\fs20 Primary Key}{\fs20 : C_CUSTKEY
+\par 
+\par }{\b\fs20 ORDERS Table Layout
+\par }{\fs20 O_ORDERKEY identifier SF*1,500,000 are sparsely populated
+\par O_CUSTKEY identifier Foreign key reference to C_CUSTKEY
+\par O_ORDERSTATUS fixed text, size 1
+\par O_TOTALPRICE decimal
+\par O_ORDERDATE date
+\par O_ORDERPRIORITY fixed text, size 15
+\par O_CLERK fixed text, size 15
+\par O_SHIPPRIORITY integer
+\par O_COMMENT variable text, size 79
+\par }{\b\fs20 Primary Key}{\fs20 : O_ORDERKEY
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\fs20 Comment}{\fs20 : Orders are not present f
+or all customers. In fact, one-third of the customers do not have any order in the database. The orders are assigned at random to two-thirds of the customers (see Clause 4). The purpose of this is to exercise the capabilities of the DBMS to handle "dead d
+ata" when joining two or more tables.
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\fs20 
+\par }{\b\fs20 LINEITEM Table Layout
+\par }{\fs20 L_ORDERKEY identifier Foreign key reference to O_ORDERKEY
+\par L_PARTKEY identifier Foreign key reference to P_PARTKEY, Compound
+\par Foreign Key Reference to (PS_PARTKEY, PS_SUPPKEY) with L_SUPPKEY
+\par L_SUPPKEY identifier Foreign key reference to S_SUPPKEY, Compound
+\par Foreign key reference to (PS_PARTKEY, PS_SUPPKEY) with L_PARTKEY
+\par L_LINENUMBER integer
+\par L_QUANTITY decimal
+\par L_EXTENDEDPRICE decimal
+\par L_DISCOUNT decimal
+\par L_TAX decimal
+\par L_RETURNFLAG fixed text, size 1
+\par L_LINESTATUS fixed text, size 1
+\par L_SHIPDATE date
+\par L_COMMITDATE date
+\par L_RECEIPTDATE date
+\par L_SHIPINSTRUCT fixed text, size 25
+\par L_SHIPMODE fixed text, size 10
+\par L_COMMENT variable text size 44
+\par }{\b\fs20 Compound Primary Key}{\fs20 : L_ORDERKEY, L_LINENUMBER
+\par 
+\par }{\b\fs20 NATION Table Layout
+\par }{\fs20 N_NATIONKEY identifier 25 nations are populated
+\par N_NAME fixed text, size 25
+\par N_REGIONKEY identifier Foreign key reference to R_REGIONKEY
+\par N_COMMENT variable text, size 152
+\par }{\b\fs20 Primary Key}{\fs20 : N_NATIONKEY
+\par 
+\par }{\b\fs20 REGION Table Layout
+\par }{\fs20 R_REGIONKEY identifier 5 regions are populated
+\par R_NAME fixed text, size 25
+\par R_COMMENT variable text, size 152
+\par }{\b\fs20 Primary Key}{\fs20 : R_REGIONKEY
+\par 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\fs20 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\fs20 
+\par }\pard \ri-720\widctlpar\tx260\tx540\tx800\tx1080\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {\b\fs28 References}{
+\par }\pard \ri-720\widctlpar\tx260\tx360\tx540\tx800\tx1080\tldot\tx7920\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx360\tx540\tx800\tx1080\tldot\tx7920\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+[SETQ] Pat O'Neil, "The Set Query Benchmark", The Benchmark Handbook for Database and Transaction Processing Systems, Jim Gray, Editor, Morgan Kaufmann 1991/
+1993, pp. 209-245. Download this text from http://www.sigmod.org/dblp/db/books/collections/gray91.html .
+\par }\pard \ri-720\widctlpar\tx260\tx360\tx540\tx800\tx1080\tldot\tx7920\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx360\tx540\tx800\tx1080\tldot\tx7920\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+[TPC-D] Meikel Poess, Bryan Smith, Lubor Kollar and Paul Larson, "TPC-DS, Taking Decision Support Benchmarking to the Next Level", ACM SIGMOD 2002, pp. 582-587.}{\f0\fs20 
+\par }\pard \ri-720\widctlpar\tx260\tx360\tx540\tx800\tx1080\tldot\tx7920\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {
+\par }\pard \ri-720\widctlpar\tx260\tx360\tx540\tx800\tx1080\tldot\tx7920\aspalpha\aspnum\faauto\adjustright\rin-720\lin0\itap0 {[Kimball] Ralph Kimball and Margy Ross, \ldblquote The Data Warehouse Toolkit\rdblquote , Second Edition, Wiley, 2002.
+\par }}

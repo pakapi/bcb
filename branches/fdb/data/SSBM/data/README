@@ -1,0 +1,7 @@
+The data directory contains the script for genenating data files
+through the compiled dbgen and server as a tempary data storage for
+data loading purpose.
+
+Simply run the GEN_DATA script to generate all files. Make sure the
+the dbgen has been previously compiled.
+
