@@ -14,16 +14,10 @@ ELSE (CMAKE_BUILD_TYPE STREQUAL "DEBUG" OR CMAKE_BUILD_TYPE STREQUAL "debug" OR 
   ADD_DEFINITIONS(-Wall -O2)
 ENDIF (CMAKE_BUILD_TYPE STREQUAL "DEBUG" OR CMAKE_BUILD_TYPE STREQUAL "debug" OR CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-find_package(Boost REQUIRED filesystem)
+find_package(Boost REQUIRED)
 message ( STATUS "    Boost found in include=${Boost_INCLUDE_DIRS},lib=${Boost_LIBRARIES}")
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARIES})
-
-# switched to glog (for ease of compilation in windows, though glog is still having troubles too..)
-# find_package(Log4cxx REQUIRED)
-# message ( STATUS "    Log4cxx found in include=${LOG4CXX_INCLUDE_DIRS},lib=${LOG4CXX_LIBRARIES}")
-# INCLUDE_DIRECTORIES(${LOG4CXX_INCLUDE_DIRS})
-# link_directories(${LOG4CXX_LIBRARIES})
 
 find_package(Glog REQUIRED)
 INCLUDE_DIRECTORIES(${GLOG_INCLUDE_DIRS})
@@ -43,7 +37,7 @@ ADD_EXECUTABLE(testmain testmain.cpp)
 # required packages
 # db (BDB)
 # db_cxx (BDB c++ binding)
-# log4cxx
+# glog (Google logging)
 # tedious to write cmake find modules. please make sure you have these installed in /usr/lib...
 TARGET_LINK_LIBRARIES(fdbmain glog fdbstorage fdbssb fengine)
 

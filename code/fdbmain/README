@@ -54,3 +54,5 @@ and src/example/cpp/console.cpp
 
 
 -- same thing to libdb/libdb_cxx and boost
+
+Switched to glog, so need to install log4cxx.
