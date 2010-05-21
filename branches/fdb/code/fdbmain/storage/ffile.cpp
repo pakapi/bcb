@@ -13,7 +13,6 @@
 #include <string.h>
 #include <glog/logging.h>
 #include <boost/scoped_array.hpp>
-#include <boost/filesystem/operations.hpp>
 
 using namespace std;
 using namespace boost;
@@ -38,19 +37,19 @@ void FSignatureSet::load (const std::string &filepath) {
   StopWatch watch;
   watch.init();
 
-  if (!boost::filesystem::exists(boost::filesystem::path(filepath))) {
+  ifstream in(filepath.c_str(), ios::in | ios::binary);
+  if (!in.is_open()) {
     LOG(INFO) << "the signature file " << (filepath)
       << " does not exist. a new empty signature file will be created";
     return;
   }
 
-  ifstream in(filepath.c_str(), ios::in | ios::binary);
-  if (!in.is_open()) {
-    LOG(ERROR) << "what's the heck? boost::filesystem::exists said ok!";
-    return;
-  }
-
-  int filesize = boost::filesystem::file_size(boost::filesystem::path(filepath));
+  long begin = in.tellg ();
+  in.seekg (0, ios::end);
+  long end = in.tellg();
+  int filesize = end - begin;
+  in.seekg (0, ios::beg);
+  assert (filesize >= 0);
   assert (filesize % sizeof(FFileSignature) == 0);
   scoped_array<char> bufferPtr(new char[filesize]);
   char *buffer = bufferPtr.get();
