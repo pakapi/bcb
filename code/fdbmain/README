@@ -1,0 +1,56 @@
+This project is a CMake project.
+
+# launch ccmake to find appropriate package locations
+ccmake .
+
+# cmake to make Makefile, and make it
+cmake .
+make
+
+# (if you are a kdevelop user)
+cmake . -G KDevelop3
+# then open the generated project file in kdevelop
+
+If you are using KDevelop4, simply open the cmake files.
+
+
+-- if you don't have log4cxx installed and you don't have permission
+to install them in /usr or /usr/local (like Brown CS machines), 
+download APR/APR-util/log4cxx and install them in your home directory.
+For example:
+
+mkdir /home/hkimura/modules
+cd /home/hkimura/modules
+
+# download and extract files here
+
+cd apr-1.4.2/
+./configure --prefix=/home/hkimura/modules
+make
+make install
+cd ..
+
+cd apr-util-1.3.9/
+./configure --prefix=/home/hkimura/modules --with-apr=/home/hkimura/modules/apr-1.4.2
+make
+make install
+cd ..
+
+cd apache-log4cxx-0.10.0
+./configure --prefix=/home/hkimura/modules --with-apr=/home/hkimura/modules/apr-1.4.2  --with-apr-util=/home/hkimura/modules/apr-util-1.3.9
+make
+make install
+
+And then, specify the log4cxx folder in ccmake. for example:
+ LOG4CXX_INCLUDE_DIRS            */home/hkimura/modules/include                
+ LOG4CXX_LIBRARIES               */home/hkimura/modules/lib                    
+ Log4cxx_FOUND                   *ON    
+
+- one trouble in debian. I encountered a compilation error:
+"inputstreamreader.cpp:66: error: 'memmove' was not declared in this scope"
+I avoided this error by adding "#include <string.h>" in
+src/main/cpp/inputstreamreader.cpp and src/main/cpp/socketoutputstream.cpp
+and src/example/cpp/console.cpp
+
+
+-- same thing to libdb/libdb_cxx and boost

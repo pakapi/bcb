@@ -1,0 +1,620 @@
+misc memo about codes/experiments.
+
+
+==========May 3, 2010
+=== scale-1 SSB lineorder, from bin file with STX-BTree, Release build
+../scripts/cacheclear.sh
+./fdbmain loadssbbin
+trial1
+2010-05-03 14:59:13,957 [0xb7755770] INFO  loadssb - constructred main memory BTree (8855179 micsosec for reading and constructing). writing to disk...
+2010-05-03 14:59:13,957 [0xb7755770] INFO  fdb - dumping an on-memory btree to a new file ../../data/datafile.13...
+2010-05-03 14:59:19,847 [0xb7755770] INFO  fdb - finished writing 8429 leaf pages.
+2010-05-03 14:59:21,310 [0xb7755770] INFO  fdb - finished writing 8431 pages in total(2 non-leaf pages).
+2010-05-03 14:59:22,318 [0xb7755770] INFO  fdb - completed writing. 8361103 micsosec
+
+trial2
+2010-05-03 15:14:21,094 [0xb788d770] INFO  loadssb - constructred main memory BTree (9006694 micsosec for reading and constructing). writing to disk...
+2010-05-03 15:14:21,094 [0xb788d770] INFO  fdb - dumping an on-memory btree to a new file ../../data/datafile.18...
+2010-05-03 15:14:26,660 [0xb788d770] INFO  fdb - finished writing 8429 leaf pages.
+2010-05-03 15:14:26,665 [0xb788d770] INFO  fdb - finished writing 8431 pages in total(2 non-leaf pages).
+2010-05-03 15:14:29,129 [0xb788d770] INFO  fdb - completed writing. 8034425 micsosec
+
+trial3
+2010-05-03 15:15:04,255 [0xb77a7770] INFO  loadssb - constructred main memory BTree (9172469 micsosec for reading and constructing). writing to disk...
+2010-05-03 15:15:04,256 [0xb77a7770] INFO  fdb - dumping an on-memory btree to a new file ../../data/datafile.23...
+2010-05-03 15:15:10,011 [0xb77a7770] INFO  fdb - finished writing 8429 leaf pages.
+2010-05-03 15:15:10,014 [0xb77a7770] INFO  fdb - finished writing 8431 pages in total(2 non-leaf pages).
+2010-05-03 15:15:11,999 [0xb77a7770] INFO  fdb - completed writing. 7743026 micsosec
+
+=== scale-1 SSB lineorder, from bin file with std::map, Release build
+../scripts/cacheclear.sh
+./fdbmain loadssbbin
+trial1
+2010-05-03 15:12:08,198 [0xb7878770] INFO  loadssb - constructred main memory BTree (9333545 micsosec for reading and constructing). writing to disk...
+
+trial2
+2010-05-03 15:13:03,915 [0xb7776770] INFO  loadssb - constructred main memory BTree (9065994 micsosec for reading and constructing). writing to disk...
+
+trial3
+2010-05-03 15:13:29,444 [0xb7796770] INFO  loadssb - constructred main memory BTree (9506941 micsosec for reading and constructing). writing to disk...
+
+STX won ... slightly.
+
+==========May 10, 2010
+=== scale-1 SSB lineorder, from bin file 
+
+[hkimura@artemis fdbmain]$ ../scripts/cacheclear.sh 
+Dropped cache
+[hkimura@artemis fdbmain]$ ./fdbmain loadssbmv
+2010-05-10 15:50:33,344 [0xb76e69a0] INFO  fdb - started.
+<...>
+2010-05-10 15:51:31,883 [0xb76e69a0] INFO  loadssbmv - read 6001171 lines
+2010-05-10 15:51:31,883 [0xb76e69a0] INFO  loadssbmv - constructred main memory BTree (55973829 micsosec for reading and constructing). writing to disk...
+2010-05-10 15:51:31,883 [0xb76e69a0] INFO  loadssbmv - rowstore
+2010-05-10 15:51:31,883 [0xb76e69a0] INFO  mbtree - dumping an on-memory btree to a new file ../../data/lineorder.bin.db...
+2010-05-10 15:51:31,985 [0xb76e69a0] INFO  mbtree - deleted existing file ../../data/lineorder.bin.db.
+2010-05-10 15:51:36,510 [0xb76e69a0] INFO  mbtree - finished writing 7704 leaf pages.
+2010-05-10 15:51:36,514 [0xb76e69a0] INFO  mbtree - finished writing 7706 pages in total(2 non-leaf pages).
+2010-05-10 15:51:38,846 [0xb76e69a0] INFO  mbtree - completed writing. 6963095 micsosec
+2010-05-10 15:51:38,847 [0xb76e69a0] INFO  mbtree - dumping an on-memory btree to a new file ../../data/mvprojection.db...
+2010-05-10 15:51:48,361 [0xb76e69a0] INFO  mbtree - finished writing 13578 leaf pages.
+2010-05-10 15:51:49,082 [0xb76e69a0] INFO  mbtree - finished writing 13601 pages in total(23 non-leaf pages).
+2010-05-10 15:51:51,221 [0xb76e69a0] INFO  mbtree - completed writing. 12373677 micsosec
+2010-05-10 15:51:52,037 [0xb76e69a0] INFO  fdb - wrote 6 signatures. 125 micsosec
+2010-05-10 15:51:52,037 [0xb76e69a0] INFO  loadssbmv - loaded all SSB data from bin files. 78655892 micsosec
+2010-05-10 15:51:52,141 [0xb76e69a0] INFO  fdb - ended.
+
+
+[hkimura@artemis fdbmain]$ ../scripts/cacheclear.sh 
+Dropped cache
+[hkimura@artemis fdbmain]$ ./fdbmain loadssbmvcstore
+2010-05-10 15:54:21,873 [0xb78649a0] INFO  loadssbmv - read 6001171 lines
+2010-05-10 15:54:21,873 [0xb78649a0] INFO  loadssbmv - constructred main memory BTree (55927376 micsosec for reading and constructing). writing to disk...
+2010-05-10 15:54:21,873 [0xb78649a0] INFO  loadssbmv - cstore
+2010-05-10 15:54:21,873 [0xb78649a0] INFO  dumpcstore - dumping an on-memory btree to new CStore files...
+2010-05-10 15:54:21,874 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.orderkey.db (compression=RLE_COMPRESSED)...
+2010-05-10 15:54:22,264 [0xb78649a0] DEBUG dumpcstore - in total 1500000 runs
+2010-05-10 15:54:22,264 [0xb78649a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 15:54:22,529 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.linenumber.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:22,996 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.custkey.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:23,779 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.partkey.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:24,563 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.suppkey.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:25,347 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.orderdate.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:26,156 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.orderpriority.db (compression=DICTIONARY_COMPRESSED_4BIT)...
+2010-05-10 15:54:27,025 [0xb78649a0] DEBUG dumpcstore - Wrote dictionary. 5 entries. 1 root pages
+2010-05-10 15:54:27,140 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.shippriority.db (compression=DICTIONARY_COMPRESSED_1BIT)...
+2010-05-10 15:54:27,449 [0xb78649a0] DEBUG dumpcstore - Wrote dictionary. 1 entries. 1 root pages
+2010-05-10 15:54:27,532 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.quantity.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:28,007 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.extendedprice.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:28,808 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.ordertotalprice.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:29,626 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.discount.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:30,118 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.revenue.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:30,910 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.supplycost.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:31,677 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.tax.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:32,169 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.commitdate.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:32,945 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.shipmode.db (compression=DICTIONARY_COMPRESSED_4BIT)...
+2010-05-10 15:54:33,901 [0xb78649a0] DEBUG dumpcstore - Wrote dictionary. 7 entries. 1 root pages
+2010-05-10 15:54:34,011 [0xb78649a0] INFO  dumpcstore - completed all dumping. 12137936 micsosec
+2010-05-10 15:54:34,012 [0xb78649a0] INFO  dumpcstore - dumping an on-memory btree to new CStore files...
+2010-05-10 15:54:34,012 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.s_region.db (compression=RLE_COMPRESSED)...
+2010-05-10 15:54:35,265 [0xb78649a0] DEBUG dumpcstore - in total 5 runs
+2010-05-10 15:54:35,266 [0xb78649a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 15:54:35,328 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.d_year.db (compression=RLE_COMPRESSED)...
+2010-05-10 15:54:36,325 [0xb78649a0] DEBUG dumpcstore - in total 35 runs
+2010-05-10 15:54:36,325 [0xb78649a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 15:54:36,387 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.c_region.db (compression=RLE_COMPRESSED)...
+2010-05-10 15:54:37,637 [0xb78649a0] DEBUG dumpcstore - in total 175 runs
+2010-05-10 15:54:37,637 [0xb78649a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 15:54:37,687 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.s_nation.db (compression=RLE_COMPRESSED)...
+2010-05-10 15:54:38,987 [0xb78649a0] DEBUG dumpcstore - in total 875 runs
+2010-05-10 15:54:38,987 [0xb78649a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 15:54:39,038 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.c_nation.db (compression=RLE_COMPRESSED)...
+2010-05-10 15:54:40,337 [0xb78649a0] DEBUG dumpcstore - in total 4375 runs
+2010-05-10 15:54:40,338 [0xb78649a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 15:54:40,388 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.s_city.db (compression=RLE_COMPRESSED)...
+2010-05-10 15:54:41,611 [0xb78649a0] DEBUG dumpcstore - in total 43750 runs
+2010-05-10 15:54:41,612 [0xb78649a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 15:54:41,680 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.c_city.db (compression=RLE_COMPRESSED)...
+2010-05-10 15:54:42,955 [0xb78649a0] DEBUG dumpcstore - in total 437473 runs
+2010-05-10 15:54:42,955 [0xb78649a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 15:54:43,097 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.d_yearmonth.db (compression=RLE_COMPRESSED)...
+2010-05-10 15:54:44,646 [0xb78649a0] DEBUG dumpcstore - in total 3425131 runs
+2010-05-10 15:54:44,646 [0xb78649a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 15:54:45,214 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_orderkey.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:46,922 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_linenumber.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:48,315 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_quantity.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:49,707 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_extendedprice.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:51,391 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_discount.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:52,783 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_revenue.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:54,474 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_supplycost.db (compression=UNCOMPRESSED)...
+2010-05-10 15:54:56,250 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.p_mfgr.db (compression=DICTIONARY_COMPRESSED_4BIT)...
+2010-05-10 15:54:58,094 [0xb78649a0] DEBUG dumpcstore - Wrote dictionary. 5 entries. 1 root pages
+2010-05-10 15:54:58,208 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.p_category.db (compression=DICTIONARY_COMPRESSED_8BIT)...
+2010-05-10 15:54:59,845 [0xb78649a0] DEBUG dumpcstore - Wrote dictionary. 25 entries. 1 root pages
+2010-05-10 15:54:59,984 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.p_brand.db (compression=DICTIONARY_COMPRESSED_16BIT)...
+2010-05-10 15:55:01,773 [0xb78649a0] DEBUG dumpcstore - Wrote dictionary. 1000 entries. 1 root pages
+2010-05-10 15:55:01,984 [0xb78649a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.d_weeknuminyear.db (compression=UNCOMPRESSED)...
+2010-05-10 15:55:03,376 [0xb78649a0] INFO  dumpcstore - completed all dumping. 29363271 micsosec
+2010-05-10 15:55:04,175 [0xb78649a0] INFO  fdb - wrote 77 signatures. 146 micsosec
+2010-05-10 15:55:04,175 [0xb78649a0] INFO  loadssbmv - loaded all SSB data from bin files. 103229419 micsosec
+2010-05-10 15:55:04,179 [0xb78649a0] INFO  fdb - ended.
+
+
+==== filesize (d_yearmonth=RLE)
+-rw------- 1 hkimura nogroup  24051712 May 10 15:53 lineorder.bin.commitdate.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:53 lineorder.bin.custkey.db
+-rw------- 1 hkimura nogroup 505020416 May 10 15:49 lineorder.bin.db
+-rw------- 1 hkimura nogroup   6029312 May 10 15:53 lineorder.bin.discount.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:53 lineorder.bin.extendedprice.db
+-rw------- 1 hkimura nogroup   6029312 May 10 15:53 lineorder.bin.linenumber.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:53 lineorder.bin.orderdate.db
+-rw------- 1 hkimura nogroup  12124160 May 10 15:53 lineorder.bin.orderkey.db
+-rw------- 1 hkimura nogroup   3080192 May 10 15:53 lineorder.bin.orderpriority.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:53 lineorder.bin.ordertotalprice.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:53 lineorder.bin.partkey.db
+-rw------- 1 hkimura nogroup   6029312 May 10 15:53 lineorder.bin.quantity.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:53 lineorder.bin.revenue.db
+-rw------- 1 hkimura nogroup   3080192 May 10 15:53 lineorder.bin.shipmode.db
+-rw------- 1 hkimura nogroup    851968 May 10 15:53 lineorder.bin.shippriority.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:53 lineorder.bin.suppkey.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:53 lineorder.bin.supplycost.db
+-rw------- 1 hkimura nogroup   6029312 May 10 15:53 lineorder.bin.tax.db
+-rw------- 1 hkimura nogroup   6684672 May 10 15:54 mvprojection.c_city.db
+-rw------- 1 hkimura nogroup    196608 May 10 15:54 mvprojection.c_nation.db
+-rw------- 1 hkimura nogroup    131072 May 10 15:54 mvprojection.c_region.db
+-rw------- 1 hkimura nogroup   6029312 May 10 15:54 mvprojection.d_weeknuminyear.db
+-rw------- 1 hkimura nogroup    131072 May 10 15:53 mvprojection.d_year.db
+-rw------- 1 hkimura nogroup  41222144 May 10 15:54 mvprojection.d_yearmonth.db
+-rw------- 1 hkimura nogroup 891355136 May 10 15:51 mvprojection.db
+-rw------- 1 hkimura nogroup   6029312 May 10 15:54 mvprojection.l_discount.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:54 mvprojection.l_extendedprice.db
+-rw------- 1 hkimura nogroup   6029312 May 10 15:54 mvprojection.l_linenumber.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:54 mvprojection.l_orderkey.db
+-rw------- 1 hkimura nogroup   6029312 May 10 15:54 mvprojection.l_quantity.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:54 mvprojection.l_revenue.db
+-rw------- 1 hkimura nogroup  24051712 May 10 15:54 mvprojection.l_supplycost.db
+-rw------- 1 hkimura nogroup  12124160 May 10 15:54 mvprojection.p_brand.db
+-rw------- 1 hkimura nogroup   6094848 May 10 15:54 mvprojection.p_category.db
+-rw------- 1 hkimura nogroup   3080192 May 10 15:54 mvprojection.p_mfgr.db
+-rw------- 1 hkimura nogroup    786432 May 10 15:54 mvprojection.s_city.db
+-rw------- 1 hkimura nogroup    131072 May 10 15:54 mvprojection.s_nation.db
+-rw------- 1 hkimura nogroup    131072 May 10 15:53 mvprojection.s_region.db
+
+d_yearmonth=DICTIONARY_COMPRESSED_8BIT
+-rw------- 1 hkimura nogroup   6094848 May 10 16:15 mvprojection.d_yearmonth.db
+
+better. others seem fine.
+
+== Unsorted Array + quicksort
+[hkimura@artemis fdbmain]$ ./fdbmain loadssbmv
+2010-05-10 17:29:38,284 [0xb78af9a0] INFO  loadssbmv - reading 6000000
+2010-05-10 17:29:38,285 [0xb78af9a0] INFO  loadssbmv - read 6001171 lines
+<sort here>
+2010-05-10 17:30:05,476 [0xb78af9a0] INFO  loadssbmv - constructred main memory BTree (37760003 micsosec for reading and constructing). writing to disk...
+2010-05-10 17:30:05,477 [0xb78af9a0] INFO  loadssbmv - rowstore
+2010-05-10 17:30:05,477 [0xb78af9a0] INFO  mbtree - dumping an on-memory btree to a new file ../../data/lineorder.bin.db...
+2010-05-10 17:30:05,523 [0xb78af9a0] INFO  mbtree - deleted existing file ../../data/lineorder.bin.db.
+2010-05-10 17:30:10,849 [0xb78af9a0] INFO  mbtree - finished writing 7704 leaf pages.
+2010-05-10 17:30:12,663 [0xb78af9a0] INFO  mbtree - finished writing 7706 pages in total(2 non-leaf pages).
+2010-05-10 17:30:13,074 [0xb78af9a0] INFO  mbtree - completed writing. 7597357 micsosec
+2010-05-10 17:30:13,075 [0xb78af9a0] INFO  mbtree - dumping an on-memory btree to a new file ../../data/mvprojection.db...
+2010-05-10 17:30:13,129 [0xb78af9a0] INFO  mbtree - deleted existing file ../../data/mvprojection.db.
+2010-05-10 17:30:22,577 [0xb78af9a0] INFO  mbtree - finished writing 13578 leaf pages.
+2010-05-10 17:30:23,193 [0xb78af9a0] INFO  mbtree - finished writing 13601 pages in total(23 non-leaf pages).
+2010-05-10 17:30:25,276 [0xb78af9a0] INFO  mbtree - completed writing. 12200111 micsosec
+2010-05-10 17:30:25,445 [0xb78af9a0] INFO  fdb - wrote 6 signatures. 163 micsosec
+2010-05-10 17:30:25,445 [0xb78af9a0] INFO  loadssbmv - loaded all SSB data from bin files. 60882138 micsosec
+
+
+[hkimura@artemis fdbmain]$ ./fdbmain loadssbmvcstore
+2010-05-10 17:32:01,227 [0xb775b9a0] INFO  loadssbmv - reading 6000000
+2010-05-10 17:32:01,228 [0xb775b9a0] INFO  loadssbmv - read 6001171 lines
+<sort here>
+2010-05-10 17:32:28,418 [0xb775b9a0] INFO  loadssbmv - constructred main memory BTree (37705856 micsosec for reading and constructing). writing to disk...
+2010-05-10 17:32:28,418 [0xb775b9a0] INFO  loadssbmv - cstore
+2010-05-10 17:32:28,418 [0xb775b9a0] INFO  dumpcstore - dumping an on-memory btree to new CStore files...
+2010-05-10 17:32:28,454 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.orderkey.db.
+2010-05-10 17:32:28,454 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.orderkey.db (compression=RLE_COMPRESSED)...
+2010-05-10 17:32:28,772 [0xb775b9a0] DEBUG dumpcstore - in total 1500000 runs
+2010-05-10 17:32:28,772 [0xb775b9a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 17:32:29,013 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.linenumber.db.
+2010-05-10 17:32:29,013 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.linenumber.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:29,414 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.custkey.db.
+2010-05-10 17:32:29,414 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.custkey.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:30,130 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.partkey.db.
+2010-05-10 17:32:30,130 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.partkey.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:30,816 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.suppkey.db.
+2010-05-10 17:32:30,816 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.suppkey.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:31,509 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.orderdate.db.
+2010-05-10 17:32:31,509 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.orderdate.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:32,166 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.orderpriority.db.
+2010-05-10 17:32:32,166 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.orderpriority.db (compression=DICTIONARY_COMPRESSED_4BIT)...
+2010-05-10 17:32:32,942 [0xb775b9a0] DEBUG dumpcstore - Wrote dictionary. 5 entries. 1 root pages
+2010-05-10 17:32:33,032 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.shippriority.db.
+2010-05-10 17:32:33,033 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.shippriority.db (compression=DICTIONARY_COMPRESSED_1BIT)...
+2010-05-10 17:32:33,257 [0xb775b9a0] DEBUG dumpcstore - Wrote dictionary. 1 entries. 1 root pages
+2010-05-10 17:32:33,316 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.quantity.db.
+2010-05-10 17:32:33,316 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.quantity.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:33,702 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.extendedprice.db.
+2010-05-10 17:32:33,702 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.extendedprice.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:34,401 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.ordertotalprice.db.
+2010-05-10 17:32:34,401 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.ordertotalprice.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:35,078 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.discount.db.
+2010-05-10 17:32:35,078 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.discount.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:35,462 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.revenue.db.
+2010-05-10 17:32:35,462 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.revenue.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:36,121 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.supplycost.db.
+2010-05-10 17:32:36,121 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.supplycost.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:36,771 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.tax.db.
+2010-05-10 17:32:36,771 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.tax.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:37,147 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.commitdate.db.
+2010-05-10 17:32:37,147 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.commitdate.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:37,806 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.shipmode.db.
+2010-05-10 17:32:37,806 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.shipmode.db (compression=DICTIONARY_COMPRESSED_4BIT)...
+2010-05-10 17:32:38,678 [0xb775b9a0] DEBUG dumpcstore - Wrote dictionary. 7 entries. 1 root pages
+2010-05-10 17:32:38,781 [0xb775b9a0] INFO  dumpcstore - completed all dumping. 10362643 micsosec
+2010-05-10 17:32:38,782 [0xb775b9a0] INFO  dumpcstore - dumping an on-memory btree to new CStore files...
+2010-05-10 17:32:38,782 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.s_region.db.
+2010-05-10 17:32:38,782 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.s_region.db (compression=RLE_COMPRESSED)...
+2010-05-10 17:32:39,881 [0xb775b9a0] DEBUG dumpcstore - in total 5 runs
+2010-05-10 17:32:39,882 [0xb775b9a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 17:32:39,931 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.d_year.db.
+2010-05-10 17:32:39,931 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.d_year.db (compression=RLE_COMPRESSED)...
+2010-05-10 17:32:40,550 [0xb775b9a0] DEBUG dumpcstore - in total 35 runs
+2010-05-10 17:32:40,550 [0xb775b9a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 17:32:40,607 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.c_region.db.
+2010-05-10 17:32:40,607 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.c_region.db (compression=RLE_COMPRESSED)...
+2010-05-10 17:32:41,703 [0xb775b9a0] DEBUG dumpcstore - in total 175 runs
+2010-05-10 17:32:41,704 [0xb775b9a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 17:32:41,757 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.s_nation.db.
+2010-05-10 17:32:41,757 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.s_nation.db (compression=RLE_COMPRESSED)...
+2010-05-10 17:32:42,898 [0xb775b9a0] DEBUG dumpcstore - in total 875 runs
+2010-05-10 17:32:42,898 [0xb775b9a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 17:32:42,949 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.c_nation.db.
+2010-05-10 17:32:42,949 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.c_nation.db (compression=RLE_COMPRESSED)...
+2010-05-10 17:32:44,090 [0xb775b9a0] DEBUG dumpcstore - in total 4375 runs
+2010-05-10 17:32:44,090 [0xb775b9a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 17:32:44,142 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.s_city.db.
+2010-05-10 17:32:44,142 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.s_city.db (compression=RLE_COMPRESSED)...
+2010-05-10 17:32:45,227 [0xb775b9a0] DEBUG dumpcstore - in total 43750 runs
+2010-05-10 17:32:45,228 [0xb775b9a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 17:32:45,284 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.c_city.db.
+2010-05-10 17:32:45,284 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.c_city.db (compression=RLE_COMPRESSED)...
+2010-05-10 17:32:46,411 [0xb775b9a0] DEBUG dumpcstore - in total 437473 runs
+2010-05-10 17:32:46,411 [0xb775b9a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 17:32:46,561 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.d_yearmonth.db.
+2010-05-10 17:32:46,561 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.d_yearmonth.db (compression=DICTIONARY_COMPRESSED_8BIT)...
+2010-05-10 17:32:48,129 [0xb775b9a0] DEBUG dumpcstore - Wrote dictionary. 80 entries. 1 root pages
+2010-05-10 17:32:48,270 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.l_orderkey.db.
+2010-05-10 17:32:48,270 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_orderkey.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:49,786 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.l_linenumber.db.
+2010-05-10 17:32:49,786 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_linenumber.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:50,986 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.l_quantity.db.
+2010-05-10 17:32:50,986 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_quantity.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:52,179 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.l_extendedprice.db.
+2010-05-10 17:32:52,179 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_extendedprice.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:53,671 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.l_discount.db.
+2010-05-10 17:32:53,671 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_discount.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:54,863 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.l_revenue.db.
+2010-05-10 17:32:54,863 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_revenue.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:56,339 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.l_supplycost.db.
+2010-05-10 17:32:56,339 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.l_supplycost.db (compression=UNCOMPRESSED)...
+2010-05-10 17:32:57,830 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.p_mfgr.db.
+2010-05-10 17:32:57,830 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.p_mfgr.db (compression=DICTIONARY_COMPRESSED_4BIT)...
+2010-05-10 17:32:59,508 [0xb775b9a0] DEBUG dumpcstore - Wrote dictionary. 5 entries. 1 root pages
+2010-05-10 17:32:59,614 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.p_category.db.
+2010-05-10 17:32:59,614 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.p_category.db (compression=DICTIONARY_COMPRESSED_8BIT)...
+2010-05-10 17:33:01,143 [0xb775b9a0] DEBUG dumpcstore - Wrote dictionary. 25 entries. 1 root pages
+2010-05-10 17:33:01,272 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.p_brand.db.
+2010-05-10 17:33:01,273 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.p_brand.db (compression=DICTIONARY_COMPRESSED_16BIT)...
+2010-05-10 17:33:02,902 [0xb775b9a0] DEBUG dumpcstore - Wrote dictionary. 1000 entries. 1 root pages
+2010-05-10 17:33:03,107 [0xb775b9a0] DEBUG dumpcstore - deleted existing file ../../data/mvprojection.d_weeknuminyear.db.
+2010-05-10 17:33:03,107 [0xb775b9a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/mvprojection.d_weeknuminyear.db (compression=UNCOMPRESSED)...
+2010-05-10 17:33:04,332 [0xb775b9a0] INFO  dumpcstore - completed all dumping. 25550561 micsosec
+2010-05-10 17:33:04,501 [0xb775b9a0] INFO  fdb - wrote 77 signatures. 202 micsosec
+2010-05-10 17:33:04,501 [0xb775b9a0] INFO  loadssbmv - loaded all SSB data from bin files. 79132927 micsosec
+2010-05-10 17:33:04,504 [0xb775b9a0] INFO  fdb - ended.
+
+
+  amortized sort : 56sec for reading and construction (??sec for sort)
+  unsorted+quicksort: 37sec for reading and construction (27sec for sort)
+
+==without MV
+./fdbmain loadssb
+2010-05-10 17:39:41,655 [0xb776b9a0] INFO  loadssb - reading 6000000
+<sort here: moved it now>
+2010-05-10 17:39:41,903 [0xb776b9a0] INFO  loadssb - read 6001171 lines
+2010-05-10 17:39:41,903 [0xb776b9a0] INFO  loadssb - constructred main memory BTree (6826900 micsosec for reading and constructing). writing to disk...
+2010-05-10 17:39:41,903 [0xb776b9a0] INFO  loadssb - rowstore
+2010-05-10 17:39:41,903 [0xb776b9a0] INFO  mbtree - dumping an on-memory btree to a new file ../../data/lineorder.bin.db...
+2010-05-10 17:39:41,943 [0xb776b9a0] INFO  mbtree - deleted existing file ../../data/lineorder.bin.db.
+2010-05-10 17:39:46,497 [0xb776b9a0] INFO  mbtree - finished writing 7704 leaf pages.
+2010-05-10 17:39:47,532 [0xb776b9a0] INFO  mbtree - finished writing 7706 pages in total(2 non-leaf pages).
+2010-05-10 17:39:48,925 [0xb776b9a0] INFO  mbtree - completed writing. 7022403 micsosec
+
+
+./fdbmain loadssbcstore
+2010-05-10 17:41:39,119 [0xb77309a0] INFO  loadssb - reading 6000000
+<sort here: moved it now>
+2010-05-10 17:41:39,360 [0xb77309a0] INFO  loadssb - read 6001171 lines
+2010-05-10 17:41:39,360 [0xb77309a0] INFO  loadssb - constructred main memory BTree (6809280 micsosec for reading and constructing). writing to disk...
+2010-05-10 17:41:39,360 [0xb77309a0] INFO  loadssb - cstore
+2010-05-10 17:41:39,360 [0xb77309a0] INFO  dumpcstore - dumping an on-memory btree to new CStore files...
+2010-05-10 17:41:39,361 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.orderkey.db.
+2010-05-10 17:41:39,361 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.orderkey.db (compression=RLE_COMPRESSED)...
+2010-05-10 17:41:39,684 [0xb77309a0] DEBUG dumpcstore - in total 1500000 runs
+2010-05-10 17:41:39,684 [0xb77309a0] DEBUG dumpcstore - RLE 1 root pages
+2010-05-10 17:41:39,908 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.linenumber.db.
+2010-05-10 17:41:39,909 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.linenumber.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:40,293 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.custkey.db.
+2010-05-10 17:41:40,293 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.custkey.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:40,977 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.partkey.db.
+2010-05-10 17:41:40,977 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.partkey.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:41,627 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.suppkey.db.
+2010-05-10 17:41:41,627 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.suppkey.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:42,287 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.orderdate.db.
+2010-05-10 17:41:42,287 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.orderdate.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:42,962 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.orderpriority.db.
+2010-05-10 17:41:42,962 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.orderpriority.db (compression=DICTIONARY_COMPRESSED_4BIT)...
+2010-05-10 17:41:43,735 [0xb77309a0] DEBUG dumpcstore - Wrote dictionary. 5 entries. 1 root pages
+2010-05-10 17:41:43,837 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.shippriority.db.
+2010-05-10 17:41:43,837 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.shippriority.db (compression=DICTIONARY_COMPRESSED_1BIT)...
+2010-05-10 17:41:44,062 [0xb77309a0] DEBUG dumpcstore - Wrote dictionary. 1 entries. 1 root pages
+2010-05-10 17:41:44,129 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.quantity.db.
+2010-05-10 17:41:44,129 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.quantity.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:44,513 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.extendedprice.db.
+2010-05-10 17:41:44,514 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.extendedprice.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:45,181 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.ordertotalprice.db.
+2010-05-10 17:41:45,181 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.ordertotalprice.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:45,839 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.discount.db.
+2010-05-10 17:41:45,839 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.discount.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:46,223 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.revenue.db.
+2010-05-10 17:41:46,223 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.revenue.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:46,899 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.supplycost.db.
+2010-05-10 17:41:46,899 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.supplycost.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:47,557 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.tax.db.
+2010-05-10 17:41:47,557 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.tax.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:47,941 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.commitdate.db.
+2010-05-10 17:41:47,941 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.commitdate.db (compression=UNCOMPRESSED)...
+2010-05-10 17:41:48,608 [0xb77309a0] DEBUG dumpcstore - deleted existing file ../../data/lineorder.bin.shipmode.db.
+2010-05-10 17:41:48,608 [0xb77309a0] DEBUG dumpcstore - dumping an on-memory btree to a new CStore file ../../data/lineorder.bin.shipmode.db (compression=DICTIONARY_COMPRESSED_4BIT)...
+2010-05-10 17:41:49,475 [0xb77309a0] DEBUG dumpcstore - Wrote dictionary. 7 entries. 1 root pages
+2010-05-10 17:41:49,567 [0xb77309a0] INFO  dumpcstore - completed all dumping. 10206070 micsosec
+
+
+  unsorted+quicksort: 6.8sec for reading and construction (0.25sec for sort)
+
+== May 13th, 2010
+// performance test of memory caching.
+      char *mem = new char[1 << 30]; // 1GB
+      ::memset (mem, 1, 1 << 30);
+      //suppose 128 (=1 << 7) bytes of tuples
+      //500MB is 1 << 23 tuples
+
+      // repeat 3 times to take average
+      int64_t jumpingTotal = 0, nonJumpingTotal = 0;
+      for (int i = 0; i < 3; ++i) {
+        {
+          LOG4CXX_INFO(logger, "testing jumping memory access...");
+          // we are going to calculate sum of the first 1 byte of each tuple
+          StopWatch w;
+          w.init();
+          int64_t sum = 0;
+          const char *end = mem + (1 << 30);
+          for (const char *cursor = mem; cursor != end; cursor += (1 << 7)) {
+            sum += *cursor;
+          }
+          w.stop();
+          jumpingTotal += w.getElapsed();
+          LOG4CXX_INFO(logger, "done. " << w.getElapsed() << " microsec. sum=" << sum);
+        }
+
+        {
+          LOG4CXX_INFO(logger, "testing sequential memory access...");
+          // we are going to calculate sum of first 1 << 23 bytes
+          StopWatch w;
+          w.init();
+          int64_t sum = 0;
+          const char *end = mem + (1 << 23);
+          for (const char *cursor = mem; cursor != end; ++cursor) {
+            sum += *cursor;
+          }
+          w.stop();
+          nonJumpingTotal += w.getElapsed();
+          LOG4CXX_INFO(logger, "done. " << w.getElapsed() << " microsec. sum=" << sum);
+        }
+      }
+      delete[] mem;
+      LOG4CXX_INFO(logger, "total: jumping=" << jumpingTotal << " microsec");
+      LOG4CXX_INFO(logger, "total: non-jumping=" << nonJumpingTotal << " microsec");
+
+
+josie /home/hkimura/workspace/fdb/code/fdbmain % ./fdbmain testmem
+2010-05-13 18:54:11,419 [0xb7ad98d0] INFO  fdb - started.
+2010-05-13 18:54:13,547 [0xb7ad98d0] INFO  fdb - testing jumping memory access...
+2010-05-13 18:54:13,852 [0xb7ad98d0] INFO  fdb - done. 304355 microsec. sum=8388608
+2010-05-13 18:54:13,852 [0xb7ad98d0] INFO  fdb - testing sequential memory access...
+2010-05-13 18:54:13,867 [0xb7ad98d0] INFO  fdb - done. 14615 microsec. sum=8388608
+2010-05-13 18:54:13,867 [0xb7ad98d0] INFO  fdb - testing jumping memory access...
+2010-05-13 18:54:14,178 [0xb7ad98d0] INFO  fdb - done. 310833 microsec. sum=8388608
+2010-05-13 18:54:14,178 [0xb7ad98d0] INFO  fdb - testing sequential memory access...
+2010-05-13 18:54:14,192 [0xb7ad98d0] INFO  fdb - done. 13905 microsec. sum=8388608
+2010-05-13 18:54:14,192 [0xb7ad98d0] INFO  fdb - testing jumping memory access...
+2010-05-13 18:54:14,498 [0xb7ad98d0] INFO  fdb - done. 305464 microsec. sum=8388608
+2010-05-13 18:54:14,498 [0xb7ad98d0] INFO  fdb - testing sequential memory access...
+2010-05-13 18:54:14,512 [0xb7ad98d0] INFO  fdb - done. 13970 microsec. sum=8388608
+2010-05-13 18:54:14,614 [0xb7ad98d0] INFO  fdb - total: jumping=920652 microsec
+2010-05-13 18:54:14,614 [0xb7ad98d0] INFO  fdb - total: non-jumping=42490 microsec
+2010-05-13 18:54:14,614 [0xb7ad98d0] INFO  fdb - ended.
+
+
+./fdbmain runbench 1000 true false 5 1000 20
+Debug build
+2010-05-19 21:32:56,020 [0xb7aa48d0] INFO  bench - Finished benchmark: total:25929724 microsec. queryTotal=25911840, insertTotal=9393, mvTime=6054, lineorderTime=821
+
+josie /home/hkimura/workspace/fdb/code/fdbmain % ./fdbmain runbench 1000 true false 15 200000 40
+2010-05-19 21:43:58,034 [0xb7a3a8d0] INFO  fdb - started.
+2010-05-19 21:43:58,036 [0xb7a3a8d0] INFO  bench - starting. bufferPoolSize=1000, cstore=1, sortedBuffer=0, batchCount=15, batchSize=200000,queriesBetweenBatch=40
+2010-05-19 21:43:58,037 [0xb7a3a8d0] INFO  fdb - read 84 signatures. 1135 micsosec
+2010-05-19 21:43:58,038 [0xb7a3a8d0] INFO  bufferpool - created buffer pool: page count=1000
+2010-05-19 21:43:58,038 [0xb7a3a8d0] INFO  dbgen - loading dimension data...
+2010-05-19 21:43:58,123 [0xb7a3a8d0] INFO  dbgen - read 30000 customers
+2010-05-19 21:43:58,138 [0xb7a3a8d0] INFO  dbgen - read 10000 suppliers
+2010-05-19 21:43:58,452 [0xb7a3a8d0] INFO  dbgen - read 200000 parts
+2010-05-19 21:43:58,455 [0xb7a3a8d0] INFO  dbgen - read 2556 dates
+2010-05-19 21:43:58,455 [0xb7a3a8d0] INFO  dbgen - completed initialization.
+^C
+josie /home/hkimura/workspace/fdb/code/fdbmain % ./fdbmain runbench 1000 true false 15 200000 40
+2010-05-19 21:45:31,814 [0xb7a498d0] INFO  fdb - started.
+2010-05-19 21:45:31,816 [0xb7a498d0] INFO  bench - starting. bufferPoolSize=1000, cstore=1, sortedBuffer=0, batchCount=15, batchSize=200000,queriesBetweenBatch=40
+2010-05-19 21:45:31,817 [0xb7a498d0] INFO  fdb - read 84 signatures. 1197 micsosec
+2010-05-19 21:45:31,817 [0xb7a498d0] INFO  bufferpool - created buffer pool: page count=1000
+2010-05-19 21:45:31,817 [0xb7a498d0] INFO  dbgen - loading dimension data...
+2010-05-19 21:45:31,901 [0xb7a498d0] INFO  dbgen - read 30000 customers
+2010-05-19 21:45:31,917 [0xb7a498d0] INFO  dbgen - read 10000 suppliers
+2010-05-19 21:45:32,232 [0xb7a498d0] INFO  dbgen - read 200000 parts
+2010-05-19 21:45:32,234 [0xb7a498d0] INFO  dbgen - read 2556 dates
+2010-05-19 21:45:32,234 [0xb7a498d0] INFO  dbgen - completed initialization.
+2010-05-19 21:45:32,234 [0xb7a498d0] INFO  bench - Too large. needs flushing.
+^C
+[1]  + Done                          kdevelop
+josie /home/hkimura/workspace/fdb/code/fdbmain % ./fdbmain runbench 1000 true false 10 200000 40
+2010-05-19 21:45:42,145 [0xb7a948d0] INFO  fdb - started.
+2010-05-19 21:45:42,146 [0xb7a948d0] INFO  bench - starting. bufferPoolSize=1000, cstore=1, sortedBuffer=0, batchCount=10, batchSize=200000,queriesBetweenBatch=40
+2010-05-19 21:45:42,146 [0xb7a948d0] INFO  fdb - read 84 signatures. 511 micsosec
+2010-05-19 21:45:42,146 [0xb7a948d0] INFO  bufferpool - created buffer pool: page count=1000
+2010-05-19 21:45:42,146 [0xb7a948d0] INFO  dbgen - loading dimension data...
+2010-05-19 21:45:42,195 [0xb7a948d0] INFO  dbgen - read 30000 customers
+2010-05-19 21:45:42,217 [0xb7a948d0] INFO  dbgen - read 10000 suppliers
+2010-05-19 21:45:42,550 [0xb7a948d0] INFO  dbgen - read 200000 parts
+2010-05-19 21:45:42,552 [0xb7a948d0] INFO  dbgen - read 2556 dates
+2010-05-19 21:45:42,552 [0xb7a948d0] INFO  dbgen - completed initialization.
+2010-05-19 21:45:50,433 [0xb7a948d0] INFO  bench - Query batch done. 0. 6568280 microsec
+2010-05-19 21:45:50,771 [0xb7a948d0] INFO  bench - Insert batch done. 0. 337562 microsec
+2010-05-19 21:45:56,733 [0xb7a948d0] INFO  bench - Query batch done. 1. 5961792 microsec
+2010-05-19 21:45:57,021 [0xb7a948d0] INFO  bench - Insert batch done. 1. 287761 microsec
+2010-05-19 21:46:05,156 [0xb7a948d0] INFO  bench - Query batch done. 2. 8135266 microsec
+2010-05-19 21:46:05,444 [0xb7a948d0] INFO  bench - Insert batch done. 2. 287200 microsec
+2010-05-19 21:46:13,439 [0xb7a948d0] INFO  bench - Query batch done. 3. 7994637 microsec
+2010-05-19 21:46:13,726 [0xb7a948d0] INFO  bench - Insert batch done. 3. 287158 microsec
+2010-05-19 21:46:24,422 [0xb7a948d0] INFO  bench - Query batch done. 4. 10696052 microsec
+2010-05-19 21:46:24,710 [0xb7a948d0] INFO  bench - Insert batch done. 4. 287970 microsec
+2010-05-19 21:46:37,221 [0xb7a948d0] INFO  bench - Query batch done. 5. 12509914 microsec
+2010-05-19 21:46:37,509 [0xb7a948d0] INFO  bench - Insert batch done. 5. 288194 microsec
+2010-05-19 21:46:49,521 [0xb7a948d0] INFO  bench - Query batch done. 6. 12011649 microsec
+2010-05-19 21:46:49,809 [0xb7a948d0] INFO  bench - Insert batch done. 6. 288269 microsec
+2010-05-19 21:47:01,952 [0xb7a948d0] INFO  bench - Query batch done. 7. 12142137 microsec
+2010-05-19 21:47:02,239 [0xb7a948d0] INFO  bench - Insert batch done. 7. 286881 microsec
+2010-05-19 21:47:15,687 [0xb7a948d0] INFO  bench - Query batch done. 8. 13447855 microsec
+2010-05-19 21:47:15,974 [0xb7a948d0] INFO  bench - Insert batch done. 8. 286531 microsec
+2010-05-19 21:47:26,524 [0xb7a948d0] INFO  bench - Query batch done. 9. 10549490 microsec
+2010-05-19 21:47:26,811 [0xb7a948d0] INFO  bench - Insert batch done. 9. 286833 microsec
+2010-05-19 21:47:33,175 [0xb7a948d0] INFO  bench - Finished benchmark: total:109310696 microsec. queryTotal=100017072, insertTotal=2924359, mvTime=6188091, lineorderTime=176396
+josie /home/hkimura/workspace/fdb/code/fdbmain % 
+josie /home/hkimura/workspace/fdb/code/fdbmain % ./fdbmain runbench 1000 true true 10 200000 40
+2010-05-19 21:49:06,702 [0xb7ac78d0] INFO  fdb - started.
+2010-05-19 21:49:06,703 [0xb7ac78d0] INFO  bench - starting. bufferPoolSize=1000, cstore=1, sortedBuffer=1, batchCount=10, batchSize=200000,queriesBetweenBatch=40
+2010-05-19 21:49:06,704 [0xb7ac78d0] INFO  fdb - read 84 signatures. 1144 micsosec
+2010-05-19 21:49:06,704 [0xb7ac78d0] INFO  bufferpool - created buffer pool: page count=1000
+2010-05-19 21:49:06,704 [0xb7ac78d0] INFO  dbgen - loading dimension data...
+2010-05-19 21:49:06,755 [0xb7ac78d0] INFO  dbgen - read 30000 customers
+2010-05-19 21:49:06,773 [0xb7ac78d0] INFO  dbgen - read 10000 suppliers
+2010-05-19 21:49:07,110 [0xb7ac78d0] INFO  dbgen - read 200000 parts
+2010-05-19 21:49:07,112 [0xb7ac78d0] INFO  dbgen - read 2556 dates
+2010-05-19 21:49:07,113 [0xb7ac78d0] INFO  dbgen - completed initialization.
+2010-05-19 21:49:14,654 [0xb7ac78d0] INFO  bench - Query batch done. 0. 6561360 microsec
+2010-05-19 21:49:15,740 [0xb7ac78d0] INFO  bench - Insert batch done. 0. 1085806 microsec
+2010-05-19 21:49:21,530 [0xb7ac78d0] INFO  bench - Query batch done. 1. 5789761 microsec
+2010-05-19 21:49:22,731 [0xb7ac78d0] INFO  bench - Insert batch done. 1. 1201024 microsec
+2010-05-19 21:49:30,389 [0xb7ac78d0] INFO  bench - Query batch done. 2. 7657899 microsec
+2010-05-19 21:49:31,655 [0xb7ac78d0] INFO  bench - Insert batch done. 2. 1265538 microsec
+2010-05-19 21:49:39,334 [0xb7ac78d0] INFO  bench - Query batch done. 3. 7678509 microsec
+2010-05-19 21:49:40,641 [0xb7ac78d0] INFO  bench - Insert batch done. 3. 1307355 microsec
+2010-05-19 21:49:50,920 [0xb7ac78d0] INFO  bench - Query batch done. 4. 10278190 microsec
+2010-05-19 21:49:52,259 [0xb7ac78d0] INFO  bench - Insert batch done. 4. 1339645 microsec
+2010-05-19 21:50:04,470 [0xb7ac78d0] INFO  bench - Query batch done. 5. 12209954 microsec
+2010-05-19 21:50:05,834 [0xb7ac78d0] INFO  bench - Insert batch done. 5. 1364250 microsec
+2010-05-19 21:50:17,464 [0xb7ac78d0] INFO  bench - Query batch done. 6. 11629172 microsec
+2010-05-19 21:50:18,851 [0xb7ac78d0] INFO  bench - Insert batch done. 6. 1387557 microsec
+2010-05-19 21:50:30,812 [0xb7ac78d0] INFO  bench - Query batch done. 7. 11960073 microsec
+2010-05-19 21:50:32,211 [0xb7ac78d0] INFO  bench - Insert batch done. 7. 1399018 microsec
+2010-05-19 21:50:45,566 [0xb7ac78d0] INFO  bench - Query batch done. 8. 13354513 microsec
+2010-05-19 21:50:46,989 [0xb7ac78d0] INFO  bench - Insert batch done. 8. 1423181 microsec
+2010-05-19 21:50:57,093 [0xb7ac78d0] INFO  bench - Query batch done. 9. 10103471 microsec
+2010-05-19 21:50:58,518 [0xb7ac78d0] INFO  bench - Insert batch done. 9. 1424607 microsec
+2010-05-19 21:50:58,518 [0xb7ac78d0] INFO  bench - Finished benchmark: total:110425498 microsec. queryTotal=97222902, insertTotal=13197981, mvTime=3, lineorderTime=9
+2010-05-19 21:50:59,007 [0xb7ac78d0] INFO  bufferpool - cleared buffer pool
+2010-05-19 21:50:59,007 [0xb7ac78d0] INFO  bufferpool - destroyed buffer pool
+2010-05-19 21:50:59,007 [0xb7ac78d0] INFO  fdb - ended.
+josie /home/hkimura/workspace/fdb/code/fdbmain % ./fdbmain runbench 1000 true true 10 400000 40
+2010-05-19 21:52:13,836 [0xb7a9c8d0] INFO  fdb - started.
+2010-05-19 21:52:13,836 [0xb7a9c8d0] INFO  bench - starting. bufferPoolSize=1000, cstore=1, sortedBuffer=1, batchCount=10, batchSize=400000,queriesBetweenBatch=40
+2010-05-19 21:52:13,838 [0xb7a9c8d0] INFO  fdb - read 84 signatures. 1093 micsosec
+2010-05-19 21:52:13,838 [0xb7a9c8d0] INFO  bufferpool - created buffer pool: page count=1000
+2010-05-19 21:52:13,838 [0xb7a9c8d0] INFO  dbgen - loading dimension data...
+2010-05-19 21:52:13,888 [0xb7a9c8d0] INFO  dbgen - read 30000 customers
+2010-05-19 21:52:13,908 [0xb7a9c8d0] INFO  dbgen - read 10000 suppliers
+2010-05-19 21:52:14,247 [0xb7a9c8d0] INFO  dbgen - read 200000 parts
+2010-05-19 21:52:14,249 [0xb7a9c8d0] INFO  dbgen - read 2556 dates
+2010-05-19 21:52:14,249 [0xb7a9c8d0] INFO  dbgen - completed initialization.
+2010-05-19 21:52:23,169 [0xb7a9c8d0] INFO  bench - Query batch done. 0. 6614286 microsec
+2010-05-19 21:52:25,508 [0xb7a9c8d0] INFO  bench - Insert batch done. 0. 2338592 microsec
+2010-05-19 21:52:31,816 [0xb7a9c8d0] INFO  bench - Query batch done. 1. 6307837 microsec
+2010-05-19 21:52:34,414 [0xb7a9c8d0] INFO  bench - Insert batch done. 1. 2598001 microsec
+2010-05-19 21:52:43,296 [0xb7a9c8d0] INFO  bench - Query batch done. 2. 8881221 microsec
+2010-05-19 21:52:46,049 [0xb7a9c8d0] INFO  bench - Insert batch done. 2. 2753176 microsec
+2010-05-19 21:52:55,376 [0xb7a9c8d0] INFO  bench - Query batch done. 3. 9326587 microsec
+2010-05-19 21:52:58,169 [0xb7a9c8d0] INFO  bench - Insert batch done. 3. 2792957 microsec
+2010-05-19 21:53:10,729 [0xb7a9c8d0] INFO  bench - Query batch done. 4. 12559571 microsec
+2010-05-19 21:53:13,590 [0xb7a9c8d0] INFO  bench - Insert batch done. 4. 2860537 microsec
+2010-05-19 21:53:28,581 [0xb7a9c8d0] INFO  bench - Query batch done. 5. 14991456 microsec
+2010-05-19 21:53:31,465 [0xb7a9c8d0] INFO  bench - Insert batch done. 5. 2883528 microsec
+2010-05-19 21:53:46,534 [0xb7a9c8d0] INFO  bench - Query batch done. 6. 15068441 microsec
+2010-05-19 21:53:49,452 [0xb7a9c8d0] INFO  bench - Insert batch done. 6. 2917373 microsec
+2010-05-19 21:54:05,285 [0xb7a9c8d0] INFO  bench - Query batch done. 7. 15833153 microsec
+2010-05-19 21:54:08,238 [0xb7a9c8d0] INFO  bench - Insert batch done. 7. 2952784 microsec
+2010-05-19 21:54:25,973 [0xb7a9c8d0] INFO  bench - Query batch done. 8. 17734996 microsec
+2010-05-19 21:54:28,974 [0xb7a9c8d0] INFO  bench - Insert batch done. 8. 3000031 microsec
+2010-05-19 21:54:44,289 [0xb7a9c8d0] INFO  bench - Query batch done. 9. 15314947 microsec
+2010-05-19 21:54:47,381 [0xb7a9c8d0] INFO  bench - Insert batch done. 9. 3092110 microsec
+2010-05-19 21:54:47,382 [0xb7a9c8d0] INFO  bench - Finished benchmark: total:150826922 microsec. queryTotal=122632495, insertTotal=28189089, mvTime=2, lineorderTime=14
+2010-05-19 21:54:48,452 [0xb7a9c8d0] INFO  bufferpool - cleared buffer pool
+2010-05-19 21:54:48,452 [0xb7a9c8d0] INFO  bufferpool - destroyed buffer pool
+2010-05-19 21:54:48,452 [0xb7a9c8d0] INFO  fdb - ended.
+josie /home/hkimura/workspace/fdb/code/fdbmain % ./fdbmain runbench 1000 true false 10 400000 40
+2010-05-19 21:55:02,052 [0xb7aaa8d0] INFO  fdb - started.
+2010-05-19 21:55:02,052 [0xb7aaa8d0] INFO  bench - starting. bufferPoolSize=1000, cstore=1, sortedBuffer=0, batchCount=10, batchSize=400000,queriesBetweenBatch=40
+2010-05-19 21:55:02,054 [0xb7aaa8d0] INFO  fdb - read 84 signatures. 1115 micsosec
+2010-05-19 21:55:02,054 [0xb7aaa8d0] INFO  bufferpool - created buffer pool: page count=1000
+2010-05-19 21:55:02,054 [0xb7aaa8d0] INFO  dbgen - loading dimension data...
+2010-05-19 21:55:02,113 [0xb7aaa8d0] INFO  dbgen - read 30000 customers
+2010-05-19 21:55:02,135 [0xb7aaa8d0] INFO  dbgen - read 10000 suppliers
+2010-05-19 21:55:02,470 [0xb7aaa8d0] INFO  dbgen - read 200000 parts
+2010-05-19 21:55:02,472 [0xb7aaa8d0] INFO  dbgen - read 2556 dates
+2010-05-19 21:55:02,473 [0xb7aaa8d0] INFO  dbgen - completed initialization.
+2010-05-19 21:55:12,425 [0xb7aaa8d0] INFO  bench - Query batch done. 0. 6577288 microsec
+2010-05-19 21:55:13,056 [0xb7aaa8d0] INFO  bench - Insert batch done. 0. 630452 microsec
+2010-05-19 21:55:19,648 [0xb7aaa8d0] INFO  bench - Query batch done. 1. 6591912 microsec
+2010-05-19 21:55:20,206 [0xb7aaa8d0] INFO  bench - Insert batch done. 1. 557505 microsec
+2010-05-19 21:55:29,592 [0xb7aaa8d0] INFO  bench - Query batch done. 2. 9386519 microsec
+2010-05-19 21:55:30,149 [0xb7aaa8d0] INFO  bench - Insert batch done. 2. 556773 microsec
+2010-05-19 21:55:39,712 [0xb7aaa8d0] INFO  bench - Query batch done. 3. 9562407 microsec
+2010-05-19 21:55:40,269 [0xb7aaa8d0] INFO  bench - Insert batch done. 3. 556825 microsec
+2010-05-19 21:55:53,257 [0xb7aaa8d0] INFO  bench - Query batch done. 4. 12987574 microsec
+2010-05-19 21:55:53,828 [0xb7aaa8d0] INFO  bench - Insert batch done. 4. 571041 microsec
+2010-05-19 21:56:09,371 [0xb7aaa8d0] INFO  bench - Query batch done. 5. 15542434 microsec
+2010-05-19 21:56:09,931 [0xb7aaa8d0] INFO  bench - Insert batch done. 5. 559624 microsec
+2010-05-19 21:56:25,380 [0xb7aaa8d0] INFO  bench - Query batch done. 6. 15449106 microsec
+2010-05-19 21:56:25,940 [0xb7aaa8d0] INFO  bench - Insert batch done. 6. 559405 microsec
+2010-05-19 21:56:41,698 [0xb7aaa8d0] INFO  bench - Query batch done. 7. 15758170 microsec
+2010-05-19 21:56:42,255 [0xb7aaa8d0] INFO  bench - Insert batch done. 7. 556290 microsec
+2010-05-19 21:56:59,741 [0xb7aaa8d0] INFO  bench - Query batch done. 8. 17486162 microsec
+2010-05-19 21:57:00,297 [0xb7aaa8d0] INFO  bench - Insert batch done. 8. 555207 microsec
+2010-05-19 21:57:15,914 [0xb7aaa8d0] INFO  bench - Query batch done. 9. 15617367 microsec
+2010-05-19 21:57:16,489 [0xb7aaa8d0] INFO  bench - Insert batch done. 9. 574365 microsec
+2010-05-19 21:57:29,910 [0xb7aaa8d0] INFO  bench - Finished benchmark: total:144061917 microsec. queryTotal=124958939, insertTotal=5677487, mvTime=13035933, lineorderTime=384595
+2010-05-19 21:57:30,034 [0xb7aaa8d0] INFO  bufferpool - cleared buffer pool
+2010-05-19 21:57:30,034 [0xb7aaa8d0] INFO  bufferpool - destroyed buffer pool
+2010-05-19 21:57:30,034 [0xb7aaa8d0] INFO  fdb - ended.
+
+
