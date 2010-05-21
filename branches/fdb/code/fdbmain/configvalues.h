@@ -16,7 +16,7 @@
 #define FDB_MAX_ROOT_PAGES 10
 
 // property file name for log4cxx
-#define FDB_LOG4CXX_FILE "log4cxx.properties"
+// #define FDB_LOG4CXX_FILE "log4cxx.properties"
 
 // lists every possible comparison type supported.
 // a quick dirty way of specifying function pointers in data file.

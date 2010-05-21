@@ -9,11 +9,10 @@
 #include "../storage/fbtree.h"
 #include "../util/stopwatch.h"
 #include <fstream>
-#include <log4cxx/logger.h>
+#include <glog/logging.h>
 
 using namespace std;
 using namespace boost;
-using namespace log4cxx;
 
 namespace fdb {
 
@@ -26,16 +25,14 @@ int64_t finishFracture (FMainMemoryBTree &btree) {
 }
 
 void runSSBBench(size_t bufferPoolSize, bool cstore, bool sortedBuffer, int batchCount, int batchSize, int queriesBetweenBatch) {
-  LoggerPtr logger (Logger::getLogger("bench"));
-
-  LOG4CXX_INFO(logger, "starting. bufferPoolSize=" << bufferPoolSize << ", cstore=" << cstore << ", sortedBuffer=" << sortedBuffer << ", batchCount=" << batchCount << ", batchSize=" << batchSize << ",queriesBetweenBatch=" << queriesBetweenBatch);
+  LOG(INFO) << "starting. bufferPoolSize=" << bufferPoolSize << ", cstore=" << cstore << ", sortedBuffer=" << sortedBuffer << ", batchCount=" << batchCount << ", batchSize=" << batchSize << ",queriesBetweenBatch=" << queriesBetweenBatch;
 
 
   FEngine engine ("../../data/", "../../data/data.sig", bufferPoolSize);
   DBGen dbGen ("../../data/ssb1/", batchSize);
   const int MAX_TUPLE = 5200000;
   if ((batchCount * batchSize) > MAX_TUPLE) {
-    LOG4CXX_INFO(logger, "Too large. needs flushing.");
+    LOG(INFO) << "Too large. needs flushing.";
     return;
   }
   FMainMemoryBTree fractureMv (MV_PROJECTION, MAX_TUPLE, sortedBuffer);
@@ -64,7 +61,7 @@ void runSSBBench(size_t bufferPoolSize, bool cstore, bool sortedBuffer, int batc
       exec.query(query, cstore, param);
     }
     watchQuery.stop();
-    LOG4CXX_INFO(logger, "Query batch done. " << i << ". " << watchQuery.getElapsed() << " microsec");
+    LOG(INFO) << "Query batch done. " << i << ". " << watchQuery.getElapsed() << " microsec";
     queryTotal += watchQuery.getElapsed();
 
     // insert
@@ -80,7 +77,7 @@ void runSSBBench(size_t bufferPoolSize, bool cstore, bool sortedBuffer, int batc
       fractureLineorder.insert(&pk, &lineorders[j]);
     }
     watchInsert.stop();
-    LOG4CXX_INFO(logger, "Insert batch done. " << i << ". " << watchInsert.getElapsed() << " microsec");
+    LOG(INFO) << "Insert batch done. " << i << ". " << watchInsert.getElapsed() << " microsec";
     insertTotal += watchInsert.getElapsed();
   }
 
@@ -88,7 +85,7 @@ void runSSBBench(size_t bufferPoolSize, bool cstore, bool sortedBuffer, int batc
   int64_t lineorderTime = finishFracture (fractureLineorder);
 
   watchTotal.stop();
-  LOG4CXX_INFO(logger, "Finished benchmark: total:" << watchTotal.getElapsed() << " microsec. queryTotal=" << queryTotal << ", insertTotal=" << insertTotal << ", mvTime=" << mvTime << ", lineorderTime=" << lineorderTime);
+  LOG(INFO) << "Finished benchmark: total:" << watchTotal.getElapsed() << " microsec. queryTotal=" << queryTotal << ", insertTotal=" << insertTotal << ", mvTime=" << mvTime << ", lineorderTime=" << lineorderTime;
 }
 
 } // fdb

@@ -3,10 +3,7 @@
 #define BOOST_TEST_MODULE FDB
 #include <boost/test/unit_test.hpp>
 
-#include <log4cxx/propertyconfigurator.h>
-#include <log4cxx/helpers/exception.h>
-using namespace log4cxx;
-using namespace log4cxx::helpers;
+#include <glog/logging.h>
 
 #include <string.h>
 #include <algorithm>
@@ -40,7 +37,9 @@ using namespace fdb;
 
 BOOST_AUTO_TEST_CASE(init) {
   BOOST_TEST_MESSAGE("===Initializing tests...");
-  PropertyConfigurator::configure(FDB_LOG4CXX_FILE);
+  google::InitGoogleLogging ("testmain");
+  google::SetLogDestination(google::INFO, "testmain.log.");
+  google::SetStderrLogging(google::INFO);
   BOOST_TEST_MESSAGE("===Initialized tests.");
 }
 

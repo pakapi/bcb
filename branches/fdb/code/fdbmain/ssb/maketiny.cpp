@@ -5,27 +5,26 @@
 #include <set>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_array.hpp>
-#include <log4cxx/logger.h>
+#include <glog/logging.h>
 
 #define IO_BUFFER_SIZE (1 << 20)
 
 using namespace std;
 using namespace boost;
-using namespace log4cxx;
 
 namespace fdb {
 
 
-shared_ptr< map<int, string> > readDimension(LoggerPtr logger, char *inBuffer,
+shared_ptr< map<int, string> > readDimension(char *inBuffer,
     const std::string &originalTblFolder, const std::string &name) {
   shared_ptr<map<int, string> > resultPtr (new map<int, string>());
   map<int, string> *result = resultPtr.get();
   std::string inFilename = originalTblFolder + name + ".tbl";
 
-  LOG4CXX_INFO(logger, "reading " << inFilename << "...");
+  LOG(INFO) << "reading " << inFilename << "...";
   std::ifstream inFile(inFilename.c_str(), std::ios::in);
   if (!inFile) {
-    LOG4CXX_ERROR(logger, "could not open " << inFilename);
+    LOG(ERROR) << "could not open " << inFilename;
     throw std::exception();
   }
   inFile.rdbuf()->pubsetbuf(inBuffer, IO_BUFFER_SIZE);
@@ -43,14 +42,13 @@ shared_ptr< map<int, string> > readDimension(LoggerPtr logger, char *inBuffer,
   }
   inFile.close();
 
-  LOG4CXX_INFO(logger, "read.");
+  LOG (INFO) << "read.";
   return resultPtr;
 }
 
 
 void makeTinySSB(const std::string &originalTblFolder, const std::string &tinyTblFolder, size_t tuples) {
-  LoggerPtr logger(Logger::getLogger("tinyssb"));
-  LOG4CXX_INFO(logger, "converting SSB files in " << originalTblFolder << ", to tiny files into " << tinyTblFolder << " upto " << tuples << " tuples.");
+  LOG (INFO) << "converting SSB files in " << originalTblFolder << ", to tiny files into " << tinyTblFolder << " upto " << tuples << " tuples.";
   scoped_array<char> inPtr(new char[IO_BUFFER_SIZE]);
   char *inb = inPtr.get();
 
@@ -64,29 +62,29 @@ void makeTinySSB(const std::string &originalTblFolder, const std::string &tinyTb
   vector<shared_ptr<map<int, string> > > maps;
   std::vector<set<int> > ids; // referenced IDs. note that it's SET.
   for (size_t i = 0; i < dimensions.size(); ++i) {
-    maps.push_back (readDimension(logger, inb, originalTblFolder, dimensions[i]));
+    maps.push_back (readDimension(inb, originalTblFolder, dimensions[i]));
     ids.push_back (set<int>());
   }
 
   // then read fact upto tuples tuples
-  LOG4CXX_INFO(logger, "reading lineorder...");
+  LOG(INFO) << "reading lineorder...";
   {
     std::string inFilename = originalTblFolder + "lineorder.tbl";
     std::string outFilename = tinyTblFolder + "lineorder.tbl";
   
     std::ifstream inFile(inFilename.c_str(), std::ios::in);
     if (!inFile) {
-      LOG4CXX_ERROR(logger, "could not open " << inFilename);
+      LOG(ERROR) << "could not open " << inFilename;
       throw std::exception();
     }
     inFile.rdbuf()->pubsetbuf(inb, IO_BUFFER_SIZE);
 
     if (std::remove(outFilename.c_str()) == 0) {
-      LOG4CXX_INFO(logger, "deleted existing file " << outFilename << ".");
+      LOG(INFO) << "deleted existing file " << outFilename << ".";
     }
     std::ofstream outFile(outFilename.c_str());
     if (!outFile) {
-      LOG4CXX_ERROR(logger, "could not open " << outFilename);
+      LOG(ERROR) << "could not open " << outFilename;
       throw std::exception();
     }
   
@@ -112,11 +110,11 @@ void makeTinySSB(const std::string &originalTblFolder, const std::string &tinyTb
     std::string outFilename = tinyTblFolder + dimensions[i] + ".tbl";
 
     if (std::remove(outFilename.c_str()) == 0) {
-      LOG4CXX_INFO(logger, "deleted existing file " << outFilename << ".");
+      LOG(INFO) << "deleted existing file " << outFilename << ".";
     }
     std::ofstream outFile(outFilename.c_str());
     if (!outFile) {
-      LOG4CXX_ERROR(logger, "could not open " << outFilename);
+      LOG(ERROR) << "could not open " << outFilename;
       throw std::exception();
     }
 
@@ -130,7 +128,7 @@ void makeTinySSB(const std::string &originalTblFolder, const std::string &tinyTb
     outFile.close();
   }
 
-  LOG4CXX_INFO(logger, "converted.");
+  LOG(INFO) << "converted.";
 }
 
 } // fdb

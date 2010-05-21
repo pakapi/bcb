@@ -8,11 +8,9 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include <log4cxx/logger.h>
+#include <glog/logging.h>
 
 namespace fdb {
-
-log4cxx::LoggerPtr iologger(log4cxx::Logger::getLogger("io"));
 
 DirectFileStream::DirectFileStream (const std::string &name, int flags) {
   init(name, flags);
@@ -21,7 +19,7 @@ void DirectFileStream::init (const std::string &name, int flags) {
   _name = name;
   _fd = ::open (name.c_str(), flags, S_IRUSR | S_IWUSR);
   if (_fd < 0) {
-    LOG4CXX_ERROR(iologger, "could not open file " + name + ". errno=" << errno);
+    LOG (ERROR) << "could not open file " << name << ". errno=" << errno;
     throw std::runtime_error("could not open file " + name + ". ");
   }
   _currentLocation = 0;
@@ -55,17 +53,17 @@ void DirectFileStream::close() {
     int ret = ::close(_fd);
     _fd = -1;
     if (ret != 0) {
-      LOG4CXX_ERROR(iologger, "error on closing a file " + _name + ". errno=" << errno);
+      LOG (ERROR) << "could not closing file " << _name << ". errno=" << errno;
       // but not throws exception.
     }
   }
 }
 int64_t DirectFileInputStream::read (void *buffer, int64_t size) {
   if (_nextLocation != _currentLocation) {
-    LOG4CXX_TRACE(iologger, "seek " + _name + " for " << _nextLocation);
+    VLOG (2) << "seek " << _name << " for " << _nextLocation;
     int64_t ret = ::lseek64 (_fd, _nextLocation, SEEK_SET);
     if (ret != _nextLocation) {
-      LOG4CXX_ERROR(iologger, "could not seek file " + _name + " to offset " << _nextLocation << " . errno=" << errno);
+      LOG (ERROR) << "could not seek file " << _name << " to offset " << _nextLocation << " . errno=" << errno;
       throw std::runtime_error("could not seek file " + _name + ". ");
     }
   }
@@ -74,7 +72,7 @@ int64_t DirectFileInputStream::read (void *buffer, int64_t size) {
   _currentLocation = _nextLocation + readSize;
   _nextLocation = _currentLocation;
   if (readSize < 0) {
-    LOG4CXX_ERROR(iologger, "could not read file " + _name + " . errno=" << errno);
+    LOG (ERROR) << "could not read file " << _name << " . errno=" << errno;
     throw std::runtime_error("could not read file " + _name + ". ");
   }
   return readSize;
@@ -82,10 +80,10 @@ int64_t DirectFileInputStream::read (void *buffer, int64_t size) {
 
 int64_t DirectFileOutputStream::write (const void *buffer, int64_t size) {
   if (_nextLocation != _currentLocation) {
-    LOG4CXX_TRACE(iologger, "seek " + _name + " for " << _nextLocation);
+    VLOG (2) << "seek " << _name << " for " << _nextLocation;
     int64_t ret = ::lseek64 (_fd, _nextLocation, SEEK_SET);
     if (ret != _nextLocation) {
-      LOG4CXX_ERROR(iologger, "could not seek file " + _name + " to offset " << _nextLocation << " . errno=" << errno);
+      LOG (ERROR) << "could not seek file " << _name << " to offset " << _nextLocation << " . errno=" << errno;
       throw std::runtime_error("could not seek file " + _name + ". ");
     }
   }
@@ -94,17 +92,17 @@ int64_t DirectFileOutputStream::write (const void *buffer, int64_t size) {
   _currentLocation = _nextLocation + writtenSize;
   _nextLocation = _currentLocation;
   if (writtenSize < 0) {
-    LOG4CXX_ERROR(iologger, "could not write file " + _name + " . errno=" << errno);
+    LOG (ERROR) << "could not write file " << _name << " . errno=" << errno;
     throw std::runtime_error("could not write file " + _name + ". ");
   }
   return writtenSize;
 }
 
 void DirectFileOutputStream::sync () {
-  LOG4CXX_TRACE(iologger, "sync " + _name);
+  VLOG (2) << "sync " << _name;
   int ret = ::fsync (_fd);
   if (ret < 0) {
-    LOG4CXX_ERROR(iologger, "could not sync " + _name + " . errno=" << errno);
+    LOG (ERROR) << "could not sync file " << _name << " . errno=" << errno;
     throw std::runtime_error("could not sync " + _name + ". ");
   }
 }
@@ -114,13 +112,13 @@ void* DirectFileStream::allocateMemoryForIO (size_t bufferSize, size_t alignment
     void *buffer = NULL;
     int ret = ::posix_memalign (&buffer, alignment, bufferSize);
     if (ret != 0) {
-      LOG4CXX_ERROR(iologger, "failed to call posix_memalign. ret=" << ret);
+      LOG (ERROR) << "failed to call posix_memalign. ret=" << ret;
     }
     return buffer;
   } else {
     void *buffer = ::malloc (bufferSize);
     if (buffer == NULL) {
-      LOG4CXX_ERROR(iologger, "failed to allocate memory." );
+      LOG (ERROR) << "failed to allocate memory.";
     }
     return buffer;
   }

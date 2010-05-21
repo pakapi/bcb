@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <vector>
 #include <stx/btree_map.h>
-#include <log4cxx/logger.h>
+#include <glog/logging.h>
 
 namespace fdb {
 
@@ -43,7 +43,6 @@ public:
   bool _finishedInserts;
   KeyDataCompareFunc _keydataFunc;
   DataDataCompareFunc _datadataFunc;
-  log4cxx::LoggerPtr _logger;
 
 protected:
   void insertTupleToArray (const void *key, const void *data);
@@ -179,7 +178,6 @@ public:
   bool _empty; // true if this btree has no data
   KeyCompareFunc _compfunc;
   KeyDataCompareFunc _compfuncForLeaf;
-  log4cxx::LoggerPtr _logger;
 };
 
 

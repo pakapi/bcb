@@ -12,7 +12,6 @@
 #include <sstream>
 #include <boost/scoped_ptr.hpp>
 
-using namespace log4cxx;
 using namespace std;
 using namespace boost;
 
@@ -191,8 +190,7 @@ void FCStoreUtil::dumpToNewCStoreFile (
   std::vector<FCStoreColumn> columns = getPhysicalDesignsOf(btree.getTableType());
   std::vector<SortOrder> orders = getSortOrdersOf(btree.getTableType());
   assert (columns.size() == signatures.size());
-  LoggerPtr logger(Logger::getLogger("dumpcstore"));
-  LOG4CXX_INFO(logger, "dumping an on-memory btree to new CStore files...");
+  LOG(INFO) << "dumping an on-memory btree to new CStore files...";
 
   StopWatch watch;
   watch.init();
@@ -215,12 +213,12 @@ void FCStoreUtil::dumpToNewCStoreFile (
     assert (signature.filepath != NULL);
     std::string filepath (signature.filepath);
     if (std::remove((filepath).c_str()) == 0) {
-      LOG4CXX_DEBUG(logger, "deleted existing file " << (filepath) << ".");
+      VLOG(1) << "deleted existing file " << (filepath) << ".";
     }
-    LOG4CXX_DEBUG(logger, "dumping an on-memory btree to a new CStore file " << filepath << " (compression=" << toCompressionSchemeName(column.compression) << ")...");
+    VLOG(1) << "dumping an on-memory btree to a new CStore file " << filepath << " (compression=" << toCompressionSchemeName(column.compression) << ")...";
 
     scoped_ptr<DirectFileOutputStream> fd(new DirectFileOutputStream(filepath, FDB_USE_DIRECT_IO));
-    CStoreDumpContext context(signature.fileId, fd.get(), (char*) buffer, column, btree, logger);
+    CStoreDumpContext context(signature.fileId, fd.get(), (char*) buffer, column, btree);
 
     ::memset (buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
     if (column.compression == UNCOMPRESSED) {
@@ -230,7 +228,7 @@ void FCStoreUtil::dumpToNewCStoreFile (
     } else if (isDictionaryCompression(column.compression)) {
       dumpDictionaryCompressedColumn(context, btree);
     } else {
-      LOG4CXX_ERROR(logger, "Unsupported compression type:" << column.compression);
+      LOG(ERROR) << "Unsupported compression type:" << column.compression;
       throw std::exception();
     }
     // done. flush and close
@@ -239,14 +237,14 @@ void FCStoreUtil::dumpToNewCStoreFile (
     context.updateFileSignature(signature, btree.getTableType(), i);
 #ifdef DEBUG
     watchColumn.stop();
-    LOG4CXX_DEBUG(logger, "finished writing " << signature.pageCount << " pages in " << watchColumn.getElapsed() << " microsec.");
+    VLOG(1) << "finished writing " << signature.pageCount << " pages in " << watchColumn.getElapsed() << " microsec.";
 #endif //DEBUG
   }
   watch.stop();
-  LOG4CXX_INFO(logger, "completed all dumping. " << watch.getElapsed() << " micsosec");
+  LOG(INFO) << "completed all dumping. " << watch.getElapsed() << " micsosec";
 }
 
-CStoreDumpContext::CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, char *buffer_, const FCStoreColumn &column_, const FMainMemoryBTree &btree, log4cxx::LoggerPtr logger_) {
+CStoreDumpContext::CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, char *buffer_, const FCStoreColumn &column_, const FMainMemoryBTree &btree) {
   fileId = fileId_;
   fd = fd_;
   buffer = buffer_;
@@ -297,7 +295,6 @@ CStoreDumpContext::CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, c
       throw std::exception();
   }
   entryInCurrentPage = 0;
-  logger = logger_;
 
   runTotal = 0;
   currentRunCount = 0;
@@ -359,7 +356,7 @@ void CStoreDumpContext::flushBuffer() {
   assert (currentBitOffset == 0);
   assert (bufferedPages <= FDB_DISK_WRITE_BUFFER_PAGES);
   if (bufferedPages > 0) {
-    LOG4CXX_TRACE(logger, "flush!");
+    VLOG(2) << "flush!";
     fd->write (buffer, FDB_PAGE_SIZE * bufferedPages);
     bufferedPages = 0;
     ::memset (buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
@@ -399,9 +396,9 @@ void CStoreDumpContext::writePageHeader(int countInThisPage, bool lastSibling, i
   header->lastSibling = lastSibling;
   header->beginningPos = beginningPos;
   if (lastSibling) {
-    LOG4CXX_TRACE(logger, "last page!");
+    VLOG(2) << "last page!";
   } else {
-    LOG4CXX_TRACE(logger, "more page!");
+    VLOG(2) << "more page!";
   }
   currentPageOffset = sizeof (FPageHeader);
 }
@@ -472,7 +469,7 @@ int CStoreDumpContext::searchInLargeDictionary (const char* value) {
 void CStoreDumpContext::prepareForNewPageUniform () {
   flipPageIfNeeded();
   if (currentPageOffset == 0) {
-    LOG4CXX_TRACE(logger, "new page!");
+    VLOG(2) << "new page!";
     flushBufferIfNeeded();
     int remainingCount = tupleCount - currentTuple;
     int countInThisPage;
@@ -514,7 +511,7 @@ void flushCurrentRun (CStoreDumpContext *dumpContext) {
   // flush the last run
   dumpContext->flipPageIfNeeded();
   if (dumpContext->currentPageOffset == 0) {
-    LOG4CXX_TRACE(dumpContext->logger, "new page!");
+    VLOG(2) << "new page!";
     dumpContext->flushBufferIfNeeded();
     // determining countInThisPage and whether it's last or not is difficult in RLE
     // this will be overwritten when this page turns out to be the last sibling
@@ -533,7 +530,7 @@ void dumpRLECompressedColumnCallback (void *context, const void *key, const void
   // write RLE data only when the value changes
   const char *currentValue = ((char*) data) + dumpContext->column.offset;
   if (dumpContext->currentRunValue == NULL || ::memcmp(dumpContext->currentRunValue, currentValue, dumpContext->column.maxLength) != 0) {
-    LOG4CXX_TRACE(dumpContext->logger, "new run!");
+    VLOG(2) << "new run!";
     flushCurrentRun (dumpContext);
 
     // Start a new run
@@ -565,7 +562,7 @@ void dumpRLECompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree 
   context.flipPage();
   context.flushBuffer();
 
-  LOG4CXX_DEBUG(context.logger, "in total " << context.runTotal << " runs");
+  VLOG(1) << "in total " << context.runTotal << " runs";
 
   // then, write root pages for position search
   size_t rootEntrySize = sizeof(int64_t) + sizeof (int);
@@ -596,7 +593,7 @@ void dumpRLECompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree 
     context.flipPage();
     context.flushBufferIfNeeded();
   }
-  LOG4CXX_DEBUG(context.logger, "RLE " << context.rootPageCount << " root pages");
+  VLOG(1) << "RLE " << context.rootPageCount << " root pages";
   context.flipPage();
   context.flushBuffer();
 }
@@ -679,7 +676,7 @@ void writeDictionary (CStoreDumpContext &context) {
     context.flipPage();
     context.flushBufferIfNeeded();
   }
-  LOG4CXX_DEBUG(context.logger, "Wrote dictionary. " << context.dictionarySize << " entries. " << context.rootPageCount << " root pages");
+  VLOG(1) << "Wrote dictionary. " << context.dictionarySize << " entries. " << context.rootPageCount << " root pages";
   context.flipPage();
   context.flushBuffer();
 }
@@ -715,7 +712,7 @@ void dumpDictionaryCompressedColumn(CStoreDumpContext &context, const FMainMemor
 // ==========================================================================
 // TODO not implemented so far
 FMainMemoryCStoreImpl::FMainMemoryCStoreImpl (TableType type, int maxTuples)
-  : _type (type), _maxTuples(maxTuples), _logger(log4cxx::Logger::getLogger("mcstore")) {
+  : _type (type), _maxTuples(maxTuples) {
 }
 FMainMemoryCStoreImpl::~FMainMemoryCStoreImpl() {
 }
@@ -779,7 +776,7 @@ std::string FColumnReaderImpl::normalize(const std::string &str) const {
 }
 
 FColumnReaderImpl::FColumnReaderImpl(FBufferPool *bufferpool, const FCStoreColumn &column, const FFileSignature &signature)
-  : _bufferpool(bufferpool), _column(column), _signature(signature), _searchRangeSet(false), _logger(Logger::getLogger("cread")) {
+  : _bufferpool(bufferpool), _column(column), _signature(signature), _searchRangeSet(false) {
 }
 std::string FColumnReaderImpl::toDebugStr (const void *key) const {
   if (_column.type == COLUMN_CHAR) {
@@ -817,13 +814,13 @@ void FColumnReaderImpl::logSearchCond (const SearchCond &cond) const {
   case GT:
   case LTEQ:
   case GTEQ:
-    LOG4CXX_DEBUG(_logger, "Searching " << toDebugStr(cond.key) << " (" << toSearchCondOp(cond.type) << ") in " << _searchRanges.size() << " ranges (type=" << (_searchRangeSet ? "range set" : "full scan") << ")...");
+    VLOG(1) << "Searching " << toDebugStr(cond.key) << " (" << toSearchCondOp(cond.type) << ") in " << _searchRanges.size() << " ranges (type=" << (_searchRangeSet ? "range set" : "full scan") << ")...";
     break;
   case BETWEEN:
-    LOG4CXX_DEBUG(_logger, "Searching " << toDebugStr(cond.key) << " to " << toDebugStr(cond.key2) << " in " << _searchRanges.size() << " ranges (type=" << (_searchRangeSet ? "range set" : "full scan") << ")...");
+    VLOG(1) << "Searching " << toDebugStr(cond.key) << " to " << toDebugStr(cond.key2) << " in " << _searchRanges.size() << " ranges (type=" << (_searchRangeSet ? "range set" : "full scan") << ")...";
     break;
   case IN:
-    LOG4CXX_DEBUG(_logger, "Searching " << cond.keys.size() << " values for IN clause in " << _searchRanges.size() << " ranges (type=" << (_searchRangeSet ? "range set" : "full scan") << ")...");
+    VLOG(1) << "Searching " << cond.keys.size() << " values for IN clause in " << _searchRanges.size() << " ranges (type=" << (_searchRangeSet ? "range set" : "full scan") << ")...";
     break;
   }
 }
@@ -960,7 +957,7 @@ void FColumnReaderImplUncompressed::getPositionBitmaps (const SearchCond &cond, 
     totalMatchCount += matchCount;
   }
   watch.stop();
-  LOG4CXX_TRACE(_logger, "Uncompressed::getPositionBitmaps Done. " << totalMatchCount << " entries matched. " << watch.getElapsed() << " microsec");
+  VLOG(2) << "Uncompressed::getPositionBitmaps Done. " << totalMatchCount << " entries matched. " << watch.getElapsed() << " microsec";
 }
 
 void FColumnReaderImplUncompressed::getDecompressedData (const PositionRange &range, void *buffer, size_t bufferSize) {
@@ -1011,7 +1008,7 @@ void FColumnReaderImplUncompressed::getDecompressedData (const PositionRange &ra
   }
 
   watch.stop();
-  LOG4CXX_TRACE(_logger, "Uncompressed::getDecompressedData Done. " << length << " entries read. " << watch.getElapsed() << " microsec");
+  VLOG(2) << "Uncompressed::getDecompressedData Done. " << length << " entries read. " << watch.getElapsed() << " microsec";
 }
 
 // ============================
@@ -1048,7 +1045,7 @@ std::vector<int> FColumnReaderImplDictionary::searchDictionary (const SearchCond
     }
   }
   watch.stop();
-  LOG4CXX_TRACE(_logger, "Searched Dictionary. " << matchingIds.size() << " entries matched. " << watch.getElapsed() << " microsec");
+  VLOG(2) << "Searched Dictionary. " << matchingIds.size() << " entries matched. " << watch.getElapsed() << " microsec";
   return matchingIds;
 }
 
@@ -1133,7 +1130,7 @@ void FColumnReaderImplDictionary::getPositionBitmaps (const SearchCond &cond, st
     totalMatchCount += matchCount;
   }
   watch.stop();
-  LOG4CXX_TRACE(_logger, "Dictionary::getPositionBitmaps Done. " << totalMatchCount << " entries matched. " << watch.getElapsed() << " microsec");
+  VLOG(2) << "Dictionary::getPositionBitmaps Done. " << totalMatchCount << " entries matched. " << watch.getElapsed() << " microsec";
 }
 
 int FColumnReaderImplDictionary::processPageBitOffset(const std::vector<int> &matchingIds, const uint8_t *cursor, int bitOffset, size_t tuplesToRead, PositionBitmap *bitmap, int64_t bitmapPageOffset) {
@@ -1258,7 +1255,7 @@ void FColumnReaderImplDictionary::getDictionaryCompressedData (const PositionRan
     }
   }
   watch.stop();
-  LOG4CXX_TRACE(_logger, "Done. " << tupleCount << " entries read. " << watch.getElapsed() << " microsec");
+  VLOG(2) << "Done. " << tupleCount << " entries read. " << watch.getElapsed() << " microsec";
 }
 int FColumnReaderImplDictionary::getDictionaryEntryId (const void *value) {
   vector<int> entries = searchDictionary (SearchCond(EQUAL, value));
@@ -1286,7 +1283,7 @@ void FColumnReaderImplDictionary::getAllDictionaryEntries (std::vector<string> &
     }
   }
   watch.stop();
-  LOG4CXX_TRACE(_logger, "Done. all dictionary entries copied. " << watch.getElapsed() << " microsec");
+  VLOG(2) << "Done. all dictionary entries copied. " << watch.getElapsed() << " microsec";
 }
 
 // ============================
@@ -1309,7 +1306,7 @@ void FColumnReaderImplRLE::getPositionRanges (const SearchCond &cond, std::vecto
     }
   }
   watch.stop();
-  LOG4CXX_TRACE(_logger, "RLE::getPositionRanges Done. " << positions.size() << " ranges matched. " << watch.getElapsed() << " microsec");
+  VLOG(2) << "RLE::getPositionRanges Done. " << positions.size() << " ranges matched. " << watch.getElapsed() << " microsec";
 }
 
 pair<int, int> FColumnReaderImplRLE::getPageRange (const PositionRange &scanRange) {
@@ -1498,7 +1495,7 @@ void FColumnReaderImplRLE::getRLECompressedData (const PositionRange &range, voi
   }
 
   watch.stop();
-  LOG4CXX_TRACE(_logger, "RLE::getRLECompressedData Done. " << count << " runs read. " << watch.getElapsed() << " microsec");
+  VLOG(2) << "RLE::getRLECompressedData Done. " << count << " runs read. " << watch.getElapsed() << " microsec";
 }
 
 // ============================
