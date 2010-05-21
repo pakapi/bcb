@@ -1,14 +1,9 @@
-
-
 #include <cstdlib>
 #include <string>
 #include <string.h>
 #include <iostream>
 
-#include <log4cxx/propertyconfigurator.h>
-#include <log4cxx/helpers/exception.h>
-using namespace log4cxx;
-using namespace log4cxx::helpers;
+#include <glog/logging.h>
 
 #include "configvalues.h"
 #include "storage/ffile.h"
@@ -31,18 +26,14 @@ using namespace fdb;
 
 
 int main(int argc, char *argv[]) {
-  try {
-    PropertyConfigurator::configure(FDB_LOG4CXX_FILE);
-  } catch(log4cxx::helpers::Exception &e) {
-    cerr << "failed to initialize log4cxx in main(): " << e.what();
-    return EXIT_FAILURE;
-  }
+  google::InitGoogleLogging ("fdbmain");
+  google::SetLogDestination(google::INFO, "fdbmain.log.");
+  google::SetStderrLogging(google::INFO);
 
-  LoggerPtr logger(Logger::getLogger("fdb"));
   try {
-    LOG4CXX_INFO(logger, "started.");
+    LOG(INFO) << "started.";
     if (argc < 2) {
-      LOG4CXX_ERROR(logger, "Usage: fdbmain <command> ...");
+      LOG(ERROR) << "Usage: fdbmain <command> ...";
       return EXIT_FAILURE;
     }
     string command(argv[1]);
@@ -60,25 +51,16 @@ int main(int argc, char *argv[]) {
       loadSSBBinFileMV(DEFAULT_DATA_FOLDER, DEFAULT_SIGNATURE_FILE, "../../data/ssb1/", false, 6001171);
     } else if (command == "loadssbmvcstore") {
       loadSSBBinFileMV(DEFAULT_DATA_FOLDER, DEFAULT_SIGNATURE_FILE, "../../data/ssb1/", true, 6001171);
-/*    } else if (command == "queryssb") {
-      if (argc < 3) {
-        LOG4CXX_ERROR(logger, "Usage: fdbmain queryssb <querynum> (<cstore-or-not>)");
-        return EXIT_FAILURE;
-      }
-      int qnum = ::atoi(argv[2]);
-      bool cstore = true;
-      if (argc >= 4) cstore = (argv[3] == string("true"));
-      querySSB(qnum, string(DEFAULT_DATA_FOLDER) + DEFAULT_SIGNATURE_FILE, cstore);*/
     } else if (command == "maketinyssb") {
       if (argc < 3) {
-        LOG4CXX_ERROR(logger, "Usage: fdbmain maketinyssb <tuplecount>");
+        LOG(ERROR) << "Usage: fdbmain maketinyssb <tuplecount>";
         return EXIT_FAILURE;
       }
       int tuples = ::atoi(argv[2]);
       makeTinySSB("../../data/ssb1/", "../../data/tinyssb/", tuples);
     } else if (command == "runbench") {
       if (argc < 8) {
-        LOG4CXX_ERROR(logger, "Usage: fdbmain runbench <int:bufferPageCount> <flag:cstore> <flag:sortedBuffer> <int:batchCount> <int:batchSize> <int:queriesBetweenBatch>");
+        LOG(ERROR) << "Usage: fdbmain runbench <int:bufferPageCount> <flag:cstore> <flag:sortedBuffer> <int:batchCount> <int:batchSize> <int:queriesBetweenBatch>";
         return EXIT_FAILURE;
       }
       int bufferPageCount = ::atoll(argv[2]);
@@ -95,7 +77,7 @@ int main(int argc, char *argv[]) {
       runSSBBench(bufferPageCount, cstore, sortedBuffer, batchCount, batchSize, queriesBetweenBatch);
     } else if (command == "describe") {
       if (argc < 3) {
-        LOG4CXX_ERROR(logger, "Usage: fdbmain describe <path of signature file>");
+        LOG(ERROR) << "Usage: fdbmain describe <path of signature file>";
         return EXIT_FAILURE;
       }
       string filepath(argv[2]);
@@ -114,7 +96,7 @@ int main(int argc, char *argv[]) {
       int64_t jumpingTotal = 0, nonJumpingTotal = 0;
       for (int i = 0; i < 3; ++i) {
         {
-          LOG4CXX_INFO(logger, "testing jumping memory access...");
+          LOG(INFO) << "testing jumping memory access...";
           // we are going to calculate sum of the first 1 byte of each tuple
           StopWatch w;
           w.init();
@@ -125,11 +107,11 @@ int main(int argc, char *argv[]) {
           }
           w.stop();
           jumpingTotal += w.getElapsed();
-          LOG4CXX_INFO(logger, "done. " << w.getElapsed() << " microsec. sum=" << sum);
+          LOG (INFO) << "done. " << w.getElapsed() << " microsec. sum=" << sum;
         }
 
         {
-          LOG4CXX_INFO(logger, "testing sequential memory access...");
+          LOG (INFO) << "testing sequential memory access...";
           // we are going to calculate sum of first 1 << 23 bytes
           StopWatch w;
           w.init();
@@ -140,24 +122,22 @@ int main(int argc, char *argv[]) {
           }
           w.stop();
           nonJumpingTotal += w.getElapsed();
-          LOG4CXX_INFO(logger, "done. " << w.getElapsed() << " microsec. sum=" << sum);
+          LOG(INFO) << "done. " << w.getElapsed() << " microsec. sum=" << sum;
         }
       }
       delete[] mem;
-      LOG4CXX_INFO(logger, "total: jumping=" << jumpingTotal << " microsec");
-      LOG4CXX_INFO(logger, "total: non-jumping=" << nonJumpingTotal << " microsec");
+      LOG(INFO) << "total: jumping=" << jumpingTotal << " microsec";
+      LOG(INFO) << "total: non-jumping=" << nonJumpingTotal << " microsec";
 */
     } else {
-      LOG4CXX_ERROR(logger, "unknown command.");
+      LOG(ERROR) << "unknown command.";
       return EXIT_FAILURE;
     }
 
 
-    LOG4CXX_INFO(logger, "ended.");
-  } catch(log4cxx::helpers::Exception &e) {
-    LOG4CXX_ERROR(logger, "log4cxx exception caught in main(): " << e.what());
+    LOG(INFO) << "ended.";
   } catch(std::exception &e) {
-    LOG4CXX_ERROR(logger, "stdexception caught in main(): " << e.what());
+    LOG(ERROR) << "stdexception caught in main(): " << e.what();
   } 
 
   return EXIT_SUCCESS;

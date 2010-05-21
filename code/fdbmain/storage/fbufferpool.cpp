@@ -5,7 +5,6 @@
 
 using namespace boost;
 using namespace std;
-using namespace log4cxx;
 
 namespace fdb {
 
@@ -21,15 +20,14 @@ FBufferPoolImpl::FBufferPoolImpl (int maxPageCount) :
   _maxPageCount (maxPageCount),
   _entriesAutoPtr (new PoolEntry[maxPageCount]),
   _entries (_entriesAutoPtr.get()),
-  _clockHand (0),
-  _logger(Logger::getLogger("bufferpool")) {
+  _clockHand (0) {
   assert (maxPageCount > 0);
-  LOG4CXX_INFO(_logger, "created buffer pool: page count=" << _maxPageCount);
+  LOG(INFO) << "created buffer pool: page count=" << _maxPageCount;
 }
 
 FBufferPoolImpl::~FBufferPoolImpl() {
   clear();
-  LOG4CXX_INFO(_logger, "destroyed buffer pool");
+  LOG(INFO) << "destroyed buffer pool";
 }
 
 void FBufferPoolImpl::clear() {
@@ -44,7 +42,7 @@ void FBufferPoolImpl::clear() {
     iter->second.stream = NULL;
   }
   _fileMap.clear();
-  LOG4CXX_INFO(_logger, "cleared buffer pool");
+  LOG(INFO) << "cleared buffer pool";
 }
 
 DirectFileInputStream* FBufferPoolImpl::getOrOpenFile (const FFileSignature &signature) {

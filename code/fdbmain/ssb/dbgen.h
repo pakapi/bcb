@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <vector>
 #include <map>
-#include <log4cxx/logger.h>
 
 namespace fdb {
 
@@ -50,7 +49,6 @@ private:
   int32_t _lastOrderkey;
   int _lastUpdnum; //number of rows in current segment (32 consecutive orderkey), if I understand original dbgen correctly..
   int _lastRand; // kind of seed
-  log4cxx::LoggerPtr _logger;
 
   std::vector<SlimCustomer> _customers;
   std::vector<SlimSupplier> _suppliers;

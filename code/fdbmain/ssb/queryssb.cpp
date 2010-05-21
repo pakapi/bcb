@@ -15,11 +15,10 @@
 #include <map>
 #include <set>
 #include <sstream>
-#include <log4cxx/logger.h>
+#include <glog/logging.h>
 #include <boost/scoped_array.hpp>
 
 using namespace std;
-using namespace log4cxx;
 using namespace boost;
 
 namespace fdb {
@@ -103,7 +102,7 @@ FEngine* SSBQueryExecutorImpl::getEngine() {
 }
 
 SSBQueryExecutorImpl::SSBQueryExecutorImpl (FEngine *engine)
-  : _engine(engine), _dataFolder(engine->getDataFolder()), _bufferpool (engine->getBufferPool()), _signatures(engine->getSignatureSet()), _logger(Logger::getLogger("queryssb")) {
+  : _engine(engine), _dataFolder(engine->getDataFolder()), _bufferpool (engine->getBufferPool()), _signatures(engine->getSignatureSet()) {
 }
 
 boost::shared_ptr<SSBQueryResult> SSBQueryExecutor::query (int query, bool cstore, const SSBQueryParam &param) {
@@ -155,7 +154,7 @@ boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query (int query, bool c
     }
     break;
   default:
-    LOG4CXX_ERROR(_logger, "Not implemented yet: query=" << query);
+    LOG(ERROR) << "Not implemented yet: query=" << query;
     assert (false);
     return boost::shared_ptr<SSBQueryResult>();
   }
@@ -211,7 +210,7 @@ void SSBQueryExecutorImpl::btreeMVSearchYearMainMemory (const std::string &famil
   FMainMemoryBTree *fracture = family->getCurrentFracture();
   if (fracture == NULL) return;
   if (fracture->isSortedBuffer()) {
-    LOG4CXX_DEBUG(_logger, "btreeMVSearchYearMainMemory: scanning sorted on-memory BTree..");
+    VLOG(1) << "btreeMVSearchYearMainMemory: scanning sorted on-memory BTree..";
     //then, we do exactly same thing to onmemory btree
     for (int i = 0; i < 5; ++i) {
       BtreeMVSearchYearContext context (year, i, callback, childContext);
@@ -220,7 +219,7 @@ void SSBQueryExecutorImpl::btreeMVSearchYearMainMemory (const std::string &famil
     }
   } else {
     // in this case, we have to fully scan the onmemory btree
-    LOG4CXX_DEBUG(_logger, "btreeMVSearchYearMainMemory: scanning unsorted on-memory BTree..");
+    VLOG(1) << "btreeMVSearchYearMainMemory: scanning unsorted on-memory BTree..";
     const MVProjection *buffer = reinterpret_cast<const MVProjection*>(fracture->getUnsortedBuffer());
     int64_t tuples = fracture->size();
     for (int64_t i = 0; i < tuples; ++i) {
@@ -230,7 +229,7 @@ void SSBQueryExecutorImpl::btreeMVSearchYearMainMemory (const std::string &famil
       }
     }
   }
-  LOG4CXX_DEBUG(_logger, "btreeMVSearchYearMainMemory: scanning on-memory BTree done.");
+  VLOG(1) << "btreeMVSearchYearMainMemory: scanning on-memory BTree done.";
 }
 void SSBQueryExecutorImpl::btreeMVSearchYear (BtreeMVSearchCallback callback, void* childContext, int year) {
   FReadOnlyDiskBTree mv (_bufferpool, _signatures.getFileSignature(_dataFolder + BTREE_MV_MAIN_FILENAME));
@@ -278,13 +277,13 @@ void SSBQueryExecutorImpl::btreeMVSearchSRegionMainMemory (const std::string &fa
   FMainMemoryBTree *fracture = family->getCurrentFracture();
   if (fracture == NULL) return;
   if (fracture->isSortedBuffer()) {
-    LOG4CXX_DEBUG(_logger, "btreeMVSearchSRegionMainMemory: scanning sorted on-memory BTree..");
+    VLOG(1) << "btreeMVSearchSRegionMainMemory: scanning sorted on-memory BTree..";
     MVProjection key = createBtreeMVSearchSRegionKey (region);
     BtreeMVSearchSRegionContext context (region, callback, childContext);
     fracture->scanTuplesGreaterEqual(btreeMVSearchSRegionCallback, &context, reinterpret_cast<const char*>(&key));
   } else {
     // in this case, we have to fully scan the onmemory btree
-    LOG4CXX_DEBUG(_logger, "btreeMVSearchSRegionMainMemory: scanning unsorted on-memory BTree..");
+    VLOG(1) << "btreeMVSearchSRegionMainMemory: scanning unsorted on-memory BTree..";
     const MVProjection *buffer = reinterpret_cast<const MVProjection*>(fracture->getUnsortedBuffer());
     int64_t tuples = fracture->size();
     char s_region[REGION_SIZE];
@@ -296,7 +295,7 @@ void SSBQueryExecutorImpl::btreeMVSearchSRegionMainMemory (const std::string &fa
       }
     }
   }
-  LOG4CXX_DEBUG(_logger, "btreeMVSearchSRegionMainMemory: scanning on-memory BTree done.");
+  VLOG(1) << "btreeMVSearchSRegionMainMemory: scanning on-memory BTree done.";
 }
 void SSBQueryExecutorImpl::btreeMVSearchSRegion (BtreeMVSearchCallback callback, void* childContext, const std::string &region) {
   FReadOnlyDiskBTree mv (_bufferpool, _signatures.getFileSignature(_dataFolder + BTREE_MV_MAIN_FILENAME));
@@ -350,7 +349,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query11B (const SSBQueryParam &
   btreeMVSearchYear (query11BCallback, &context, year);
   watch.stop();
   shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), context.sum));
-  LOG4CXX_DEBUG(_logger, "Q11B done: sum=" << context.sum << ". " << watch.getElapsed() << " microsec");
+  VLOG(1) << "Q11B done: sum=" << context.sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
 shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query11C (const SSBQueryParam &param) {
@@ -418,7 +417,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query11C (const SSBQueryParam &
 
   watch.stop();
   shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), sum));
-  LOG4CXX_DEBUG(_logger, "Q11C done: sum=" << sum << ". " << watch.getElapsed() << " microsec");
+  VLOG(1) << "Q11C done: sum=" << sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
 
@@ -472,7 +471,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query12B (const SSBQueryParam &
   btreeMVSearchYear (query12BCallback, &context, context.yearMonthNum / 100);
   watch.stop();
   shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), context.sum));
-  LOG4CXX_DEBUG(_logger, "Q12B done: sum=" << context.sum << ". " << watch.getElapsed() << " microsec");
+  VLOG(1) << "Q12B done: sum=" << context.sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
 shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query12C (const SSBQueryParam &param) {
@@ -537,7 +536,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query12C (const SSBQueryParam &
 
   watch.stop();
   shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), sum));
-  LOG4CXX_DEBUG(_logger, "Q12C done: sum=" << sum << ". " << watch.getElapsed() << " microsec");
+  VLOG(1) << "Q12C done: sum=" << sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
 
@@ -590,7 +589,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query13B (const SSBQueryParam &
   btreeMVSearchYear (query13BCallback, &context, param.ints[0]);
   watch.stop();
   shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), context.sum));
-  LOG4CXX_DEBUG(_logger, "Q13B done: sum=" << context.sum << ". " << watch.getElapsed() << " microsec");
+  VLOG(1) << "Q13B done: sum=" << context.sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
 shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query13C (const SSBQueryParam &param) {
@@ -658,7 +657,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query13C (const SSBQueryParam &
 
   watch.stop();
   shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), sum));
-  LOG4CXX_DEBUG(_logger, "Q13C done: sum=" << sum << ". " << watch.getElapsed() << " microsec");
+  VLOG(1) << "Q13C done: sum=" << sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
 
@@ -736,7 +735,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21B (const SSBQueryParam &
   shared_ptr<SSBQueryResult> result = context.toResult();
   watch.stop();
   result->elapsedMicrosec = watch.getElapsed();
-  LOG4CXX_DEBUG(_logger, "Q21B done: " << result->groupedResults.size() << " rows. " << result->elapsedMicrosec << " microsec");
+  VLOG(1) << "Q21B done: " << result->groupedResults.size() << " rows. " << result->elapsedMicrosec << " microsec";
   return result;
 }
 shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQueryParam &param) {
@@ -839,7 +838,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQueryParam &
 
   watch.stop();
   resultRaw->elapsedMicrosec = watch.getElapsed();
-  LOG4CXX_DEBUG(_logger, "Q21C done: " << rows << " rows. " << watch.getElapsed() << " microsec");
+  VLOG(1) << "Q21C done: " << rows << " rows. " << watch.getElapsed() << " microsec";
   return result;
 }
 
@@ -926,7 +925,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22B (const SSBQueryParam &
   shared_ptr<SSBQueryResult> result = context.toResult();
   watch.stop();
   result->elapsedMicrosec = watch.getElapsed();
-  LOG4CXX_DEBUG(_logger, "Q22B done: " << result->groupedResults.size() << " rows. " << result->elapsedMicrosec << " microsec");
+  VLOG(1) << "Q22B done: " << result->groupedResults.size() << " rows. " << result->elapsedMicrosec << " microsec";
   return result;
 }
 shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQueryParam &param) {
@@ -1014,7 +1013,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQueryParam &
 
   watch.stop();
   resultRaw->elapsedMicrosec = watch.getElapsed();
-  LOG4CXX_DEBUG(_logger, "Q22C done: " << rows << " rows. " << watch.getElapsed() << " microsec");
+  VLOG(1) << "Q22C done: " << rows << " rows. " << watch.getElapsed() << " microsec";
   return result;
 }
 
@@ -1075,7 +1074,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23B (const SSBQueryParam &
   shared_ptr<SSBQueryResult> result = context.toResult();
   watch.stop();
   result->elapsedMicrosec = watch.getElapsed();
-  LOG4CXX_DEBUG(_logger, "Q23B done: " << result->groupedResults.size() << " rows. " << result->elapsedMicrosec << " microsec");
+  VLOG(1) << "Q23B done: " << result->groupedResults.size() << " rows. " << result->elapsedMicrosec << " microsec";
   return result;
 }
 shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23C (const SSBQueryParam &param) {
@@ -1156,7 +1155,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23C (const SSBQueryParam &
 
   watch.stop();
   resultRaw->elapsedMicrosec = watch.getElapsed();
-  LOG4CXX_DEBUG(_logger, "Q23C done: " << rows << " rows. " << watch.getElapsed() << " microsec");
+  VLOG(1) << "Q23C done: " << rows << " rows. " << watch.getElapsed() << " microsec";
   return result;
 }
 

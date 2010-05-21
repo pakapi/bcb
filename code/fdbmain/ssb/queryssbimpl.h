@@ -2,7 +2,6 @@
 #define SSB_QUERYSSBIMPL_H
 
 #include "queryssb.h"
-#include <log4cxx/logger.h>
 
 namespace fdb {
 
@@ -51,7 +50,6 @@ public:
   std::string _dataFolder;
   FBufferPool *_bufferpool;
   const FSignatureSet &_signatures;
-  log4cxx::LoggerPtr _logger;
 };
 
 } //fdb

@@ -10,7 +10,6 @@
 #include <fstream>
 
 using namespace std;
-using namespace log4cxx;
 using namespace boost;
 
 namespace fdb {
@@ -118,7 +117,7 @@ void FMainMemoryBTree::scanTuplesGreaterEqual (TupleCallback callback, void *con
 
 
 FMainMemoryBTreeImpl::FMainMemoryBTreeImpl(int keySize, int dataSize, TableType tableType, int64_t maxSize)
-  : _keySize(keySize), _dataSize(dataSize), _tableType(tableType), _maxSize(maxSize), _finishedInserts(false), _logger(Logger::getLogger("mbtree"))
+  : _keySize(keySize), _dataSize(dataSize), _tableType(tableType), _maxSize(maxSize), _finishedInserts(false)
 {
   _keydataFunc = toKeyDataCompareFunc(tableType);
   _datadataFunc = toDataDataCompareFunc(tableType);
@@ -156,7 +155,6 @@ struct DumpContext {
   int keySize;
   int dataSize;
   int entryPerLeafPage;
-  LoggerPtr logger;
   vector<PageSignature> pageSignatures;
 };
 
@@ -172,12 +170,12 @@ void dumpLeafPagesCallback (void *context, const void *key, const void *data) {
   }
 
   if (dumpContext->currentPageOffset == 0) {
-    LOG4CXX_TRACE(dumpContext->logger, "new page!");
+    VLOG(2) << "new page!";
 
     // check if we need to flush buffered pages
     assert (dumpContext->bufferedPages <= FDB_DISK_WRITE_BUFFER_PAGES);
     if (dumpContext->bufferedPages == FDB_DISK_WRITE_BUFFER_PAGES) {
-      LOG4CXX_TRACE(dumpContext->logger, "flush!");
+      VLOG(2) << "flush!";
       dumpContext->fd->write (dumpContext->buffer, FDB_PAGE_SIZE * dumpContext->bufferedPages);
       dumpContext->bufferedPages = 0;
       ::memset (dumpContext->buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
@@ -197,12 +195,12 @@ void dumpLeafPagesCallback (void *context, const void *key, const void *data) {
     if (remainingCount >= dumpContext->entryPerLeafPage) {
       header->count = dumpContext->entryPerLeafPage;
       header->lastSibling = false;
-      LOG4CXX_TRACE(dumpContext->logger, "more page!");
+      VLOG(2) << "more page!";
     } else {
       // last leaf page!
       header->count = remainingCount;
       header->lastSibling = true;
-      LOG4CXX_TRACE(dumpContext->logger, "last page!");
+      VLOG(2) << "last page!";
     }
     dumpContext->currentPageOffset = sizeof (FPageHeader);
 
@@ -249,12 +247,12 @@ void dumpNonLeafPages (int currentLevel, DumpContext *dumpContext,
     }
 
     if (dumpContext->currentPageOffset == 0) {
-      LOG4CXX_TRACE(dumpContext->logger, "new page!");
+      VLOG(2) << "new page!";
 
       // check if we need to flush buffered pages
       assert (dumpContext->bufferedPages <= FDB_DISK_WRITE_BUFFER_PAGES);
       if (dumpContext->bufferedPages == FDB_DISK_WRITE_BUFFER_PAGES) {
-        LOG4CXX_TRACE(dumpContext->logger, "flush!");
+        VLOG(2) << "flush!";
         dumpContext->fd->write (dumpContext->buffer, FDB_PAGE_SIZE * dumpContext->bufferedPages);
         dumpContext->bufferedPages = 0;
         ::memset (dumpContext->buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
@@ -274,11 +272,11 @@ void dumpNonLeafPages (int currentLevel, DumpContext *dumpContext,
       if (remainingCount >= entryPerNonLeafPage) {
         header->count = entryPerNonLeafPage;
         header->lastSibling = false;
-        LOG4CXX_TRACE(dumpContext->logger, "more page!");
+        VLOG(2) << "more page!";
       } else {
         header->count = remainingCount;
         header->lastSibling = true;
-        LOG4CXX_TRACE(dumpContext->logger, "last page!");
+        VLOG(2) << "last page!";
       }
       dumpContext->currentPageOffset = sizeof (FPageHeader);
 
@@ -298,7 +296,7 @@ void dumpNonLeafPages (int currentLevel, DumpContext *dumpContext,
     ++(dumpContext->currentEntry);
   }
 
-  LOG4CXX_TRACE(dumpContext->logger, "flushing last pages...");
+  VLOG(2) << "flushing last pages...";
   if (dumpContext->currentPageOffset > 0) {
     ++(dumpContext->bufferedPages);
     dumpContext->currentPageOffset = 0;
@@ -308,11 +306,11 @@ void dumpNonLeafPages (int currentLevel, DumpContext *dumpContext,
     dumpContext->fd->write(dumpContext->buffer, FDB_PAGE_SIZE * dumpContext->bufferedPages);
   }
   if (root) {
-    LOG4CXX_TRACE(dumpContext->logger, "last non-leaf level");
+    VLOG(2) << "last non-leaf level";
     assert (dumpContext->currentPageId == rootPageStart + rootPageCount);
     rootPageLevel = currentLevel;
   } else {
-    LOG4CXX_TRACE(dumpContext->logger, "recurse for higher level");
+    VLOG(2) << "recurse for higher level";
     dumpContext->pageSignatures = higherPageSignatures;
     dumpNonLeafPages (currentLevel + 1, dumpContext, rootPageStart, rootPageCount, rootPageLevel);
   }
@@ -322,12 +320,12 @@ void FMainMemoryBTreeImpl::dumpToNewRowStoreFile (FFileSignature &signature) con
   assert (signature.fileId > 0);
   assert (signature.filepath != NULL);
   std::string filepath (signature.filepath);
-  LOG4CXX_INFO(_logger, "dumping an on-memory btree to a new file " << filepath << "...");
+  LOG(INFO) << "dumping an on-memory btree to a new file " << filepath << "...";
 
   StopWatch watch;
   watch.init();
   if (std::remove((filepath).c_str()) == 0) {
-    LOG4CXX_INFO(_logger, "deleted existing file " << (filepath) << ".");
+    LOG(INFO) << "deleted existing file " << (filepath) << ".";
   }
 
   // dump the btree. start from leaf pages
@@ -350,7 +348,6 @@ void FMainMemoryBTreeImpl::dumpToNewRowStoreFile (FFileSignature &signature) con
   context.keySize = getKeySize();
   context.dataSize = getDataSize();
   context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / context.dataSize;
-  context.logger = _logger;
   context.pageSignatures.reserve ((context.entryCount / context.entryPerLeafPage) + 10);
   traverse(dumpLeafPagesCallback, &context);
 
@@ -365,14 +362,14 @@ void FMainMemoryBTreeImpl::dumpToNewRowStoreFile (FFileSignature &signature) con
   }
   int leafPageCount = context.pageSignatures.size();
   assert (leafPageCount == context.currentPageId);
-  LOG4CXX_INFO(_logger, "finished writing " << leafPageCount << " leaf pages.");
+  LOG(INFO) << "finished writing " << leafPageCount << " leaf pages.";
 
   // then, construct non-leaf pages from context.pageSignatures
   int rootPageStart = 0, rootPageCount = 0, rootPageLevel = 0;
   dumpNonLeafPages(1, &context, rootPageStart, rootPageCount, rootPageLevel);
 
   int totalPageCount = context.currentPageId;
-  LOG4CXX_INFO(_logger, "finished writing " << totalPageCount << " pages in total(" << (totalPageCount - leafPageCount) << " non-leaf pages).");
+  LOG(INFO) << "finished writing " << totalPageCount << " pages in total(" << (totalPageCount - leafPageCount) << " non-leaf pages).";
 
   // done. flush and close
   fd->sync();
@@ -388,7 +385,7 @@ void FMainMemoryBTreeImpl::dumpToNewRowStoreFile (FFileSignature &signature) con
   signature.tableType = getTableType();
 
   watch.stop();
-  LOG4CXX_INFO(_logger, "completed writing. " << watch.getElapsed() << " micsosec");
+  LOG(INFO) << "completed writing. " << watch.getElapsed() << " micsosec";
 }
 
 
@@ -421,11 +418,10 @@ FReadOnlyDiskBTreeImpl::FReadOnlyDiskBTreeImpl (FBufferPool *bufferpool, const F
     _signature(signature),
     _empty (signature.pageCount == 0),
     _compfunc (toKeyCompareFunc(signature.keyCompareFuncType)),
-    _compfuncForLeaf (toKeyDataCompareFunc(signature.tableType)),
-    _logger(Logger::getLogger("rbtree"))
+    _compfuncForLeaf (toKeyDataCompareFunc(signature.tableType))
 {
   if (_empty) {
-    LOG4CXX_INFO(_logger, "this btree is emptry");
+    LOG(INFO) << "this btree is emptry";
   }
 }
 
@@ -545,7 +541,7 @@ const char* FReadOnlyDiskBTreeImpl::getSingleTupleByKey (const char *key) {
 void FReadOnlyDiskBTreeImpl::scanAllTuples (TupleCallback callback, void *context) {
   if (_empty) return;
 
-  LOG4CXX_TRACE(_logger, "start reading");
+  VLOG(2) << "start reading";
   bool needsToReadNext = true;
   for (int pageId = 0; needsToReadNext; ++pageId) {
     assert (pageId < _signature.pageCount);
@@ -560,11 +556,11 @@ void FReadOnlyDiskBTreeImpl::scanAllTuples (TupleCallback callback, void *contex
       if (ret == TUPLE_CALLBACK_OK) {
         // keep going
       } else if (ret == TUPLE_CALLBACK_QUIT) {
-        LOG4CXX_TRACE(_logger, "callback quit");
+        VLOG(2) << "callback quit";
         needsToReadNext = false;
         break;
       } else {
-        LOG4CXX_ERROR(_logger, "some error happened. ret=" << ret);
+        LOG(ERROR) << "some error happened. ret=" << ret;
         needsToReadNext = false;
         break;
       }
@@ -573,7 +569,7 @@ void FReadOnlyDiskBTreeImpl::scanAllTuples (TupleCallback callback, void *contex
       break;
     }
   }
-  LOG4CXX_TRACE(_logger, "reading ended");
+  VLOG(2) << "reading ended";
 }
 
 void FReadOnlyDiskBTreeImpl::scanTuplesGreaterEqual (TupleCallback callback, void *context, const char *key) {
@@ -582,7 +578,7 @@ void FReadOnlyDiskBTreeImpl::scanTuplesGreaterEqual (TupleCallback callback, voi
   int leafPageId = getFirstMatchingLeafPageId (_signature.rootPageLevel, _signature.rootPageStart, key, false);
   if (leafPageId < 0) return;
 
-  LOG4CXX_TRACE(_logger, "start reading");
+  VLOG(2) << "start reading";
   bool needsToReadNext = true;
   bool canSkipLessThanCheck = false;
   for (int pageId = leafPageId; needsToReadNext; ++pageId) {
@@ -602,11 +598,11 @@ void FReadOnlyDiskBTreeImpl::scanTuplesGreaterEqual (TupleCallback callback, voi
         if (ret == TUPLE_CALLBACK_OK) {
           // keep going
         } else if (ret == TUPLE_CALLBACK_QUIT) {
-          LOG4CXX_TRACE(_logger, "callback quit");
+          VLOG(2) << "callback quit";
           needsToReadNext = false;
           break;
         } else {
-          LOG4CXX_ERROR(_logger, "some error happened. ret=" << ret);
+          LOG(ERROR) << "some error happened. ret=" << ret;
           needsToReadNext = false;
           break;
         }
@@ -616,7 +612,7 @@ void FReadOnlyDiskBTreeImpl::scanTuplesGreaterEqual (TupleCallback callback, voi
       break;
     }
   }
-  LOG4CXX_TRACE(_logger, "read ended");
+  VLOG(2) << "read ended";
 }
 
 

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <fstream>
 #include <boost/scoped_array.hpp>
+#include <glog/logging.h>
 
 #define IO_BUFFER_SIZE (2 << 20)
 
@@ -27,13 +28,12 @@
 // </definitions from dss.h>
 
 using namespace std;
-using namespace log4cxx;
 using namespace boost;
 
 namespace fdb {
 
-DBGen::DBGen (const string &dimensionDataFolder, size_t batchSize) : _dimensionDataFolder(dimensionDataFolder), _batchSize (batchSize), _currentBatchSize (0), _lastOrderkey(0), _lastUpdnum(0), _lastRand (12345678), _logger(Logger::getLogger("dbgen")) {
-  LOG4CXX_INFO(_logger, "loading dimension data...");
+DBGen::DBGen (const string &dimensionDataFolder, size_t batchSize) : _dimensionDataFolder(dimensionDataFolder), _batchSize (batchSize), _currentBatchSize (0), _lastOrderkey(0), _lastUpdnum(0), _lastRand (12345678) {
+  LOG(INFO) << "loading dimension data...";
 
   scoped_array<char> bufferAutoPtr(new char[IO_BUFFER_SIZE]);
   char *buffer = bufferAutoPtr.get();
@@ -68,7 +68,7 @@ DBGen::DBGen (const string &dimensionDataFolder, size_t batchSize) : _dimensionD
 
   _lineorderBuffer = new Lineorder[_batchSize + 32]; // +32 as it might have more than _batchSize
   _mvBuffer = new MVProjection[_batchSize + 32];
-  LOG4CXX_INFO(_logger, "completed initialization.");
+  LOG(INFO) << "completed initialization.";
 }
 DBGen::~DBGen() {
   delete[] _lineorderBuffer;
@@ -79,7 +79,7 @@ void DBGen::loadCustomer(char *buffer) {
   std::string filename = _dimensionDataFolder + "customer.bin";
   std::ifstream file(filename.c_str(), std::ios::in | std::ios::binary);
   if (!file) {
-    LOG4CXX_ERROR(_logger, "could not open " << filename);
+    LOG(ERROR) << "could not open " << filename;
     throw std::exception();
   }
   const size_t objectSize = sizeof(Customer);
@@ -102,13 +102,13 @@ void DBGen::loadCustomer(char *buffer) {
     if (readSize < maxBufSize) break;
   }
   file.close();
-  LOG4CXX_INFO(_logger, "read " << count << " customers");
+  LOG(INFO) << "read " << count << " customers";
 }
 void DBGen::loadSupplier(char *buffer) {
   std::string filename = _dimensionDataFolder + "supplier.bin";
   std::ifstream file(filename.c_str(), std::ios::in | std::ios::binary);
   if (!file) {
-    LOG4CXX_ERROR(_logger, "could not open " << filename);
+    LOG(ERROR) << "could not open " << filename;
     throw std::exception();
   }
   const size_t objectSize = sizeof(Supplier);
@@ -131,13 +131,13 @@ void DBGen::loadSupplier(char *buffer) {
     if (readSize < maxBufSize) break;
   }
   file.close();
-  LOG4CXX_INFO(_logger, "read " << count << " suppliers");
+  LOG(INFO) << "read " << count << " suppliers";
 }
 void DBGen::loadPart(char *buffer) {
   std::string filename = _dimensionDataFolder + "part.bin";
   std::ifstream file(filename.c_str(), std::ios::in | std::ios::binary);
   if (!file) {
-    LOG4CXX_ERROR(_logger, "could not open " << filename);
+    LOG(ERROR) << "could not open " << filename;
     throw std::exception();
   }
   const size_t objectSize = sizeof(Part);
@@ -160,13 +160,13 @@ void DBGen::loadPart(char *buffer) {
     if (readSize < maxBufSize) break;
   }
   file.close();
-  LOG4CXX_INFO(_logger, "read " << count << " parts");
+  LOG(INFO) << "read " << count << " parts";
 }
 void DBGen::loadDate(char *buffer) {
   std::string filename = _dimensionDataFolder + "date.bin";
   std::ifstream file(filename.c_str(), std::ios::in | std::ios::binary);
   if (!file) {
-    LOG4CXX_ERROR(_logger, "could not open " << filename);
+    LOG(ERROR) << "could not open " << filename;
     throw std::exception();
   }
   const size_t objectSize = sizeof(Date);
@@ -183,7 +183,7 @@ void DBGen::loadDate(char *buffer) {
     if (readSize < maxBufSize) break;
   }
   file.close();
-  LOG4CXX_INFO(_logger, "read " << count << " dates");
+  LOG(INFO) << "read " << count << " dates";
 }
 
 size_t DBGen::getStringId (const string &str, vector<string> &v, map<string, size_t> &m) {

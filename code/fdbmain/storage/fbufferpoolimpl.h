@@ -7,7 +7,7 @@
 
 #include <map>
 #include <boost/shared_array.hpp>
-#include <log4cxx/logger.h>
+#include <glog/logging.h>
 
 namespace fdb {
 
@@ -60,8 +60,6 @@ public:
   typedef std::map<int, FBufferedFileStatus> FileMap;
   typedef FileMap::iterator FileMapIter;
   FileMap _fileMap; // map<file-id, FBufferedFileStatus>
-
-  log4cxx::LoggerPtr _logger;
 };
 
 

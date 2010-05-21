@@ -11,11 +11,10 @@
 #include <fstream>
 #include <vector>
 #include <string.h>
-#include <log4cxx/logger.h>
+#include <glog/logging.h>
 #include <boost/scoped_array.hpp>
 #include <boost/filesystem/operations.hpp>
 
-using namespace log4cxx;
 using namespace std;
 using namespace boost;
 
@@ -23,8 +22,7 @@ namespace fdb {
 
 FSignatureSet::~FSignatureSet () {
   if (_dirty) {
-    LoggerPtr logger(Logger::getLogger("fdb"));
-    LOG4CXX_ERROR(logger, "the signature file wasn't updated properly. some change might have been lost");
+    LOG(ERROR) << "the signature file wasn't updated properly. some change might have been lost";
   }
 }
 
@@ -32,7 +30,6 @@ void FSignatureSet::load (const std::string &folder, const std::string &filename
   load (folder + filename);
 }
 void FSignatureSet::load (const std::string &filepath) {
-  LoggerPtr logger(Logger::getLogger("fdb"));
   _idMap.clear();
   _pathMap.clear();
   _lastFileId = 0;
@@ -42,14 +39,14 @@ void FSignatureSet::load (const std::string &filepath) {
   watch.init();
 
   if (!boost::filesystem::exists(boost::filesystem::path(filepath))) {
-    LOG4CXX_WARN(logger, "the signature file " << (filepath)
-      << " does not exist. a new empty signature file will be created");
+    LOG(INFO) << "the signature file " << (filepath)
+      << " does not exist. a new empty signature file will be created";
     return;
   }
 
   ifstream in(filepath.c_str(), ios::in | ios::binary);
   if (!in.is_open()) {
-    LOG4CXX_ERROR(logger, "what's the heck? boost::filesystem::exists said ok!");
+    LOG(ERROR) << "what's the heck? boost::filesystem::exists said ok!";
     return;
   }
 
@@ -59,7 +56,7 @@ void FSignatureSet::load (const std::string &filepath) {
   char *buffer = bufferPtr.get();
   in.read (buffer, filesize);
   if (in.fail()) {
-    LOG4CXX_ERROR(logger, "error on reading a signature file.");
+    LOG(ERROR) << "error on reading a signature file.";
   }
   FFileSignature *bufferSig = (FFileSignature *) buffer;
   for (int i = 0; i  < (int) (filesize / sizeof(FFileSignature)); ++i) {
@@ -69,17 +66,16 @@ void FSignatureSet::load (const std::string &filepath) {
 
   in.close();
   if (in.fail()) {
-    LOG4CXX_ERROR(logger, "error on closing a signature file.");
+    LOG(ERROR) << "error on closing a signature file.";
   }
   watch.stop();
   _dirty = false;
-  LOG4CXX_INFO(logger, "read " << _idMap.size() << " signatures. " << watch.getElapsed() << " micsosec");
+  LOG(INFO) << "read " << _idMap.size() << " signatures. " << watch.getElapsed() << " micsosec";
 }
 void FSignatureSet::save (const std::string &folder, const std::string &filename) {
   save (folder + filename);
 }
 void FSignatureSet::save (const std::string &filepath) {
-  LoggerPtr logger(Logger::getLogger("fdb"));
   _dirty = false;
 
   StopWatch watch;
@@ -87,7 +83,7 @@ void FSignatureSet::save (const std::string &filepath) {
 
   ofstream out(filepath.c_str(), ios::out | ios::binary | ios::trunc);
   if (!out.is_open()) {
-    LOG4CXX_ERROR(logger, "could not open signature file");
+    LOG(ERROR) << "could not open signature file";
     return;
   }
 
@@ -101,18 +97,18 @@ void FSignatureSet::save (const std::string &filepath) {
 
   out.write (buffer, sizeof(FFileSignature) * _idMap.size());
   if (out.fail()) {
-    LOG4CXX_ERROR(logger, "error on writing a signature file.");
+    LOG(ERROR) << "error on writing a signature file.";
   }
   out.flush();
   if (out.fail()) {
-    LOG4CXX_ERROR(logger, "error on flushing a signature file.");
+    LOG(ERROR) << "error on flushing a signature file.";
   }
   out.close();
   if (out.fail()) {
-    LOG4CXX_ERROR(logger, "error on closing a signature file.");
+    LOG(ERROR) << "error on closing a signature file.";
   }
   watch.stop();
-  LOG4CXX_INFO(logger, "wrote " << _idMap.size() << " signatures. " << watch.getElapsed() << " micsosec");
+  LOG(INFO) << "wrote " << _idMap.size() << " signatures. " << watch.getElapsed() << " micsosec";
 }
 
 bool FSignatureSet::existsFile (int fileId) const {
@@ -171,18 +167,16 @@ void FSignatureSet::addFileSignature (const FFileSignature &signature) {
 }
 
 FFileSignature FSignatureSet::dumpToNewRowStoreFile (const std::string &folder, const std::string &filename, const FMainMemoryBTree &btree) {
-  LoggerPtr logger(Logger::getLogger("fdb"));
-
   int fileId = issueNextFileId();
   bool addsSl = (folder.size() > 0 && folder[folder.size() - 1] != '/');
   string filepath = folder + (addsSl ? "/" : "") + filename;
 
   if (_pathMap.find(filepath) != _pathMap.end()) {
-    LOG4CXX_ERROR(logger, "the file " << filepath << " already exists in the database.");
+    LOG(ERROR) << "the file " << filepath << " already exists in the database.";
     throw std::exception();
   }
   if (filepath.size() + 1 > FFILE_MAX_FILEPATH) {
-    LOG4CXX_ERROR(logger, "the filepath " << filepath << " is too long.");
+    LOG(ERROR) << "the filepath " << filepath << " is too long.";
     throw std::exception();
   }
 
@@ -197,14 +191,13 @@ FFileSignature FSignatureSet::dumpToNewRowStoreFile (const std::string &folder, 
 }
 
 std::vector<FFileSignature> FSignatureSet::getCStoreFileSignatures (const std::string &folder, const std::vector<FCStoreColumn>  &columns, const std::string &filenamePrefix) const {
-  LoggerPtr logger(Logger::getLogger("fdb"));
   std::vector<FFileSignature> ret;
   bool addsSl = (folder.size() > 0 && folder[folder.size() - 1] != '/');
   for (size_t i = 0; i < columns.size(); ++i) {
     const FCStoreColumn &column = columns[i];
     string filepath = folder + (addsSl ? "/" : "") + filenamePrefix + "." + column.name + ".db";
     if (!existsFile(filepath)) {
-      LOG4CXX_ERROR(logger, "the file " << filepath << " wasn't found in the database.");
+      LOG(ERROR) << "the file " << filepath << " wasn't found in the database.";
       throw std::exception();
     }
     ret.push_back (getFileSignature(filepath));
@@ -212,7 +205,6 @@ std::vector<FFileSignature> FSignatureSet::getCStoreFileSignatures (const std::s
   return ret;
 }
 std::vector<FFileSignature> FSignatureSet::dumpToNewCStoreFiles (const std::string &folder, const std::string &filenamePrefix, const FMainMemoryBTree &btree) {
-  LoggerPtr logger(Logger::getLogger("fdb"));
   std::vector<FCStoreColumn> columns = FCStoreUtil::getPhysicalDesignsOf(btree.getTableType());
   std::vector<FFileSignature> signatures;
 
@@ -223,11 +215,11 @@ std::vector<FFileSignature> FSignatureSet::dumpToNewCStoreFiles (const std::stri
     string filepath = folder + (addsSl ? "/" : "") + filenamePrefix + "." + column.name + ".db";
 
     if (_pathMap.find(filepath) != _pathMap.end()) {
-      LOG4CXX_ERROR(logger, "the file " << filepath << " already exists in the database.");
+      LOG(ERROR) << "the file " << filepath << " already exists in the database.";
       throw std::exception();
     }
     if (filepath.size() + 1 > FFILE_MAX_FILEPATH) {
-      LOG4CXX_ERROR(logger, "the filepath " << filepath << " is too long.");
+      LOG(ERROR) << "the filepath " << filepath << " is too long.";
       throw std::exception();
     }
 

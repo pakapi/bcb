@@ -4,7 +4,7 @@
 #include "ffilesig.h"
 #include "fcstore.h"
 #include "searchcond.h"
-#include <log4cxx/logger.h>
+#include <glog/logging.h>
 #include <stdint.h>
 #include <string.h>
 #include <functional>
@@ -28,8 +28,6 @@ public:
   int _maxTuples;
   std::vector<FCStoreColumn> _columns;
   KeyCompareFunc *_compfunc;
-
-  log4cxx::LoggerPtr _logger;
 };
 
 
@@ -37,7 +35,7 @@ public:
 class DirectFileOutputStream;
 class FMainMemoryBTree;
 struct CStoreDumpContext {
-  CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, char *buffer_, const FCStoreColumn &column, const FMainMemoryBTree &btree, log4cxx::LoggerPtr logger_);
+  CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, char *buffer_, const FCStoreColumn &column, const FMainMemoryBTree &btree);
   ~CStoreDumpContext();
   void updateFileSignature(FFileSignature &signature, TableType tableType, int columnIndex) const;
 
@@ -68,7 +66,6 @@ struct CStoreDumpContext {
   int leafEntrySize; // this is not same as column.maxLength with RLE/Dictionary encoding
   int entryInCurrentPage;
   int entryPerLeafPage;
-  log4cxx::LoggerPtr logger;
 
   // for RLE
   int64_t runTotal;
@@ -131,7 +128,6 @@ protected:
   FFileSignature _signature;
   bool _searchRangeSet;
   std::vector<PositionRange> _searchRanges;
-  log4cxx::LoggerPtr _logger;
 };
 
 class FColumnReaderImplUncompressed : public FColumnReaderImpl {
