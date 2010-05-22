@@ -1,6 +1,7 @@
 #ifndef IO_FIS_H
 #define IO_FIS_H
 
+#include <stdint.h>
 #include <string>
 #include <cstdlib>
 

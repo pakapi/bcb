@@ -13,46 +13,20 @@ cmake . -G KDevelop3
 
 If you are using KDevelop4, simply open the cmake files.
 
+== Windows build
+If you are having this error on cmake:
+> Check for working C compiler using: Visual Studio 10
+> Check for working C compiler using: Visual Studio 10 -- works
+> Detecting C compiler ABI info
+> CMake Error: Could not COPY_FILE.
+Check these out:
+http://webcache.googleusercontent.com/search?q=cache:re1c-13cK7MJ:www.mail-archive.com/cmake@cmake.org/msg28836.html+cmake+Visual+Studio+10+could+not+copy_file&cd=3&hl=en&ct=clnk&gl=us
+Download
+http://cmake.org/gitweb?p=cmake.git;a=blob_plain;f=Modules/CMakeVS10FindMake.cmake;hb=HEAD
+and replace it with 
+  C:\Program Files\CMake 2.8\share\cmake-2.8\Modules\CMakeVS10FindMake.cmake
+or so.
 
--- if you don't have log4cxx installed and you don't have permission
-to install them in /usr or /usr/local (like Brown CS machines), 
-download APR/APR-util/log4cxx and install them in your home directory.
-For example:
-
-mkdir /home/hkimura/modules
-cd /home/hkimura/modules
-
-# download and extract files here
-
-cd apr-1.4.2/
-./configure --prefix=/home/hkimura/modules
-make
-make install
-cd ..
-
-cd apr-util-1.3.9/
-./configure --prefix=/home/hkimura/modules --with-apr=/home/hkimura/modules/apr-1.4.2
-make
-make install
-cd ..
-
-cd apache-log4cxx-0.10.0
-./configure --prefix=/home/hkimura/modules --with-apr=/home/hkimura/modules/apr-1.4.2  --with-apr-util=/home/hkimura/modules/apr-util-1.3.9
-make
-make install
-
-And then, specify the log4cxx folder in ccmake. for example:
- LOG4CXX_INCLUDE_DIRS            */home/hkimura/modules/include                
- LOG4CXX_LIBRARIES               */home/hkimura/modules/lib                    
- Log4cxx_FOUND                   *ON    
-
-- one trouble in debian. I encountered a compilation error:
-"inputstreamreader.cpp:66: error: 'memmove' was not declared in this scope"
-I avoided this error by adding "#include <string.h>" in
-src/main/cpp/inputstreamreader.cpp and src/main/cpp/socketoutputstream.cpp
-and src/example/cpp/console.cpp
-
-
--- same thing to libdb/libdb_cxx and boost
-
-Switched to glog, so need to install log4cxx.
+glog build:
+ Download latest glog, build it with VC++ (I tested with VC++ 2010 Express)
+ Don't forget to compile both debug and release build.
