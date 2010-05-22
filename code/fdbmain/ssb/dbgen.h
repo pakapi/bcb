@@ -102,7 +102,7 @@ struct SlimSupplier {
   int8_t regionId;
 };
 
-class SlimPart {
+struct SlimPart {
 public:
   int32_t partkey;
   int8_t mfgrId;

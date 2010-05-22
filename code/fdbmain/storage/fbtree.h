@@ -80,7 +80,7 @@ private:
 };
 
 class FBufferPool;
-class FFileSignature;
+struct FFileSignature;
 class FReadOnlyDiskBTreeImpl;
 
 // BTree for reading.

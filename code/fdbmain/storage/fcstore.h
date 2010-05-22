@@ -66,7 +66,7 @@ private:
   FMainMemoryCStoreImpl *_impl;
 };
 
-class FFileSignature;
+struct FFileSignature;
 class FMainMemoryBTree;
 typedef std::pair<size_t, bool> SortOrder; // pair<columnIndex, asc>
 class FCStoreUtil {
@@ -127,7 +127,7 @@ private:
 };
 
 // provides read accesses for a column
-class SearchCond;
+struct SearchCond;
 class FColumnReader {
 public:
   virtual ~FColumnReader(){}

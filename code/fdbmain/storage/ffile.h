@@ -15,7 +15,7 @@ class FBufferPool;
 
 // represents a configuration file containing the list of file signatures.
 class FMainMemoryBTree;
-class FCStoreColumn;
+struct FCStoreColumn;
 class FSignatureSet {
 public:
   FSignatureSet() : _lastFileId(0), _dirty (false) {};

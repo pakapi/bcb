@@ -150,7 +150,7 @@ public:
   }
 };
 
-class FPageHeader;
+struct FPageHeader;
 // pimple class for FReadOnlyDiskBTree
 class FReadOnlyDiskBTreeImpl {
 public:

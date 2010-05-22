@@ -7,7 +7,7 @@
 namespace fdb {
 
 class FBufferPoolImpl;
-class FFileSignature;
+struct FFileSignature;
 
 // represents a buffer pool to keep disk pages in main memory.
 // note that this buffer pool is *just for reading*, thus all pages
