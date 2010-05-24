@@ -809,17 +809,17 @@ std::string FColumnReaderImpl::toDebugStr (const void *key) const {
 }
 void FColumnReaderImpl::logSearchCond (const SearchCond &cond) const {
   switch (cond.type) {
-  case EQUAL:
-  case LT:
-  case GT:
-  case LTEQ:
-  case GTEQ:
+  case SCT_EQUAL:
+  case SCT_LT:
+  case SCT_GT:
+  case SCT_LTEQ:
+  case SCT_GTEQ:
     VLOG(1) << "Searching " << toDebugStr(cond.key) << " (" << toSearchCondOp(cond.type) << ") in " << _searchRanges.size() << " ranges (type=" << (_searchRangeSet ? "range set" : "full scan") << ")...";
     break;
-  case BETWEEN:
+  case SCT_BETWEEN:
     VLOG(1) << "Searching " << toDebugStr(cond.key) << " to " << toDebugStr(cond.key2) << " in " << _searchRanges.size() << " ranges (type=" << (_searchRangeSet ? "range set" : "full scan") << ")...";
     break;
-  case IN:
+  case SCT_IN:
     VLOG(1) << "Searching " << cond.keys.size() << " values for IN clause in " << _searchRanges.size() << " ranges (type=" << (_searchRangeSet ? "range set" : "full scan") << ")...";
     break;
   }
@@ -836,18 +836,18 @@ FColumnReaderImplUncompressed::FColumnReaderImplUncompressed(
 
 int FColumnReaderImplUncompressed::processPageString(const SearchCond &cond, const char *cursor, size_t tuplesToRead, PositionBitmap *bitmap, int64_t bitmapPageOffset) {
   switch (cond.type) {
-  case EQUAL:
+  case SCT_EQUAL:
     return processPageStringBinary (std::equal_to<int>(), cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-  case LT:
+  case SCT_LT:
     return processPageStringBinary (std::less<int>(), cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-  case GT:
+  case SCT_GT:
     return processPageStringBinary (std::greater<int>(), cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-  case LTEQ:
+  case SCT_LTEQ:
     return processPageStringBinary (std::less_equal<int>(), cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-  case GTEQ:
+  case SCT_GTEQ:
     return processPageStringBinary (std::greater_equal<int>(), cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-  case BETWEEN: return processPageStringBetween (cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-  case IN: return processPageStringIn (cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
+  case SCT_BETWEEN: return processPageStringBetween (cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
+  case SCT_IN: return processPageStringIn (cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
   default:
     assert (false);
     return 0;
@@ -1258,7 +1258,7 @@ void FColumnReaderImplDictionary::getDictionaryCompressedData (const PositionRan
   VLOG(2) << "Done. " << tupleCount << " entries read. " << watch.getElapsed() << " microsec";
 }
 int FColumnReaderImplDictionary::getDictionaryEntryId (const void *value) {
-  vector<int> entries = searchDictionary (SearchCond(EQUAL, value));
+  vector<int> entries = searchDictionary (SearchCond(SCT_EQUAL, value));
   if (entries.size() == 0) return -1;
   return entries[0];
 }

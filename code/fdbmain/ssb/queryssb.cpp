@@ -371,7 +371,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query11C (const SSBQueryParam &
 
   int16_t year = param.ints[0];
   vector <PositionRange> ranges;
-  yearReader->getPositionRanges(SearchCond(EQUAL, &year), ranges);
+  yearReader->getPositionRanges(SearchCond(SCT_EQUAL, &year), ranges);
   assert (ranges.size() > 0);
   int64_t sum = 0;
   size_t maxLen = 0;
@@ -493,7 +493,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query12C (const SSBQueryParam &
 
   int32_t yearMonthNum = param.ints[0];
   vector <PositionRange> ranges;
-  yearmonthnumReader->getPositionRanges(SearchCond(EQUAL, &yearMonthNum), ranges);
+  yearmonthnumReader->getPositionRanges(SearchCond(SCT_EQUAL, &yearMonthNum), ranges);
   assert (ranges.size() > 0);
   int64_t sum = 0;
   size_t maxLen = 0;
@@ -607,7 +607,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query13C (const SSBQueryParam &
 
   int16_t year = param.ints[0];
   vector <PositionRange> ranges;
-  yearReader->getPositionRanges(SearchCond(EQUAL, &year), ranges);
+  yearReader->getPositionRanges(SearchCond(SCT_EQUAL, &year), ranges);
   assert (ranges.size() > 0);
   int64_t sum = 0;
   size_t maxLen = 0;
@@ -759,7 +759,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQueryParam &
   string s_region = sregionReader->normalize(param.strings[1]);
 
   vector <PositionRange> regionRanges;
-  sregionReader->getPositionRanges(SearchCond(EQUAL, s_region.data()), regionRanges);
+  sregionReader->getPositionRanges(SearchCond(SCT_EQUAL, s_region.data()), regionRanges);
   assert (regionRanges.size() == 1);
   const PositionRange &regionRange = regionRanges[0];
 
@@ -789,7 +789,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQueryParam &
 
   vector<shared_ptr<PositionBitmap> > positions;
   categoryReader->setSearchRanges(yearRangesVec);
-  categoryReader->getPositionBitmaps(SearchCond(EQUAL, p_category.data()), positions);
+  categoryReader->getPositionBitmaps(SearchCond(SCT_EQUAL, p_category.data()), positions);
   assert (positions.size () == yearRanges.size());
 
   int rows = 0;
@@ -944,7 +944,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQueryParam &
   string s_region = sregionReader->normalize(param.strings[2]);
 
   vector <PositionRange> regionRanges;
-  sregionReader->getPositionRanges(SearchCond(EQUAL, s_region.data()), regionRanges);
+  sregionReader->getPositionRanges(SearchCond(SCT_EQUAL, s_region.data()), regionRanges);
   assert (regionRanges.size() == 1);
   const PositionRange &regionRange = regionRanges[0];
 
@@ -1093,7 +1093,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23C (const SSBQueryParam &
   string s_region = sregionReader->normalize(param.strings[1]);
 
   vector <PositionRange> regionRanges;
-  sregionReader->getPositionRanges(SearchCond(EQUAL, s_region.data()), regionRanges);
+  sregionReader->getPositionRanges(SearchCond(SCT_EQUAL, s_region.data()), regionRanges);
   assert (regionRanges.size() == 1);
   const PositionRange &regionRange = regionRanges[0];
 
@@ -1117,7 +1117,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23C (const SSBQueryParam &
 
   vector<shared_ptr<PositionBitmap> > positions;
   brandReader->setSearchRanges(yearRangesVec);
-  brandReader->getPositionBitmaps(SearchCond(EQUAL, p_brand.data()), positions);
+  brandReader->getPositionBitmaps(SearchCond(SCT_EQUAL, p_brand.data()), positions);
   assert (positions.size () == yearRanges.size());
 
   int rows = 0;

@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_uncompressed) {
     reader->setSearchRanges(ranges);
     vector<shared_ptr<PositionBitmap> > ret;
     int32_t key = 4763742;
-    reader->getPositionBitmaps(SearchCond(EQUAL, &key), ret);
+    reader->getPositionBitmaps(SearchCond(SCT_EQUAL, &key), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
     PositionBitmap *bitmap = ret[0].get();
     BOOST_CHECK (bitmap != NULL);
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_uncompressed) {
     reader->setSearchRanges(cranges);
     vector<shared_ptr<PositionBitmap> > ret;
     string key = reader->normalize("Customer#000013813");
-    reader->getPositionBitmaps(SearchCond(EQUAL, key.data()), ret);
+    reader->getPositionBitmaps(SearchCond(SCT_EQUAL, key.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
     PositionBitmap *bitmap = ret[0].get();
     BOOST_CHECK (bitmap != NULL);
@@ -341,7 +341,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_uncompressed) {
     BOOST_CHECK_EQUAL (bitmap->matchedCount, 1);
 
     ret.clear();
-    reader->getPositionBitmaps(SearchCond(LT, key.data()), ret);
+    reader->getPositionBitmaps(SearchCond(SCT_LT, key.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
     bitmap = ret[0].get();
     BOOST_CHECK (bitmap != NULL);
@@ -376,7 +376,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     reader->setSearchRanges(ranges);
     vector<shared_ptr<PositionBitmap> > ret;
     string key = reader->normalize("2-HIGH");
-    reader->getPositionBitmaps(SearchCond(EQUAL, key.data()), ret);
+    reader->getPositionBitmaps(SearchCond(SCT_EQUAL, key.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
     PositionBitmap *bitmap = ret[0].get();
     BOOST_CHECK (bitmap != NULL);
@@ -387,7 +387,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     BOOST_CHECK_EQUAL (bitmap->matchedCount, 7);
 
     ret.clear();
-    reader->getPositionBitmaps(SearchCond(LT, key.data()), ret);
+    reader->getPositionBitmaps(SearchCond(SCT_LT, key.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
     bitmap = ret[0].get();
     BOOST_CHECK (bitmap != NULL);
@@ -405,7 +405,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     reader->setSearchRanges(ranges);
     vector<shared_ptr<PositionBitmap> > ret;
     string key = reader->normalize("0");
-    reader->getPositionBitmaps(SearchCond(EQUAL, key.data()), ret);
+    reader->getPositionBitmaps(SearchCond(SCT_EQUAL, key.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
     PositionBitmap *bitmap = ret[0].get();
     BOOST_CHECK (bitmap != NULL);
@@ -417,7 +417,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
 
     ret.clear();
     key = reader->normalize("1");
-    reader->getPositionBitmaps(SearchCond(EQUAL, key.data()), ret);
+    reader->getPositionBitmaps(SearchCond(SCT_EQUAL, key.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
     bitmap = ret[0].get();
     BOOST_CHECK (bitmap != NULL);
@@ -437,7 +437,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     string china = reader->normalize("CHINA");
     string egypt = reader->normalize("EGYPT");
     string jordan = reader->normalize("JORDAN");
-    reader->getPositionBitmaps(SearchCond(EQUAL, egypt.data()), ret);
+    reader->getPositionBitmaps(SearchCond(SCT_EQUAL, egypt.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
     PositionBitmap *bitmap = ret[0].get();
     BOOST_CHECK (bitmap != NULL);
@@ -477,7 +477,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     reader->setSearchRanges(cranges);
     vector<shared_ptr<PositionBitmap> > ret;
     string edypt = reader->normalize("EGYPT    6");
-    reader->getPositionBitmaps(SearchCond(EQUAL, edypt.data()), ret);
+    reader->getPositionBitmaps(SearchCond(SCT_EQUAL, edypt.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
     PositionBitmap *bitmap = ret[0].get();
     BOOST_CHECK (bitmap != NULL);
@@ -488,7 +488,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
 
     ret.clear();
     string us = reader->normalize("UNITED ST8");
-    reader->getPositionBitmaps(SearchCond(LT, us.data()), ret);
+    reader->getPositionBitmaps(SearchCond(SCT_LT, us.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
     bitmap = ret[0].get();
     BOOST_CHECK (bitmap != NULL);
@@ -524,7 +524,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_rle) {
     {
       vector<PositionRange> ret;
       int32_t key = 2;
-      reader->getPositionRanges(SearchCond(EQUAL, &key), ret);
+      reader->getPositionRanges(SearchCond(SCT_EQUAL, &key), ret);
       BOOST_CHECK_EQUAL (ret.size(), 1);
       const PositionRange &range = ret[0];
       BOOST_CHECK_EQUAL (range.begin, 3);
@@ -534,7 +534,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_rle) {
     {
       vector<PositionRange> ret;
       int32_t key = 3;
-      reader->getPositionRanges(SearchCond(LT, &key), ret);
+      reader->getPositionRanges(SearchCond(SCT_LT, &key), ret);
       BOOST_CHECK_EQUAL (ret.size(), 1);
       const PositionRange &range = ret[0];
       BOOST_CHECK_EQUAL (range.begin, 0);
@@ -569,7 +569,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_rle) {
   reader->setSearchRanges(ranges);
   vector<PositionRange> ret;
   int32_t key = 2;
-  reader->getPositionRanges(SearchCond(EQUAL, &key), ret);
+  reader->getPositionRanges(SearchCond(SCT_EQUAL, &key), ret);
   BOOST_CHECK_EQUAL (ret.size(), 1);
   BOOST_CHECK_EQUAL (ret[0].begin, 3);
   BOOST_CHECK_EQUAL (ret[0].end, 6);
