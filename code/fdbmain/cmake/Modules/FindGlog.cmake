@@ -17,8 +17,8 @@ IF( GLOG_ROOT )
   file(TO_CMAKE_PATH ${GLOG_ROOT} GLOG_ROOT)
 ENDIF( GLOG_ROOT )
 
-UNSET (GLOG_INCLUDE_DIRS CACHE)
-UNSET (GLOG_LIBRARIES CACHE)
+SET (GLOG_INCLUDE_DIRS)
+SET (GLOG_LIBRARIES)
 IF(WIN32)
   IF(MSVC)
     FIND_PATH(GLOG_INCLUDE_DIRS NAMES src/windows/glog/logging.h HINTS ${GLOG_ROOT})
@@ -40,6 +40,7 @@ IF(WIN32)
 ELSE(WIN32)
   FIND_PATH(GLOG_INCLUDE_DIRS NAMES glog/logging.h HINTS ${GLOG_ROOT}/include ${GLOG_ROOT} /include/ /usr/include/ /usr/local/include/)
   FIND_LIBRARY(GLOG_LIBRARIES NAMES glog HINTS ${GLOG_ROOT}/lib ${GLOG_ROOT} /lib /usr/lib /usr/local/lib)
+  SET(GLOG_LIBRARIES ${GLOG_LIBRARIES}/libglog.so) # not sure this is correct, but needed to keep pace with windows cmake
 ENDIF(WIN32)
 
 IF(GLOG_INCLUDE_DIRS AND GLOG_LIBRARIES)

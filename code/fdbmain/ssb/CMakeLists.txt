@@ -1,2 +1,2 @@
 ADD_LIBRARY (fdbssb loadssb.cpp maketiny.cpp queryssb.cpp ssb.cpp dbgen.cpp runbench.cpp)
-TARGET_LINK_LIBRARIES(fdbssb glog fdbstorage)
+TARGET_LINK_LIBRARIES(fdbssb ${GLOG_LIBRARIES} fdbstorage)
