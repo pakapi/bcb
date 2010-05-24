@@ -17,7 +17,6 @@
 using namespace std;
 using namespace fdb;
 
-
 // path to the data folder
 #define DEFAULT_DATA_FOLDER "../../data/"
 
@@ -63,15 +62,15 @@ int main(int argc, char *argv[]) {
         LOG(ERROR) << "Usage: fdbmain runbench <int:bufferPageCount> <flag:cstore> <flag:sortedBuffer> <int:batchCount> <int:batchSize> <int:queriesBetweenBatch>";
         return EXIT_FAILURE;
       }
-      int bufferPageCount = ::atoll(argv[2]);
+      int bufferPageCount = ::atol(argv[2]);
       assert (bufferPageCount > 10);
       bool cstore = string(argv[3]) == "true";
       bool sortedBuffer = string(argv[4]) == "true";
-      int batchCount = ::atoll(argv[5]);
+      int batchCount = ::atol(argv[5]);
       assert (batchCount >= 0);
-      int batchSize = ::atoll(argv[6]);
+      int batchSize = ::atol(argv[6]);
       assert (batchSize >= 0);
-      int queriesBetweenBatch = ::atoll(argv[7]);
+      int queriesBetweenBatch = ::atol(argv[7]);
       assert (queriesBetweenBatch >= 0);
 
       runSSBBench(bufferPageCount, cstore, sortedBuffer, batchCount, batchSize, queriesBetweenBatch);

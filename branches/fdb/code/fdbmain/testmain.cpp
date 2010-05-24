@@ -29,8 +29,20 @@
 #include "storage/searchcond.h"
 #include "util/hashmap.h"
 
+#ifdef WIN32
+  #define NOGDI
+  #include <windows.h>
+  void sleepSec (int sec) {
+    ::Sleep (sec * 1000);
+  }
+#else //WIN32
+  void sleepSec (int sec) {
+    ::sleep (sec);
+  }
+#endif //WIN32
+
+
 using namespace std;
-using namespace boost;
 using namespace fdb;
 
 #define TEST_DATA_FOLDER "../../data/test/"
@@ -68,7 +80,7 @@ BOOST_AUTO_TEST_CASE(storage_test_sig) {
   sig1.keyEntrySize = 16;
   sig1.keyCompareFuncType = INT32_ASC_NODUP;
   sig1.tableType = LINEORDER_PK_SORT;
-  ::strcpy(sig1.filepath, "_test.1");
+  ::memcpy(sig1.filepath, "_test.1", 7);
   BOOST_CHECK_EQUAL (sig1.fileId, 0);
   sig1.fileId = signatureFile.issueNextFileId();
   BOOST_CHECK_EQUAL (sig1.fileId, 1);
@@ -89,7 +101,7 @@ BOOST_AUTO_TEST_CASE(storage_test_sig) {
   sig2.keyEntrySize = 32;
   sig2.keyCompareFuncType = INT64_ASC_NODUP;
   sig2.tableType = LINEORDER_PK_SORT;
-  ::strcpy(sig2.filepath, "_test.2");
+  ::memcpy(sig2.filepath, "_test.2", 7);
   BOOST_CHECK_EQUAL (sig2.fileId, 0);
   sig2.fileId = signatureFile.issueNextFileId();
   BOOST_CHECK_EQUAL (sig2.fileId, 2);
@@ -254,11 +266,11 @@ BOOST_AUTO_TEST_CASE(ssb_test_convert) {
   std::remove((TEST_DATA_FOLDER + string("_tinyssb.sig")).c_str());
   loadSSBBinFile(TEST_DATA_FOLDER, "_tinyssb.sig", "../../data/tinyssb/", false, 20);
   loadSSBBinFile(TEST_DATA_FOLDER, "_tinyssb.sig", "../../data/tinyssb/", true, 20);
-  ::sleep (1); // for some reason this makes following testcases happy. probably file flushing?
+  sleepSec (1); // for some reason this makes following testcases happy. probably file flushing?
   std::remove((TEST_DATA_FOLDER + string("_tinyssb.sig")).c_str());
   loadSSBBinFileMV(TEST_DATA_FOLDER, "_tinyssb.sig", "../../data/tinyssb/", false, 20);
   loadSSBBinFileMV(TEST_DATA_FOLDER, "_tinyssb.sig", "../../data/tinyssb/", true, 20);
-  ::sleep (2); // for some reason this makes following testcases happy. probably file flushing?
+  sleepSec (2); // for some reason this makes following testcases happy. probably file flushing?
   BOOST_TEST_MESSAGE("===Tested SSB converting.");
 }
 BOOST_AUTO_TEST_CASE(storage_cstore_normalize) {
@@ -296,7 +308,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_uncompressed) {
     BOOST_CHECK (reader != NULL);
     BOOST_CHECK_EQUAL (reader->getColumn().name, "revenue");
     reader->setSearchRanges(ranges);
-    vector<shared_ptr<PositionBitmap> > ret;
+    vector<boost::shared_ptr<PositionBitmap> > ret;
     int32_t key = 4763742;
     reader->getPositionBitmaps(SearchCond(SCT_EQUAL, &key), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
@@ -329,7 +341,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_uncompressed) {
     BOOST_CHECK (reader != NULL);
     BOOST_CHECK_EQUAL (reader->getColumn().name, "name");
     reader->setSearchRanges(cranges);
-    vector<shared_ptr<PositionBitmap> > ret;
+    vector<boost::shared_ptr<PositionBitmap> > ret;
     string key = reader->normalize("Customer#000013813");
     reader->getPositionBitmaps(SearchCond(SCT_EQUAL, key.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
@@ -374,7 +386,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     BOOST_CHECK (reader != NULL);
     BOOST_CHECK_EQUAL (reader->getColumn().name, "orderpriority");
     reader->setSearchRanges(ranges);
-    vector<shared_ptr<PositionBitmap> > ret;
+    vector<boost::shared_ptr<PositionBitmap> > ret;
     string key = reader->normalize("2-HIGH");
     reader->getPositionBitmaps(SearchCond(SCT_EQUAL, key.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
@@ -403,7 +415,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     BOOST_CHECK (reader != NULL);
     BOOST_CHECK_EQUAL (reader->getColumn().name, "shippriority");
     reader->setSearchRanges(ranges);
-    vector<shared_ptr<PositionBitmap> > ret;
+    vector<boost::shared_ptr<PositionBitmap> > ret;
     string key = reader->normalize("0");
     reader->getPositionBitmaps(SearchCond(SCT_EQUAL, key.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
@@ -433,7 +445,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     BOOST_CHECK (reader != NULL);
     BOOST_CHECK_EQUAL (reader->getColumn().name, "nation");
     reader->setSearchRanges(cranges);
-    vector<shared_ptr<PositionBitmap> > ret;
+    vector<boost::shared_ptr<PositionBitmap> > ret;
     string china = reader->normalize("CHINA");
     string egypt = reader->normalize("EGYPT");
     string jordan = reader->normalize("JORDAN");
@@ -475,7 +487,7 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     BOOST_CHECK (reader != NULL);
     BOOST_CHECK_EQUAL (reader->getColumn().name, "city");
     reader->setSearchRanges(cranges);
-    vector<shared_ptr<PositionBitmap> > ret;
+    vector<boost::shared_ptr<PositionBitmap> > ret;
     string edypt = reader->normalize("EGYPT    6");
     reader->getPositionBitmaps(SearchCond(SCT_EQUAL, edypt.data()), ret);
     BOOST_CHECK_EQUAL (ret.size(), 1);
@@ -841,7 +853,7 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
       param.ints.push_back (1);
       param.ints.push_back (5);
       param.ints.push_back (30);
-      shared_ptr<SSBQueryResult> res = exec.query(11, i == 0, param);
+      boost::shared_ptr<SSBQueryResult> res = exec.query(11, i == 0, param);
       BOOST_TEST_MESSAGE("  result:" << res->toString());
       BOOST_CHECK_EQUAL (res->singleIntResult, 13456484);
 
@@ -865,7 +877,7 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
       param.ints.push_back (10);
       param.ints.push_back (30);
       param.ints.push_back (50);
-      shared_ptr<SSBQueryResult> res = exec.query(12, i == 0, param);
+      boost::shared_ptr<SSBQueryResult> res = exec.query(12, i == 0, param);
       BOOST_TEST_MESSAGE("  result:" << res->toString());
       BOOST_CHECK_EQUAL (res->singleIntResult, 126913294);
 
@@ -890,7 +902,7 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
       param.ints.push_back (10);
       param.ints.push_back (30);
       param.ints.push_back (40);
-      shared_ptr<SSBQueryResult> res = exec.query(13, i == 0, param);
+      boost::shared_ptr<SSBQueryResult> res = exec.query(13, i == 0, param);
       BOOST_TEST_MESSAGE("  result:" << res->toString());
       BOOST_CHECK_EQUAL (res->singleIntResult, 82287540);
 
@@ -926,7 +938,7 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
       SSBQueryParam param;
       param.strings.push_back ("MFGR#12");
       param.strings.push_back ("EUROPE");
-      shared_ptr<SSBQueryResult> res = exec.query(21, i == 0, param);
+      boost::shared_ptr<SSBQueryResult> res = exec.query(21, i == 0, param);
       BOOST_TEST_MESSAGE("  result:" << res->toString());
       BOOST_CHECK_EQUAL (res->groupedResults.size(), 2);
       for (SSBQueryResult::ResultMapIter it = res->groupedResults.begin(); it != res->groupedResults.end(); ++it) {
@@ -1009,7 +1021,7 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
       param.strings.push_back ("MFGR#3332");
       param.strings.push_back ("MIDDLE EAST");
       {
-        shared_ptr<SSBQueryResult> res = exec.query(22, i == 0, param);
+        boost::shared_ptr<SSBQueryResult> res = exec.query(22, i == 0, param);
         BOOST_TEST_MESSAGE("  result:" << res->toString());
         BOOST_CHECK_EQUAL (res->groupedResults.size(), 1);
         SSBQueryResult::ResultMapIter it = res->groupedResults.begin();
@@ -1029,7 +1041,7 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
       param.strings.push_back ("MFGR#3332");
       param.strings.push_back ("AFRICA");
       {
-        shared_ptr<SSBQueryResult> res = exec.query(22, i == 0, param);
+        boost::shared_ptr<SSBQueryResult> res = exec.query(22, i == 0, param);
         BOOST_TEST_MESSAGE("  result:" << res->toString());
         BOOST_CHECK_EQUAL (res->groupedResults.size(), 1);
         SSBQueryResult::ResultMapIter it = res->groupedResults.begin();
@@ -1046,7 +1058,7 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
 
       for (int sorted = 0; sorted < 2; ++sorted) {
         family[i]->setCurrentFracture(sorted == 0 ? &fractureUnsorted : &fractureSorted);
-        shared_ptr<SSBQueryResult> res = exec.query(22, i == 0, param);
+        boost::shared_ptr<SSBQueryResult> res = exec.query(22, i == 0, param);
         BOOST_TEST_MESSAGE("  result:" << res->toString());
         BOOST_CHECK_EQUAL (res->groupedResults.size(), 3);
         SSBQueryResult::ResultMapIter it = res->groupedResults.begin();
@@ -1084,7 +1096,7 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
       param.strings.push_back ("MFGR#1239");
       param.strings.push_back ("ASIA");
       {
-        shared_ptr<SSBQueryResult> res = exec.query(23, i == 0, param);
+        boost::shared_ptr<SSBQueryResult> res = exec.query(23, i == 0, param);
         BOOST_TEST_MESSAGE("  result:" << res->toString());
         BOOST_CHECK_EQUAL (res->groupedResults.size(), 1);
         SSBQueryResult::ResultMapIter it = res->groupedResults.begin();
@@ -1101,7 +1113,7 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
       param.strings.push_back ("MFGR#3332");
       param.strings.push_back ("MIDDLE EAST");
       {
-        shared_ptr<SSBQueryResult> res = exec.query(23, i == 0, param);
+        boost::shared_ptr<SSBQueryResult> res = exec.query(23, i == 0, param);
         BOOST_TEST_MESSAGE("  result:" << res->toString());
         BOOST_CHECK_EQUAL (res->groupedResults.size(), 1);
         SSBQueryResult::ResultMapIter it = res->groupedResults.begin();
@@ -1116,7 +1128,7 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
 
       for (int sorted = 0; sorted < 2; ++sorted) {
         family[i]->setCurrentFracture(sorted == 0 ? &fractureUnsorted : &fractureSorted);
-        shared_ptr<SSBQueryResult> res = exec.query(23, i == 0, param);
+        boost::shared_ptr<SSBQueryResult> res = exec.query(23, i == 0, param);
         BOOST_TEST_MESSAGE("  result:" << res->toString());
         BOOST_CHECK_EQUAL (res->groupedResults.size(), 2);
         SSBQueryResult::ResultMapIter it = res->groupedResults.begin();
@@ -1195,7 +1207,7 @@ BOOST_AUTO_TEST_CASE(ssb_random_query) {
     else ++(it->second);
     BOOST_TEST_MESSAGE("Q" << query);
     param.generateRandomParam(query, seed);
-    shared_ptr<SSBQueryResult> res = exec.query(query, false, param);
+    boost::shared_ptr<SSBQueryResult> res = exec.query(query, false, param);
     BOOST_TEST_MESSAGE("  result:" << res->toString());
   }
   for (map<int, int>::const_iterator it = m.begin(); it != m.end(); ++it) {

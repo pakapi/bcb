@@ -7,10 +7,12 @@
 #include "../ssb/ssb.h"
 #include "../util/stopwatch.h"
 #include "../util/hashmap.h"
+#include <stdint.h>
 #include <string.h>
 #include <cstdio>
 #include <sstream>
 #include <boost/scoped_ptr.hpp>
+#include <glog/logging.h>
 
 using namespace std;
 using namespace boost;
@@ -694,10 +696,10 @@ void dumpDictionaryCompressedColumn(CStoreDumpContext &context, const FMainMemor
     }
     break;
   case 8:
-    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<unsigned int8_t>, &context);
+    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<uint8_t>, &context);
     break;
   case 16:
-    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<unsigned int16_t>, &context);
+    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<uint16_t>, &context);
     break;
   default:
       // not supported yet
@@ -730,20 +732,20 @@ FReadOnlyCStore::FReadOnlyCStore (FBufferPool *bufferpool, TableType type, const
   for (size_t i = 0; i < _columns.size(); ++i) {
     const FCStoreColumn &column = _columns[i];
     const FFileSignature &signature = signatures[i];
-    shared_ptr<FColumnReader> reader;
+    boost::shared_ptr<FColumnReader> reader;
     switch (column.compression) {
     case UNCOMPRESSED:
-      reader = shared_ptr<FColumnReader>(new FColumnReaderImplUncompressed(bufferpool, column, signature));
+      reader = boost::shared_ptr<FColumnReader>(new FColumnReaderImplUncompressed(bufferpool, column, signature));
       break;
     case RLE_COMPRESSED:
-      reader = shared_ptr<FColumnReader>(new FColumnReaderImplRLE(bufferpool, column, signature));
+      reader = boost::shared_ptr<FColumnReader>(new FColumnReaderImplRLE(bufferpool, column, signature));
       break;
     case DICTIONARY_COMPRESSED_1BIT:
     case DICTIONARY_COMPRESSED_2BIT:
     case DICTIONARY_COMPRESSED_4BIT:
     case DICTIONARY_COMPRESSED_8BIT:
     case DICTIONARY_COMPRESSED_16BIT:
-      reader = shared_ptr<FColumnReader>(new FColumnReaderImplDictionary(bufferpool, column, signature));
+      reader = boost::shared_ptr<FColumnReader>(new FColumnReaderImplDictionary(bufferpool, column, signature));
       break;
     default:
       assert (false);
@@ -891,7 +893,7 @@ void FColumnReaderImplUncompressed::getPositionBitmaps (const SearchCond &cond, 
   for (size_t i = 0; i < _searchRanges.size(); ++i) {
     const PositionRange &range = _searchRanges[i];
     size_t tupleCount = range.end - range.begin;
-    shared_ptr<PositionBitmap> bitmapPtr = PositionBitmap::newBitmap(range.begin, tupleCount);
+    boost::shared_ptr<PositionBitmap> bitmapPtr = PositionBitmap::newBitmap(range.begin, tupleCount);
     positions.push_back (bitmapPtr);
     PositionBitmap *bitmap = bitmapPtr.get();
 
@@ -1063,7 +1065,7 @@ void FColumnReaderImplDictionary::getPositionBitmaps (const SearchCond &cond, st
     for (size_t i = 0; i < _searchRanges.size(); ++i) {
       const PositionRange &range = _searchRanges[i];
       size_t tupleCount = range.end - range.begin;
-      shared_ptr<PositionBitmap> bitmapPtr = PositionBitmap::newBitmap(range.begin, tupleCount);
+      boost::shared_ptr<PositionBitmap> bitmapPtr = PositionBitmap::newBitmap(range.begin, tupleCount);
       positions.push_back (bitmapPtr);
     }
     return;
@@ -1072,7 +1074,7 @@ void FColumnReaderImplDictionary::getPositionBitmaps (const SearchCond &cond, st
   for (size_t i = 0; i < _searchRanges.size(); ++i) {
     const PositionRange &range = _searchRanges[i];
     size_t tupleCount = range.end - range.begin;
-    shared_ptr<PositionBitmap> bitmapPtr = PositionBitmap::newBitmap(range.begin, tupleCount);
+    boost::shared_ptr<PositionBitmap> bitmapPtr = PositionBitmap::newBitmap(range.begin, tupleCount);
     positions.push_back (bitmapPtr);
     PositionBitmap *bitmap = bitmapPtr.get();
 
@@ -1115,9 +1117,9 @@ void FColumnReaderImplDictionary::getPositionBitmaps (const SearchCond &cond, st
         // no bit offset. simple
         assert (_dictionaryBits % 8 == 0);
         if (_dictionaryBits == 8) {
-          matchCount += processPageNoBitOffset<unsigned int8_t>(matchingIds, reinterpret_cast<const unsigned int8_t*>(cursor), tupleToRead, bitmap, bitmapPageOffset);
+          matchCount += processPageNoBitOffset<uint8_t>(matchingIds, reinterpret_cast<const uint8_t*>(cursor), tupleToRead, bitmap, bitmapPageOffset);
         } else if (_dictionaryBits == 16) {
-          matchCount += processPageNoBitOffset<unsigned int16_t>(matchingIds, reinterpret_cast<const unsigned int16_t*>(cursor), tupleToRead, bitmap, bitmapPageOffset);
+          matchCount += processPageNoBitOffset<uint16_t>(matchingIds, reinterpret_cast<const uint16_t*>(cursor), tupleToRead, bitmap, bitmapPageOffset);
         } else {
           assert (false); // not supported
         }
@@ -1512,8 +1514,8 @@ PositionBitmap::PositionBitmap (int64_t beginPosition_, size_t bitLength_) {
 PositionBitmap::~PositionBitmap() {
   delete[] bitmap;
 }
-shared_ptr<PositionBitmap> PositionBitmap::newBitmap (int64_t beginPosition_, size_t bitLength_) {
-  return shared_ptr<PositionBitmap>(new PositionBitmap(beginPosition_, bitLength_));
+boost::shared_ptr<PositionBitmap> PositionBitmap::newBitmap (int64_t beginPosition_, size_t bitLength_) {
+  return boost::shared_ptr<PositionBitmap>(new PositionBitmap(beginPosition_, bitLength_));
 }
 
 } // fdb

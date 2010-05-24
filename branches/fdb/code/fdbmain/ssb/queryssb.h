@@ -1,6 +1,7 @@
 #ifndef SSB_QUERYSSB_H
 #define SSB_QUERYSSB_H
 
+#include <stdint.h>
 #include <map>
 #include <string>
 #include <vector>

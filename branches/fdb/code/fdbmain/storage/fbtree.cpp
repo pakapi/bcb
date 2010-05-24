@@ -8,6 +8,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <string.h>
 #include <fstream>
+#include <glog/logging.h>
 
 using namespace std;
 using namespace boost;

@@ -9,7 +9,7 @@ namespace fdb {
 
 class DirectFileStream {
 public:
-  DirectFileStream (const std::string &name, int flags);
+  DirectFileStream (const std::string &name, bool direct, bool readonly);
   virtual ~DirectFileStream ();
 
   void close();
@@ -25,10 +25,13 @@ public:
   static void deallocateMemoryForIO (bool direct, void *buffer);
 
 protected:
-  void init (const std::string &name, int flags);
-
   std::string _name;
+  bool _direct;
+#ifdef WIN32
+  void* _fd;
+#else //WIN32
   int _fd;
+#endif //WIN32
   int64_t _currentLocation;
   int64_t _nextLocation;
 };
@@ -55,7 +58,6 @@ public:
 class DirectFileInputStream : public DirectFileStream {
 public:
   DirectFileInputStream (const std::string &name, bool direct);
-  DirectFileInputStream (const std::string &name, int flags);
   virtual ~DirectFileInputStream () {};
 
   int64_t read (void *buffer, int64_t size);
@@ -65,7 +67,6 @@ public:
 class DirectFileOutputStream : public DirectFileStream {
 public:
   DirectFileOutputStream (const std::string &name, bool direct);
-  DirectFileOutputStream (const std::string &name, int flags);
   virtual ~DirectFileOutputStream () {};
 
   int64_t write (const void *buffer, int64_t size);

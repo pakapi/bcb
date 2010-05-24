@@ -92,9 +92,9 @@ void FBufferPoolImpl::addPage (int fileId, int pageId, char *data) {
       } else {
         // this page is not recently read. evict this!
         FilePageId oldFilePageId = toFilePageId(_entries[_clockHand].fileId, _entries[_clockHand].pageId);
-#ifdef DEBUG
+#ifndef NDEBUG
         size_t erased =
-#endif// DEBUG
+#endif// NDEBUG
           _idMap.erase (oldFilePageId);
         assert (erased > 0);
         _entries[_clockHand].clear();

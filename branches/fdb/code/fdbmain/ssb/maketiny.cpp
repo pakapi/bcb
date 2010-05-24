@@ -10,14 +10,13 @@
 #define IO_BUFFER_SIZE (1 << 20)
 
 using namespace std;
-using namespace boost;
 
 namespace fdb {
 
 
-shared_ptr< map<int, string> > readDimension(char *inBuffer,
+boost::shared_ptr< std::map<int, std::string> > readDimension(char *inBuffer,
     const std::string &originalTblFolder, const std::string &name) {
-  shared_ptr<map<int, string> > resultPtr (new map<int, string>());
+  boost::shared_ptr<std::map<int, std::string> > resultPtr (new map<int, string>());
   map<int, string> *result = resultPtr.get();
   std::string inFilename = originalTblFolder + name + ".tbl";
 
@@ -49,7 +48,7 @@ shared_ptr< map<int, string> > readDimension(char *inBuffer,
 
 void makeTinySSB(const std::string &originalTblFolder, const std::string &tinyTblFolder, size_t tuples) {
   LOG (INFO) << "converting SSB files in " << originalTblFolder << ", to tiny files into " << tinyTblFolder << " upto " << tuples << " tuples.";
-  scoped_array<char> inPtr(new char[IO_BUFFER_SIZE]);
+  boost::scoped_array<char> inPtr(new char[IO_BUFFER_SIZE]);
   char *inb = inPtr.get();
 
   vector<string> dimensions;
@@ -59,7 +58,7 @@ void makeTinySSB(const std::string &originalTblFolder, const std::string &tinyTb
   dimensions.push_back("supplier");
 
   // first, read all tuples from dimension tables to collect referenced tuples.
-  vector<shared_ptr<map<int, string> > > maps;
+  std::vector<boost::shared_ptr<std::map<int, std::string> > > maps;
   std::vector<set<int> > ids; // referenced IDs. note that it's SET.
   for (size_t i = 0; i < dimensions.size(); ++i) {
     maps.push_back (readDimension(inb, originalTblFolder, dimensions[i]));

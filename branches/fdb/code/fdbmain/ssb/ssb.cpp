@@ -26,10 +26,10 @@ void Lineorder::loadDataPiped(const std::string &line) {
   copyStr (orderpriority, (it++));
   copyStr (shippriority, (it++));
   quantity = ::atol((it++)->c_str());
-  extendedprice = ::atoll((it++)->c_str());
+  extendedprice = ::atol((it++)->c_str());
   ordertotalprice = ::atol((it++)->c_str());
   discount = ::atol((it++)->c_str());
-  revenue = ::atoll((it++)->c_str());
+  revenue = ::atol((it++)->c_str());
   supplycost = ::atol((it++)->c_str());
   tax = ::atol((it++)->c_str());
   commitdate = ::atol((it++)->c_str());

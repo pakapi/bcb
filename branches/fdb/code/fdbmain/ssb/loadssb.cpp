@@ -88,15 +88,17 @@ void convertSSBPipedFile(const std::string &tblFolder) {
   convertOneSSBPipedFile<Lineorder>(inb, outb, tblFolder, "lineorder");
   convertOneSSBPipedFile<Part>(inb, outb, tblFolder, "part");
   convertOneSSBPipedFile<Supplier>(inb, outb, tblFolder, "supplier");
+#ifndef _MSC_VER
   ::sync ();
+#endif
   watch.stop();
   LOG(INFO) << "converted all SSB tbl files to bin files. " << watch.getElapsed() << " micsosec";
 }
 
-shared_ptr<FMainMemoryBTree> loadOneSSBBinFile(
+boost::shared_ptr<FMainMemoryBTree> loadOneSSBBinFile(
     char *buffer, FSignatureSet &signatureFile, const std::string &dataFolder,
     TableType tableType, int64_t maxSize, const std::string &tblFolder, const std::string &tblName, bool cstore) {
-  shared_ptr<FMainMemoryBTree> btreePtr(new FMainMemoryBTree(tableType, maxSize, false));
+  boost::shared_ptr<FMainMemoryBTree> btreePtr(new FMainMemoryBTree(tableType, maxSize, false));
   FMainMemoryBTree *btree = btreePtr.get();
   scoped_array<char> keyBufferPtr(new char[toKeySize(tableType)]);
   char *keyBuffer = keyBufferPtr.get();
@@ -165,7 +167,9 @@ void loadSSBBinFile(const std::string &dataFolder,
   loadOneSSBBinFile(buffer, signatureFile, dataFolder, SUPPLIER_PK_SORT, 10000, tblFolder, "supplier.bin", cstore);
 
   signatureFile.save(dataFolder, dataSignatureFile);
+#ifndef _MSC_VER
   ::sync ();
+#endif
 
   watch.stop();
   LOG(INFO) << "loaded all SSB data from bin files. " << watch.getElapsed() << " micsosec";
@@ -232,7 +236,9 @@ void loadLineorderMVAndBase(
     signatureFile.dumpToNewRowStoreFile(dataFolder, tblName + ".db", baseBtree);
     signatureFile.dumpToNewRowStoreFile(dataFolder, "mvprojection.db", mvBtree);
   }
+#ifndef _MSC_VER
   ::sync ();
+#endif
 }
 
 void loadSSBBinFileMV(const std::string &dataFolder,
@@ -250,10 +256,10 @@ void loadSSBBinFileMV(const std::string &dataFolder,
 
   scoped_array<char> bufferAutoPtr(new char[IO_BUFFER_SIZE]);
   char *buffer = bufferAutoPtr.get();
-  shared_ptr<FMainMemoryBTree> cb = loadOneSSBBinFile(buffer, signatureFile, dataFolder, CUSTOMER_PK_SORT, 30000, tblFolder, "customer.bin", cstore);
-  shared_ptr<FMainMemoryBTree> db = loadOneSSBBinFile(buffer, signatureFile, dataFolder, DATE_PK_SORT, 2556, tblFolder, "date.bin", cstore);
-  shared_ptr<FMainMemoryBTree> pb = loadOneSSBBinFile(buffer, signatureFile, dataFolder, PART_PK_SORT, 200000, tblFolder, "part.bin", cstore);
-  shared_ptr<FMainMemoryBTree> sb = loadOneSSBBinFile(buffer, signatureFile, dataFolder, SUPPLIER_PK_SORT, 10000, tblFolder, "supplier.bin", cstore);
+  boost::shared_ptr<FMainMemoryBTree> cb = loadOneSSBBinFile(buffer, signatureFile, dataFolder, CUSTOMER_PK_SORT, 30000, tblFolder, "customer.bin", cstore);
+  boost::shared_ptr<FMainMemoryBTree> db = loadOneSSBBinFile(buffer, signatureFile, dataFolder, DATE_PK_SORT, 2556, tblFolder, "date.bin", cstore);
+  boost::shared_ptr<FMainMemoryBTree> pb = loadOneSSBBinFile(buffer, signatureFile, dataFolder, PART_PK_SORT, 200000, tblFolder, "part.bin", cstore);
+  boost::shared_ptr<FMainMemoryBTree> sb = loadOneSSBBinFile(buffer, signatureFile, dataFolder, SUPPLIER_PK_SORT, 10000, tblFolder, "supplier.bin", cstore);
 
   loadLineorderMVAndBase(
     buffer, signatureFile, dataFolder,
@@ -261,7 +267,9 @@ void loadSSBBinFileMV(const std::string &dataFolder,
     cb.get(), db.get(), pb.get(), sb.get());
 
   signatureFile.save(dataFolder, dataSignatureFile);
+#ifndef _MSC_VER
   ::sync ();
+#endif
 
   watch.stop();
   LOG(INFO) << "loaded all SSB data from bin files. " << watch.getElapsed() << " micsosec";
