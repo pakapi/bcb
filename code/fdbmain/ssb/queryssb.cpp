@@ -10,6 +10,7 @@
 #include "../storage/ffilesig.h"
 #include "../storage/searchcond.h"
 #include "../util/stopwatch.h"
+#include <stdint.h>
 #include <cassert>
 #include <vector>
 #include <map>
@@ -340,7 +341,7 @@ void query11BCallback (void *context, const MVProjection *tuple) {
     con->sum += tuple->l_extendedprice * tuple->l_discount;
   }
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query11B (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query11B (const SSBQueryParam &param) {
   assert (param.ints.size() >= 4);
   StopWatch watch;
   watch.init();
@@ -348,11 +349,11 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query11B (const SSBQueryParam &
   Q11BContext context (param.ints[1], param.ints[2], param.ints[3]);
   btreeMVSearchYear (query11BCallback, &context, year);
   watch.stop();
-  shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), context.sum));
+  boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), context.sum));
   VLOG(1) << "Q11B done: sum=" << context.sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query11C (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query11C (const SSBQueryParam &param) {
   assert (param.ints.size() >= 4);
   StopWatch watch;
   watch.init();
@@ -416,7 +417,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query11C (const SSBQueryParam &
   sum += context.sum;
 
   watch.stop();
-  shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), sum));
+  boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), sum));
   VLOG(1) << "Q11C done: sum=" << sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
@@ -463,18 +464,18 @@ void query12BCallback (void *context, const MVProjection *tuple) {
     }
   }
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query12B (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query12B (const SSBQueryParam &param) {
   assert (param.ints.size() >= 5);
   StopWatch watch;
   watch.init();
   Q12BContext context (param.ints[0], param.ints[1], param.ints[2], param.ints[3], param.ints[4]);
   btreeMVSearchYear (query12BCallback, &context, context.yearMonthNum / 100);
   watch.stop();
-  shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), context.sum));
+  boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), context.sum));
   VLOG(1) << "Q12B done: sum=" << context.sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query12C (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query12C (const SSBQueryParam &param) {
   assert (param.ints.size() >= 5);
   StopWatch watch;
   watch.init();
@@ -535,7 +536,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query12C (const SSBQueryParam &
   sum += context.sum;
 
   watch.stop();
-  shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), sum));
+  boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), sum));
   VLOG(1) << "Q12C done: sum=" << sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
@@ -581,18 +582,18 @@ void query13BCallback (void *context, const MVProjection *tuple) {
     con->sum += tuple->l_extendedprice * tuple->l_discount;
   }
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query13B (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query13B (const SSBQueryParam &param) {
   assert (param.ints.size() >= 6);
   StopWatch watch;
   watch.init();
   Q13BContext context(param.ints[1], param.ints[2], param.ints[3], param.ints[4], param.ints[5]);
   btreeMVSearchYear (query13BCallback, &context, param.ints[0]);
   watch.stop();
-  shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), context.sum));
+  boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), context.sum));
   VLOG(1) << "Q13B done: sum=" << context.sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query13C (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query13C (const SSBQueryParam &param) {
   assert (param.ints.size() >= 6);
   StopWatch watch;
   watch.init();
@@ -656,7 +657,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query13C (const SSBQueryParam &
   sum += context.sum;
 
   watch.stop();
-  shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), sum));
+  boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(watch.getElapsed(), sum));
   VLOG(1) << "Q13C done: sum=" << sum << ". " << watch.getElapsed() << " microsec";
   return result;
 }
@@ -686,8 +687,8 @@ struct Q21BContext {
   char p_category[P_CATEGORY_SIZE];
   map<int16_t, map<string, int64_t> > resultMap; //map<year, map<brand, sum>>
 
-  shared_ptr<SSBQueryResult> toResult () {
-    shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16, RESULT_GROUP_STRING));
+  boost::shared_ptr<SSBQueryResult> toResult () {
+    boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16, RESULT_GROUP_STRING));
     SSBQueryResult *resultRaw = result.get(); 
     for (map<int16_t, map<string, int64_t> >::const_iterator yearIt = resultMap.begin(); yearIt != resultMap.end(); ++yearIt) {
       int16_t year = yearIt->first;
@@ -726,19 +727,19 @@ void query21BCallback (void *context, const MVProjection *tuple) {
     }
   }
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21B (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21B (const SSBQueryParam &param) {
   assert (param.strings.size() >= 2);
   StopWatch watch;
   watch.init();
   Q21BContext context (param.strings[0]);
   btreeMVSearchSRegion(query21BCallback, &context, param.strings[1]);
-  shared_ptr<SSBQueryResult> result = context.toResult();
+  boost::shared_ptr<SSBQueryResult> result = context.toResult();
   watch.stop();
   result->elapsedMicrosec = watch.getElapsed();
   VLOG(1) << "Q21B done: " << result->groupedResults.size() << " rows. " << result->elapsedMicrosec << " microsec";
   return result;
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQueryParam &param) {
   assert (param.strings.size() >= 2);
   StopWatch watch;
   watch.init();
@@ -784,14 +785,16 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQueryParam &
   brandReader->getAllDictionaryEntries(brands);
   size_t brandDictionarySize = brands.size();
 
-  shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16, RESULT_GROUP_STRING));
+  boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16, RESULT_GROUP_STRING));
   SSBQueryResult *resultRaw = result.get();
 
-  vector<shared_ptr<PositionBitmap> > positions;
+  vector<boost::shared_ptr<PositionBitmap> > positions;
   categoryReader->setSearchRanges(yearRangesVec);
   categoryReader->getPositionBitmaps(SearchCond(SCT_EQUAL, p_category.data()), positions);
   assert (positions.size () == yearRanges.size());
 
+  scoped_array<int64_t> sumBufferPtr(new int64_t[brandDictionarySize]);
+  int64_t *sumBuffer = (sumBufferPtr.get());
   int rows = 0;
   for (size_t i = 0; i < yearRanges.size(); ++i) {
     const PositionRange &range = yearRanges[i].first;
@@ -799,11 +802,10 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQueryParam &
     int16_t year = yearRanges[i].second;
     string yearStr (reinterpret_cast<char *>(&year), sizeof(int16_t));
 
-    int64_t results[brandDictionarySize];
-    ::memset (results, 0, sizeof(int64_t) * brandDictionarySize);
+    ::memset (sumBuffer, 0, sizeof(int64_t) * brandDictionarySize);
     revReader->getDecompressedData(range, revBuffer, maxLen * sizeof(int32_t));
 
-    shared_ptr<PositionBitmap> position = positions[i];
+    boost::shared_ptr<PositionBitmap> position = positions[i];
     const unsigned char *bitmap = position->bitmap;
     int bitOffset = 0;
     brandReader->getDictionaryCompressedData(range, brandBuffer, maxLen * sizeof(int16_t), bitOffset);
@@ -816,18 +818,18 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQueryParam &
         int16_t brandId = brandBuffer[j];
         assert (brandId >= 0);
         assert ((size_t) brandId < brandDictionarySize);
-        results[brandId] += revBuffer[j];
+        sumBuffer[brandId] += revBuffer[j];
       }
     }
     for (size_t brandId = 0; brandId < brandDictionarySize; ++brandId) {
-      assert (results[brandId] >= 0);
-      if (results[brandId] == 0) continue;
+      assert (sumBuffer[brandId] >= 0);
+      if (sumBuffer[brandId] == 0) continue;
       ++rows;
 
       vector<string> groupString;
       groupString.push_back(yearStr);
       groupString.push_back(brands[brandId]);
-      resultRaw->groupedResults[groupString] = results[brandId];
+      resultRaw->groupedResults[groupString] = sumBuffer[brandId];
     }
   }
 
@@ -877,8 +879,8 @@ struct Q22BContext {
   char p_brand_to[P_BRAND_SIZE];
   map<int16_t, map<string, int64_t> > resultMap; //map<year, map<brand, sum>>
 
-  shared_ptr<SSBQueryResult> toResult () {
-    shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16, RESULT_GROUP_STRING));
+  boost::shared_ptr<SSBQueryResult> toResult () {
+    boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16, RESULT_GROUP_STRING));
     SSBQueryResult *resultRaw = result.get(); 
     for (map<int16_t, map<string, int64_t> >::const_iterator yearIt = resultMap.begin(); yearIt != resultMap.end(); ++yearIt) {
       int16_t year = yearIt->first;
@@ -916,19 +918,19 @@ void query22BCallback (void *context, const MVProjection *tuple) {
     }
   }
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22B (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22B (const SSBQueryParam &param) {
   assert (param.strings.size() >= 3);
   StopWatch watch;
   watch.init();
   Q22BContext context (param.strings[0], param.strings[1]);
   btreeMVSearchSRegion(query22BCallback, &context, param.strings[2]);
-  shared_ptr<SSBQueryResult> result = context.toResult();
+  boost::shared_ptr<SSBQueryResult> result = context.toResult();
   watch.stop();
   result->elapsedMicrosec = watch.getElapsed();
   VLOG(1) << "Q22B done: " << result->groupedResults.size() << " rows. " << result->elapsedMicrosec << " microsec";
   return result;
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQueryParam &param) {
   assert (param.strings.size() >= 3);
   StopWatch watch;
   watch.init();
@@ -967,9 +969,11 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQueryParam &
   size_t brandDictionarySize = brands.size();
   vector<int> matchingBrandIds = brandReader->searchDictionary(SearchCond(p_brand_from.data(), p_brand_to.data()));
 
-  shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16, RESULT_GROUP_STRING));
+  boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16, RESULT_GROUP_STRING));
   SSBQueryResult *resultRaw = result.get();
 
+  scoped_array<int64_t> resultsPtr(new int64_t[brandDictionarySize]);
+  int64_t *results = resultsPtr.get();
   int rows = 0;
   for (size_t i = 0; i < yearRanges.size(); ++i) {
     const PositionRange &range = yearRanges[i].first;
@@ -977,7 +981,6 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQueryParam &
     int16_t year = yearRanges[i].second;
     string yearStr (reinterpret_cast<char *>(&year), sizeof(int16_t));
 
-    int64_t results[brandDictionarySize];
     ::memset (results, 0, sizeof(int64_t) * brandDictionarySize);
     revReader->getDecompressedData(range, revBuffer, maxLen * sizeof(int32_t));
 
@@ -1040,8 +1043,8 @@ struct Q23BContext {
   char p_brand[P_BRAND_SIZE];
   map<int16_t, int64_t> resultMap; //map<year, sum>
 
-  shared_ptr<SSBQueryResult> toResult () {
-    shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16));
+  boost::shared_ptr<SSBQueryResult> toResult () {
+    boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16));
     SSBQueryResult *resultRaw = result.get();
     for (map<int16_t, int64_t>::const_iterator yearIt = resultMap.begin(); yearIt != resultMap.end(); ++yearIt) {
       int16_t year = yearIt->first;
@@ -1065,19 +1068,19 @@ void query23BCallback (void *context, const MVProjection *tuple) {
     }
   }
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23B (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23B (const SSBQueryParam &param) {
   assert (param.strings.size() >= 2);
   StopWatch watch;
   watch.init();
   Q23BContext context (param.strings[0]);
   btreeMVSearchSRegion(query23BCallback, &context, param.strings[1]);
-  shared_ptr<SSBQueryResult> result = context.toResult();
+  boost::shared_ptr<SSBQueryResult> result = context.toResult();
   watch.stop();
   result->elapsedMicrosec = watch.getElapsed();
   VLOG(1) << "Q23B done: " << result->groupedResults.size() << " rows. " << result->elapsedMicrosec << " microsec";
   return result;
 }
-shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23C (const SSBQueryParam &param) {
+boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23C (const SSBQueryParam &param) {
   assert (param.strings.size() >= 2);
   StopWatch watch;
   watch.init();
@@ -1112,10 +1115,10 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23C (const SSBQueryParam &
   scoped_array<int32_t> revBufferPtr(new int32_t[maxLen]);
   int32_t *revBuffer = (revBufferPtr.get());
 
-  shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16));
+  boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16));
   SSBQueryResult *resultRaw = result.get();
 
-  vector<shared_ptr<PositionBitmap> > positions;
+  vector<boost::shared_ptr<PositionBitmap> > positions;
   brandReader->setSearchRanges(yearRangesVec);
   brandReader->getPositionBitmaps(SearchCond(SCT_EQUAL, p_brand.data()), positions);
   assert (positions.size () == yearRanges.size());
@@ -1129,7 +1132,7 @@ shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query23C (const SSBQueryParam &
 
     revReader->getDecompressedData(range, revBuffer, maxLen * sizeof(int32_t));
 
-    shared_ptr<PositionBitmap> position = positions[i];
+    boost::shared_ptr<PositionBitmap> position = positions[i];
     const unsigned char *bitmap = position->bitmap;
 
     int64_t sum = 0;

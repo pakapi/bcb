@@ -14,6 +14,10 @@
 #include <utility>
 #include <boost/shared_array.hpp>
 
+#ifdef _MSC_VER
+#pragma warning( disable : 4250) // I do know there's diamond inheritance, but it's virtual inheritance!
+#endif //_MSC_VER
+
 class StringHashSet;
 namespace fdb {
 

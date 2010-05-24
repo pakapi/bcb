@@ -1,2 +1,2 @@
-ADD_LIBRARY (fdbio fis.cpp)
+ADD_LIBRARY (fdbio STATIC fis.cpp)
 TARGET_LINK_LIBRARIES(fdbio ${GLOG_LIBRARIES})

@@ -44,7 +44,7 @@ ADD_EXECUTABLE(testmain testmain.cpp)
 # db_cxx (BDB c++ binding)
 # glog (Google logging)
 # tedious to write cmake find modules. please make sure you have these installed in /usr/lib...
-TARGET_LINK_LIBRARIES(fdbmain ${GLOG_LIBRARIES} fdbstorage fdbssb fengine)
+TARGET_LINK_LIBRARIES(fdbmain ${GLOG_LIBRARIES} fdbstorage fdbssb fengine ${GLOG_LIBRARIES})
 
 # and boost test
 TARGET_LINK_LIBRARIES(testmain ${GLOG_LIBRARIES} fdbstorage fdbssb fengine boost_unit_test_framework)

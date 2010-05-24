@@ -4,15 +4,13 @@
 #include "../storage/fbtree.h"
 #include "../storage/fbufferpool.h"
 
-using namespace boost;
-using namespace std;
-
 namespace fdb {
 
 // ==========================================================================
 //  Proxies
 // ==========================================================================
-FEngine::FEngine (const std::string &dataFolder, const std::string &configFilePath, int bufferPageCount) : _impl (new FEngineImpl (dataFolder, configFilePath, bufferPageCount)) {
+FEngine::FEngine (const std::string &dataFolder, const std::string &configFilePath, int bufferPageCount)
+  : _impl (new FEngineImpl (dataFolder, configFilePath, bufferPageCount)) {
 }
 FEngine::~FEngine () {
   delete _impl;
@@ -75,7 +73,7 @@ const std::string& FEngineImpl::getDataFolder() const {
 //  On memory table get/set
 // =====================
 FMainMemoryBTree* FEngineImpl::getMainMemoryTable (const std::string &name) {
-  map<string, shared_ptr<FMainMemoryBTree> >::const_iterator it = _onMemoryTables.find (name);
+  std::map<std::string, boost::shared_ptr<FMainMemoryBTree> >::const_iterator it = _onMemoryTables.find (name);
   if (it == _onMemoryTables.end()) {
     return NULL;
   } else {
@@ -87,7 +85,7 @@ FMainMemoryBTree* FEngineImpl::createNewMainMemoryTable (const std::string &name
     assert (false);
     throw std::exception ();
   }
-  shared_ptr<FMainMemoryBTree> table (new FMainMemoryBTree(type, maxSize, sortedBuffer));
+  boost::shared_ptr<FMainMemoryBTree> table (new FMainMemoryBTree(type, maxSize, sortedBuffer));
   _onMemoryTables [name] = table;
   return table.get();
 }
@@ -101,7 +99,7 @@ bool FEngineImpl::eraseMainMemoryTable (const std::string &name) {
 // =====================
 
 FFamily* FEngineImpl::getFractureFamily (const std::string &name) {
-  map<string, shared_ptr<FFamily> >::const_iterator it = _families.find (name);
+  std::map<std::string, boost::shared_ptr<FFamily> >::const_iterator it = _families.find (name);
   if (it == _families.end()) {
     return NULL;
   } else {
@@ -113,7 +111,7 @@ FFamily* FEngineImpl::createNewFractureFamily (const std::string &name) {
     assert (false);
     throw std::exception ();
   }
-  shared_ptr<FFamily> family (new FFamily());
+  boost::shared_ptr<FFamily> family (new FFamily());
   _families [name] = family;
   return family.get();
 }

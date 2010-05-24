@@ -182,7 +182,7 @@ FFileSignature FSignatureSet::dumpToNewRowStoreFile (const std::string &folder, 
   // register the new signature
   FFileSignature signature;
   signature.fileId = fileId;
-  ::strcpy(signature.filepath, filepath.c_str());
+  ::memcpy(signature.filepath, filepath.data(), filepath.size());
   btree.dumpToNewRowStoreFile(signature);
   addFileSignature(signature);
 
@@ -224,7 +224,7 @@ std::vector<FFileSignature> FSignatureSet::dumpToNewCStoreFiles (const std::stri
 
     FFileSignature signature;
     signature.fileId = issueNextFileId();
-    ::strcpy(signature.filepath, filepath.c_str());
+    ::memcpy(signature.filepath, filepath.data(), filepath.size());
     signatures.push_back (signature);
   }
   assert (signatures.size () == columns.size());
