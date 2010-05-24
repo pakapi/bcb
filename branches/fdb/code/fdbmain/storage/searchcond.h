@@ -7,18 +7,18 @@
 namespace fdb {
 
 enum SearchCondType {
-  EQUAL,
-  BETWEEN,
-  IN,
-  LT,
-  GT,
-  LTEQ,
-  GTEQ,
+  SCT_EQUAL,
+  SCT_BETWEEN,
+  SCT_IN,
+  SCT_LT,
+  SCT_GT,
+  SCT_LTEQ,
+  SCT_GTEQ,
 };
 struct SearchCond {
   SearchCond (SearchCondType type_, const void *key_) : type(type_), key(key_), key2(NULL) {} // for EQUAL, LT, GT, LTEQ, GTEQ
-  SearchCond (const void *from, const void *to) : type(BETWEEN), key(from), key2(to) {} // for BETWEEN
-  SearchCond (const std::vector<const void*> &keys_) : type(IN), key(NULL), key2(NULL), keys(keys_) {} // for IN
+  SearchCond (const void *from, const void *to) : type(SCT_BETWEEN), key(from), key2(to) {} // for BETWEEN
+  SearchCond (const std::vector<const void*> &keys_) : type(SCT_IN), key(NULL), key2(NULL), keys(keys_) {} // for IN
   SearchCondType type;
   const void *key, *key2;
   std::vector<const void*> keys;
@@ -36,13 +36,13 @@ struct SearchCond {
   }
   inline bool matchString(const void *data, size_t length) const {
     switch (type) {
-    case EQUAL: return ::memcmp (data, key, length) == 0;
-    case LT: return ::memcmp (data, key, length) < 0;
-    case GT: return ::memcmp (data, key, length) > 0;
-    case LTEQ: return ::memcmp (data, key, length) <= 0;
-    case GTEQ: return ::memcmp (data, key, length) >= 0;
-    case BETWEEN: return ::memcmp (data, key, length) >= 0 && ::memcmp (data, key2, length) <= 0;
-    case IN: return matchStringIn(data, length);
+    case SCT_EQUAL: return ::memcmp (data, key, length) == 0;
+    case SCT_LT: return ::memcmp (data, key, length) < 0;
+    case SCT_GT: return ::memcmp (data, key, length) > 0;
+    case SCT_LTEQ: return ::memcmp (data, key, length) <= 0;
+    case SCT_GTEQ: return ::memcmp (data, key, length) >= 0;
+    case SCT_BETWEEN: return ::memcmp (data, key, length) >= 0 && ::memcmp (data, key2, length) <= 0;
+    case SCT_IN: return matchStringIn(data, length);
     default:
       assert (false);
       return false;
@@ -73,13 +73,13 @@ struct SearchCond {
   template<typename INT_TYPE>
   inline bool matchInts(INT_TYPE d) const {
     switch (type) {
-    case EQUAL: return d == *reinterpret_cast<const INT_TYPE*>(key);
-    case LT: return d < *reinterpret_cast<const INT_TYPE*>(key);
-    case GT: return d > *reinterpret_cast<const INT_TYPE*>(key);
-    case LTEQ: return d <= *reinterpret_cast<const INT_TYPE*>(key);
-    case GTEQ: return d >= *reinterpret_cast<const INT_TYPE*>(key);
-    case BETWEEN: return d >= *reinterpret_cast<const INT_TYPE*>(key) && d <= *reinterpret_cast<const INT_TYPE*>(key2);
-    case IN: return matchIntsIn<INT_TYPE>(d);
+    case SCT_EQUAL: return d == *reinterpret_cast<const INT_TYPE*>(key);
+    case SCT_LT: return d < *reinterpret_cast<const INT_TYPE*>(key);
+    case SCT_GT: return d > *reinterpret_cast<const INT_TYPE*>(key);
+    case SCT_LTEQ: return d <= *reinterpret_cast<const INT_TYPE*>(key);
+    case SCT_GTEQ: return d >= *reinterpret_cast<const INT_TYPE*>(key);
+    case SCT_BETWEEN: return d >= *reinterpret_cast<const INT_TYPE*>(key) && d <= *reinterpret_cast<const INT_TYPE*>(key2);
+    case SCT_IN: return matchIntsIn<INT_TYPE>(d);
     default:
       assert (false);
       return false;
@@ -89,19 +89,19 @@ struct SearchCond {
 
 inline const char* toSearchCondOp (SearchCondType type) {
   switch (type) {
-  case EQUAL:
+  case SCT_EQUAL:
     return "=";
-  case LT:
+  case SCT_LT:
     return "<";
-  case GT:
+  case SCT_GT:
     return ">";
-  case LTEQ:
+  case SCT_LTEQ:
     return "<=";
-  case GTEQ:
+  case SCT_GTEQ:
     return ">=";
-  case IN:
+  case SCT_IN:
     return "IN";
-  case BETWEEN:
+  case SCT_BETWEEN:
     return "BETWEEN";
   default:
     return "UNKNOWN";

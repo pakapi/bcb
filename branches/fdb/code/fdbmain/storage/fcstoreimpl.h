@@ -173,18 +173,18 @@ private:
   template <typename INT_TYPE>
   int processPageInts(const SearchCond &cond, const char *cursor, size_t tuplesToRead, PositionBitmap *bitmap, int64_t bitmapPageOffset) {
     switch (cond.type) {
-    case EQUAL:
+    case SCT_EQUAL:
       return processPageIntsBinary<INT_TYPE> (std::equal_to<INT_TYPE>(), cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-    case LT:
+    case SCT_LT:
       return processPageIntsBinary<INT_TYPE> (std::less<INT_TYPE>(), cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-    case GT:
+    case SCT_GT:
       return processPageIntsBinary<INT_TYPE> (std::greater<INT_TYPE>(), cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-    case LTEQ:
+    case SCT_LTEQ:
       return processPageIntsBinary<INT_TYPE> (std::less_equal<INT_TYPE>(), cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-    case GTEQ:
+    case SCT_GTEQ:
       return processPageIntsBinary<INT_TYPE> (std::greater_equal<INT_TYPE>(), cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-    case BETWEEN: return processPageIntsBetween<INT_TYPE> (cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
-    case IN: return processPageIntsIn<INT_TYPE> (cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
+    case SCT_BETWEEN: return processPageIntsBetween<INT_TYPE> (cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
+    case SCT_IN: return processPageIntsIn<INT_TYPE> (cond, cursor, tuplesToRead, bitmap, bitmapPageOffset);
     default:
       assert (false);
       return 0;
