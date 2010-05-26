@@ -453,6 +453,9 @@ std::string FFamilyImpl::mergeBTreeFractures (FEngine *engine, const std::vector
   LOG (INFO) << "mergeBTreeFractures() end. " << watch.getElapsed() << " micsosec";
   return filepath;
 }
+// ==========================================================================
+//  CStore Merging Fractures
+// ==========================================================================
 
 std::string FFamilyImpl::mergeCStoreFractures (FEngine *engine, const std::vector<std::string> &fractureNames, bool deleteOldFractures, long long mergeBufferSize) {
 }
