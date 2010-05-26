@@ -28,6 +28,7 @@ KeyDataCompareFunc toKeyDataCompareFunc(TableType type);
 DataDataCompareFunc toDataDataCompareFunc(TableType type);
 ExtractKeyFromTupleFunc toExtractKeyFromTupleFunc(TableType type);
 int toKeySize(TableType type);
+int toDataSize(TableType type);
 
 // pre-defined comparison functions
 int int32AscCompareFunc (const void *key1, const void *key2);

@@ -128,6 +128,7 @@ const char* FBufferPoolImpl::readPage (const FFileSignature &signature, int page
   stream->setNextLocation(((int64_t) pageId) * FDB_PAGE_SIZE);
   char *content = (char*) DirectFileStream::allocateMemoryForIO(FDB_PAGE_SIZE, FDB_DIRECT_IO_ALIGNMENT, FDB_USE_DIRECT_IO);
   stream->read(content, FDB_PAGE_SIZE);
+  assert (reinterpret_cast<FPageHeader*>(content)->magicNumber == MAGIC_NUMBER);
   assert (reinterpret_cast<FPageHeader*>(content)->pageId == pageId);
   assert (reinterpret_cast<FPageHeader*>(content)->fileId == signature.fileId);
   addPage(signature.fileId, pageId, content);
@@ -141,6 +142,22 @@ std::vector<const char*> FBufferPoolImpl::readPages (const FFileSignature &signa
     ret.push_back (readPage(signature, beginningPageId + i));
   }
   return ret;
+}
+void FBufferPoolImpl::readPages (const FFileSignature &signature, int beginningPageId, int pageCount, char *buffer) {
+  assert (beginningPageId >= 0);
+  assert (pageCount >= 0);
+  assert (beginningPageId + pageCount < signature.pageCount);
+  VLOG (1) << "reading bulk (" << beginningPageId << "-" << (beginningPageId + pageCount) << ") from " << signature.filepath;
+  DirectFileInputStream *stream = getOrOpenFile (signature);
+  stream->setNextLocation(((int64_t) beginningPageId) * FDB_PAGE_SIZE);
+  stream->read(buffer, FDB_PAGE_SIZE * pageCount);
+  VLOG (1) << "read";
+  assert (reinterpret_cast<FPageHeader*>(buffer)->magicNumber == MAGIC_NUMBER);
+  assert (reinterpret_cast<FPageHeader*>(buffer)->pageId == beginningPageId);
+  assert (reinterpret_cast<FPageHeader*>(buffer)->fileId == signature.fileId);
+  assert (reinterpret_cast<FPageHeader*>(buffer + FDB_PAGE_SIZE * (pageCount - 1))->magicNumber == MAGIC_NUMBER);
+  assert (reinterpret_cast<FPageHeader*>(buffer + FDB_PAGE_SIZE * (pageCount - 1))->pageId == beginningPageId + pageCount - 1);
+  assert (reinterpret_cast<FPageHeader*>(buffer + FDB_PAGE_SIZE * (pageCount - 1))->fileId == signature.fileId);
 }
 
 
@@ -172,6 +189,9 @@ const char* FBufferPool::readPage (const FFileSignature &signature, int pageId) 
 
 std::vector<const char*> FBufferPool::readPages (const FFileSignature &signature, int beginningPageId, int pageCount) {
   return _impl->readPages(signature, beginningPageId, pageCount);
+}
+void FBufferPool::readPages (const FFileSignature &signature, int beginningPageId, int pageCount, char *buffer) {
+  _impl->readPages (signature, beginningPageId, pageCount, buffer);
 }
 
 

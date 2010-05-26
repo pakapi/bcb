@@ -22,7 +22,6 @@ class StringHashSet;
 namespace fdb {
 
 // pimpl object for FMainMemoryCStore.
-// TODO: this class is not implemented so far.
 class FMainMemoryCStoreImpl {
 public:
   FMainMemoryCStoreImpl (TableType type, int maxTuples);
@@ -32,6 +31,35 @@ public:
   int _maxTuples;
   std::vector<FCStoreColumn> _columns;
   KeyCompareFunc *_compfunc;
+/*
+  bool insert (const void *key, const void *data);
+  void finishInserts ();
+  int64_t size () const { return _tuples; }
+  int getKeySize() const { return _keySize; }
+  int getDataSize() const { return _dataSize; }
+  TableType getTableType() const {return _tableType;}
+  const void* getBuffer(size_t column) const;
+
+  char *_array;
+  int64_t _tuples;
+
+  struct KeyAndIndex {
+    KeyAndIndex() {}
+    KeyAndIndex(const Key &key, size_t ind) : _key(key), _ind(ind) {}
+    Key _key;
+    size_t _ind;
+    inline bool operator==(const KeyAndIndex &other) const {
+      return _key == other._key;
+    }
+    inline bool operator!=(const KeyAndIndex &other) const {
+      return _key != other._key;
+    }
+    inline bool operator<(const KeyAndIndex &other) const {
+      return _key < other._key;
+    }
+  };
+  KeyAndIndex *_sortedKeys; // sorted only when finishInserts() is called
+*/
 };
 
 

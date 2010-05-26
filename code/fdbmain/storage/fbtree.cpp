@@ -376,6 +376,7 @@ void FMainMemoryBTreeImpl::dumpToNewRowStoreFile (FFileSignature &signature) con
   fd->sync();
   fd->close();
 
+  signature.totalTupleCount = size();
   signature.keyEntrySize = getKeySize();
   signature.leafEntrySize = getDataSize();
   signature.keyCompareFuncType = toKeyCompareFuncType(getTableType());
@@ -412,6 +413,17 @@ void FReadOnlyDiskBTree::scanAllTuples (TupleCallback callback, void *context) {
 }
 void FReadOnlyDiskBTree::scanTuplesGreaterEqual (TupleCallback callback, void *context, const char *key) {
   _impl->scanTuplesGreaterEqual(callback, context, key);
+}
+
+FReadOnlyDiskBTree::LeafPageIterator FReadOnlyDiskBTree::scanLeafPages () {
+  return FReadOnlyDiskBTree::LeafPageIterator (_impl);
+}
+
+const char* FReadOnlyDiskBTree::getLeafPage (int pageId) {
+  return _impl->getLeafPage(pageId);
+}
+int FReadOnlyDiskBTree::getLeafPageCount () const {
+  return _impl->getLeafPageCount();
 }
 
 FReadOnlyDiskBTreeImpl::FReadOnlyDiskBTreeImpl (FBufferPool *bufferpool, const FFileSignature &signature)
@@ -515,9 +527,8 @@ const char* FReadOnlyDiskBTreeImpl::getSingleTupleByKey (const char *key) {
 
   for (int pageId = leafPageId;; ++pageId) {
     assert (pageId < _signature.pageCount);
-    const char* data = _bufferpool->readPage(_signature, pageId);
+    const char* data = getLeafPage(pageId);
     const FPageHeader *header = reinterpret_cast<const FPageHeader*>(data);
-    checkLeafPageHeader(header, pageId);
     for (int j = 0; j < header->count; ++j) {
       int offset = sizeof(FPageHeader) + j * header->entrySize;
       const char *curData = data + offset;
@@ -547,9 +558,8 @@ void FReadOnlyDiskBTreeImpl::scanAllTuples (TupleCallback callback, void *contex
   for (int pageId = 0; needsToReadNext; ++pageId) {
     assert (pageId < _signature.pageCount);
     // Minor TODO: we should use readPage's' here to improve performance
-    const char* data = _bufferpool->readPage(_signature, pageId);
+    const char* data = getLeafPage(pageId);
     const FPageHeader *header = reinterpret_cast<const FPageHeader*>(data);
-    checkLeafPageHeader(header, pageId);
     for (int j = 0; j < header->count; ++j) {
       int offset = sizeof(FPageHeader) + j * header->entrySize;
       const char* tuple = data + offset;
@@ -585,9 +595,8 @@ void FReadOnlyDiskBTreeImpl::scanTuplesGreaterEqual (TupleCallback callback, voi
   for (int pageId = leafPageId; needsToReadNext; ++pageId) {
     assert (pageId < _signature.pageCount);
     // Minor TODO: we should use readPage's' here to improve performance
-    const char* data = _bufferpool->readPage(_signature, pageId);
+    const char* data = getLeafPage(pageId);
     const FPageHeader *header = reinterpret_cast<const FPageHeader*>(data);
-    checkLeafPageHeader(header, pageId);
     for (int j = 0; j < header->count; ++j) {
       int offset = sizeof(FPageHeader) + j * header->entrySize;
       const char* tuple = data + offset;
@@ -615,7 +624,16 @@ void FReadOnlyDiskBTreeImpl::scanTuplesGreaterEqual (TupleCallback callback, voi
   }
   VLOG(2) << "read ended";
 }
+const char* FReadOnlyDiskBTreeImpl::getLeafPage (int pageId) {
+  const char* data = _bufferpool->readPage(_signature, pageId);
+  const FPageHeader *header = reinterpret_cast<const FPageHeader*>(data);
+  checkLeafPageHeader(header, pageId);
+  return data;
+}
 
+int FReadOnlyDiskBTreeImpl::getLeafPageCount () const {
+  return _signature.rootPageStart;
+}
 
 void FReadOnlyDiskBTreeImpl::checkNonLeafPageHeader(const FPageHeader *header, int pageId, int currentLevel) {
   assert (header->magicNumber == MAGIC_NUMBER);
@@ -635,6 +653,42 @@ void FReadOnlyDiskBTreeImpl::checkLeafPageHeader (const FPageHeader *header, int
   assert (header->fileId == _signature.fileId);
   assert (header->entrySize == _signature.leafEntrySize);
   assert (header->count > 0);
+}
+
+// ==========================================================================
+//  Disk-based Read-only BTree Iterator
+// ==========================================================================
+FReadOnlyDiskBTree::LeafPageIterator::LeafPageIterator(FReadOnlyDiskBTreeImpl *impl_)
+: currentPageId (0), currentTuple(0), impl (impl_) {
+  const char* data = impl->getLeafPage(0);
+  const FPageHeader *header = reinterpret_cast<const FPageHeader*>(data);
+  tupleSize = header->entrySize;
+  currentPage = data + sizeof (FPageHeader);
+  currentPageTupleCount = header->count;
+  leafPageCount = impl->getLeafPageCount();
+}
+void FReadOnlyDiskBTree::LeafPageIterator::readPage(bool forward) {
+  if (forward) {
+    ++currentPageId;
+  } else {
+    --currentPageId;
+  }
+  if (currentPageId < 0 || currentPageId >= leafPageCount) {
+    currentPageTupleCount = 0;
+    currentPage = NULL;
+    currentTuple = 0;
+    return;
+  }
+  const char* data = impl->getLeafPage(currentPageId);
+  const FPageHeader *header = reinterpret_cast<const FPageHeader*>(data);
+  tupleSize = header->entrySize;
+  currentPage = data + sizeof (FPageHeader);
+  currentPageTupleCount = header->count;
+  if (forward) {
+    currentTuple = 0;
+  } else {
+    currentTuple = currentPageTupleCount - 1;
+  }
 }
 
 } //fdb

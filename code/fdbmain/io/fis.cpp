@@ -37,7 +37,7 @@ DirectFileStream::DirectFileStream (const std::string &name, bool direct, bool r
   #ifdef NOATIME
       | NOATIME // better for read performance if possible (linux 2.6.8-)
   #endif
-      | (direct ? O_DIRECT : 0));
+      | (direct ? O_DIRECT : 0);
 
   _fd = ::open (_name.c_str(), flags, S_IRUSR | S_IWUSR);
 #endif //WIN32
@@ -131,7 +131,7 @@ int64_t DirectFileOutputStream::write (const void *buffer, int64_t size) {
 #endif //WIN32
   _currentLocation = _nextLocation + writtenSize;
   _nextLocation = _currentLocation;
-  if (writtenSize < 0) {
+  if (writtenSize != size) {
     LOG (ERROR) << "could not write file " << _name << " . errno=" << errno;
     throw std::runtime_error("could not write file " + _name + ". ");
   }

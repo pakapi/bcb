@@ -38,9 +38,8 @@ IF(WIN32)
     message (STATUS "    Crap. this module supports only MSVC in Windows.")
   ENDIF(MSVC)
 ELSE(WIN32)
-  FIND_PATH(GLOG_INCLUDE_DIRS NAMES glog/logging.h HINTS ${GLOG_ROOT}/include ${GLOG_ROOT} /include/ /usr/include/ /usr/local/include/)
-  FIND_LIBRARY(GLOG_LIBRARIES NAMES glog HINTS ${GLOG_ROOT}/lib ${GLOG_ROOT} /lib /usr/lib /usr/local/lib)
-  SET(GLOG_LIBRARIES ${GLOG_LIBRARIES}/libglog.so) # not sure this is correct, but needed to keep pace with windows cmake
+  FIND_PATH(GLOG_INCLUDE_DIRS NAMES glog/logging.h PATHS ${GLOG_ROOT}/include ${GLOG_ROOT} /include/ /usr/include/ /usr/local/include/)
+  FIND_LIBRARY(GLOG_LIBRARIES NAMES glog PATHS ${GLOG_ROOT}/lib ${GLOG_ROOT} /lib /usr/lib /usr/local/lib)
 ENDIF(WIN32)
 
 IF(GLOG_INCLUDE_DIRS AND GLOG_LIBRARIES)

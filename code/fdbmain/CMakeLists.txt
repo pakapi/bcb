@@ -26,7 +26,7 @@ link_directories(${Boost_LIBRARIES})
 
 find_package(Glog REQUIRED)
 INCLUDE_DIRECTORIES(${GLOG_INCLUDE_DIRS})
-link_directories(${GLOG_LIBRARIES})
+#link_directories(${GLOG_LIBRARIES})
 
 INCLUDE_DIRECTORIES(stx-btree-0.8.3) # uses STX btree package
 
@@ -44,7 +44,7 @@ ADD_EXECUTABLE(testmain testmain.cpp)
 # db_cxx (BDB c++ binding)
 # glog (Google logging)
 # tedious to write cmake find modules. please make sure you have these installed in /usr/lib...
-TARGET_LINK_LIBRARIES(fdbmain ${GLOG_LIBRARIES} fdbstorage fdbssb fengine ${GLOG_LIBRARIES})
+TARGET_LINK_LIBRARIES(fdbmain ${GLOG_LIBRARIES} fdbstorage fdbssb fengine)
 
 # and boost test
 TARGET_LINK_LIBRARIES(testmain ${GLOG_LIBRARIES} fdbstorage fdbssb fengine boost_unit_test_framework)

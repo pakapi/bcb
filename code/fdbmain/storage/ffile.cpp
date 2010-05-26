@@ -160,6 +160,8 @@ void FSignatureSet::addFileSignature (const FFileSignature &signature) {
     assert (signature.columnCompression > 0);
   }
   _dirty = true;
+  assert (_idMap.find (signature.fileId) == _idMap.end());
+  assert (_pathMap.find (signature.filepath) == _pathMap.end());
   _idMap.insert(std::pair<int, FFileSignature>(signature.fileId, signature));
   _pathMap.insert(std::pair<string, FFileSignature>(signature.filepath, signature));
   assert (_idMap.size() == _pathMap.size());
@@ -183,6 +185,7 @@ FFileSignature FSignatureSet::dumpToNewRowStoreFile (const std::string &folder, 
   FFileSignature signature;
   signature.fileId = fileId;
   ::memcpy(signature.filepath, filepath.data(), filepath.size());
+  signature.filepath[filepath.size()] = '\0';
   btree.dumpToNewRowStoreFile(signature);
   addFileSignature(signature);
 
@@ -225,6 +228,7 @@ std::vector<FFileSignature> FSignatureSet::dumpToNewCStoreFiles (const std::stri
     FFileSignature signature;
     signature.fileId = issueNextFileId();
     ::memcpy(signature.filepath, filepath.data(), filepath.size());
+    signature.filepath[filepath.size()] = '\0';
     signatures.push_back (signature);
   }
   assert (signatures.size () == columns.size());

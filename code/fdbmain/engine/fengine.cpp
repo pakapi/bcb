@@ -29,8 +29,8 @@ bool FEngine::eraseMainMemoryTable (const std::string &name) {
 FFamily* FEngine::getFractureFamily (const std::string &name) {
   return _impl->getFractureFamily(name);
 }
-FFamily* FEngine::createNewFractureFamily (const std::string &name) {
-  return _impl->createNewFractureFamily(name);
+FFamily* FEngine::createNewFractureFamily (const std::string &name, TableType type, bool cstore) {
+  return _impl->createNewFractureFamily(name, type, cstore);
 }
 bool FEngine::eraseFractureFamily (const std::string &name) {
   return _impl->eraseFractureFamily(name);
@@ -106,12 +106,12 @@ FFamily* FEngineImpl::getFractureFamily (const std::string &name) {
     return it->second.get();
   }
 }
-FFamily* FEngineImpl::createNewFractureFamily (const std::string &name) {
+FFamily* FEngineImpl::createNewFractureFamily (const std::string &name, TableType type, bool cstore) {
   if (_families.find (name) != _families.end()) {
     assert (false);
     throw std::exception ();
   }
-  boost::shared_ptr<FFamily> family (new FFamily());
+  boost::shared_ptr<FFamily> family (new FFamily(name, type, cstore));
   _families [name] = family;
   return family.get();
 }

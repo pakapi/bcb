@@ -29,6 +29,27 @@ int toKeySize(TableType type) {
   }
 }
 
+int toDataSize(TableType type) {
+  switch (type) {
+    case  LINEORDER_PK_SORT:
+      return sizeof(Lineorder);
+    case  CUSTOMER_PK_SORT:
+      return sizeof(Customer);
+    case  SUPPLIER_PK_SORT:
+      return sizeof(Supplier);
+    case  PART_PK_SORT:
+      return sizeof(Part);
+    case  DATE_PK_SORT:
+      return sizeof(Date);
+    case  MV_PROJECTION:
+      return sizeof(MVProjection);
+    default:
+      // unsupported type
+      assert (false);
+      throw std::exception();
+  }
+}
+
 KeyCompareFuncType toKeyCompareFuncType(TableType type) {
   switch (type) {
     case  LINEORDER_PK_SORT:
