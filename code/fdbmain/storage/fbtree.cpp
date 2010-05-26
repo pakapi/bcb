@@ -381,6 +381,7 @@ void FMainMemoryBTreeImpl::dumpToNewRowStoreFile (FFileSignature &signature) con
   signature.leafEntrySize = getDataSize();
   signature.keyCompareFuncType = toKeyCompareFuncType(getTableType());
   signature.pageCount = totalPageCount;
+  signature.leafPageCount = leafPageCount;
   signature.rootPageStart = rootPageStart;
   signature.rootPageCount = rootPageCount;
   signature.rootPageLevel = rootPageLevel;
@@ -632,7 +633,7 @@ const char* FReadOnlyDiskBTreeImpl::getLeafPage (int pageId) {
 }
 
 int FReadOnlyDiskBTreeImpl::getLeafPageCount () const {
-  return _signature.rootPageStart;
+  return _signature.leafPageCount;
 }
 
 void FReadOnlyDiskBTreeImpl::checkNonLeafPageHeader(const FPageHeader *header, int pageId, int currentLevel) {

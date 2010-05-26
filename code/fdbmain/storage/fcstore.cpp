@@ -290,6 +290,7 @@ CStoreDumpContext::CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, c
   rootPageStart = 0;
   rootPageCount = 0;
   rootPageLevel = 0;
+  leafPageCount = 0;
 }
 CStoreDumpContext::~CStoreDumpContext() {
   if (dictionaryHashmap != NULL) delete dictionaryHashmap;
@@ -312,6 +313,7 @@ void CStoreDumpContext::updateFileSignature(FFileSignature &signature, TableType
   signature.rootPageLevel = rootPageLevel;
   signature.tableType = tableType;
   signature.pageCount = currentPageId;
+  signature.leafPageCount = leafPageCount;
   signature.dictionaryBits = dictionaryBits;
   signature.dictionaryEntryCount = dictionarySize;
 }
@@ -474,6 +476,8 @@ void dumpUncompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree &
   // flush last pages
   context.flipPage();
   context.flushBuffer();
+
+  context.leafPageCount = context.currentPageId;
 }
 
 // ========================================
@@ -533,6 +537,8 @@ void dumpRLECompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree 
   // flush last pages
   context.flipPage();
   context.flushBuffer();
+
+  context.leafPageCount = context.currentPageId;
 
   VLOG(1) << "in total " << context.runTotal << " runs";
 
@@ -700,13 +706,14 @@ void dumpDictionaryCompressedColumn(CStoreDumpContext &context, const FMainMemor
     context.dictionaryBits = 16;
     context.leafEntrySize = 2;
     context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / 2;
-    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<uint8_t>, &context);
+    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<uint16_t>, &context);
   }
 
   // flush last bits
   if (context.currentBitOffset != 0) {
     flushCurrentPackedByte(&context);
   }
+  context.leafPageCount = context.currentPageId;
   context.writeDictionary();
 
   VLOG(2) << "Dumped Dictionary Compressed column";
@@ -1377,7 +1384,7 @@ void FColumnReaderImplRLE::getPositionRangesPartialScan (const SearchCond &cond,
   if (endPageId < 0) {
     endPageId = beginPageId + 1; //until the end
   }
-  assert (endPageId <= _signature.rootPageStart);
+  assert (endPageId <= _signature.leafPageCount);
 
   // then, we read the RLE compressed pages
   PositionRange prevRange;
@@ -1432,7 +1439,7 @@ void FColumnReaderImplRLE::getPositionRangesFullscan (const SearchCond &cond, st
   // don't need to read root pages in this case. simpler
   PositionRange prevRange;
   bool hasPrevRange = false;
-  for (int pageId = 0; pageId < _signature.rootPageStart; ++pageId) {
+  for (int pageId = 0; pageId < _signature.leafPageCount; ++pageId) {
     const char *page = _bufferpool->readPage(_signature, pageId);
     const FPageHeader *header = reinterpret_cast<const FPageHeader*> (page);
     const char *cursor = page + sizeof(FPageHeader);
@@ -1482,8 +1489,8 @@ void FColumnReaderImplRLE::getRLECompressedData (const PositionRange &range, voi
   int beginPageId = pageRange.first;
   int endPageId = pageRange.second;
 
-  assert (beginPageId < _signature.rootPageStart);
-  assert (endPageId <= _signature.rootPageStart);
+  assert (beginPageId < _signature.leafPageCount);
+  assert (endPageId <= _signature.leafPageCount);
   int count = 0;
   for (int pageId = beginPageId; pageId < endPageId; ++pageId) {
     const char *page = _bufferpool->readPage(_signature, pageId);

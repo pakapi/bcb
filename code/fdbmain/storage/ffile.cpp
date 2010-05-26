@@ -140,6 +140,7 @@ void FSignatureSet::removeFileSignature (const std::string &filepath) {
 }
 void FSignatureSet::addFileSignature (const FFileSignature &signature) {
   assert (signature.signatureVersion > 0);
+  assert (signature.leafPageCount >= 0);
   assert (signature.rootPageStart >= 0);
   assert (signature.rootPageCount >= 0);
   assert (signature.rootPageLevel >= 0);
@@ -247,6 +248,7 @@ void FSignatureSet::debugout() const {
       << "filepath=" << signature.filepath << ","
       << "totalTupleCount=" << signature.totalTupleCount << ","
       << "pageCount=" << signature.pageCount << ","
+      << "leafPageCount=" << signature.leafPageCount << ","
       << "rootPageStart=" << signature.rootPageStart << ","
       << "rootPageCount=" << signature.rootPageCount << ","
       << "rootPageLevel=" << signature.rootPageLevel << ","

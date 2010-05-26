@@ -13,7 +13,7 @@ namespace fdb {
 struct FFileSignature {
   FFileSignature ()
     : signatureVersion(FFILE_SIGNATURE_CUR_VER), fileId(0), totalTupleCount(0),
-    pageCount (0), rootPageStart(0), rootPageCount(0), rootPageLevel(0),
+    pageCount (0), leafPageCount(0), rootPageStart(0), rootPageCount(0), rootPageLevel(0),
     keyEntrySize(0), keyCompareFuncType(KEY_CMP_INVALID), leafEntrySize(0), tableType(TABLE_TYPE_INVALID),
     columnFile (false), columnIndex(0), columnType(COLUMN_INVALID), columnMaxLength(0), columnOffset(0), columnCompression(COMPRESSION_INVALID), dictionaryBits(0), dictionaryEntryCount (0)
   {}
@@ -23,8 +23,10 @@ struct FFileSignature {
   int fileId; // sequentially assigned ID for each file
   int64_t totalTupleCount; // total count of tuples in this file
   int pageCount; // total count of all pages in the file
+  int leafPageCount; // num of leaf pages
   int rootPageStart, rootPageCount; // page index of the first root page and num of root pages
   int rootPageLevel; // the level of root pages. ex. if leaf+root, leaf=0, root=1.
+  // note that pageCount != rootPageCount + leafPageCount if they are 3 levels or more
   int keyEntrySize; // byte size of one key in BTree (r-store) or key table (compressed c-store)
   KeyCompareFuncType keyCompareFuncType; // specify the type of key comparison
   int leafEntrySize; // byte size of one tuple
