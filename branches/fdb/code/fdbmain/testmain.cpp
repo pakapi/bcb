@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(init) {
   BOOST_TEST_MESSAGE("===Initialized tests.");
 }
 
-/*
+
 BOOST_AUTO_TEST_CASE(storage_test_sig) {
   BOOST_TEST_MESSAGE("===Testing FSignatureSet...");
 
@@ -244,7 +244,8 @@ BOOST_AUTO_TEST_CASE(storage_test_mainmemory_btree) {
     BOOST_CHECK_EQUAL (count, 2500);
 
     BOOST_TEST_MESSAGE("--dumping to disk...");
-    signatureFile.dumpToNewRowStoreFile(TEST_DATA_FOLDER, sorted == 0 ? "test1_unsorted.db" : "test1_sorted.db", btree);
+    FFileSignature sig = signatureFile.dumpToNewRowStoreFile(TEST_DATA_FOLDER, sorted == 0 ? "test1_unsorted.db" : "test1_sorted.db", btree);
+    BOOST_CHECK_EQUAL (sig.totalTupleCount, 2500);
   }
   signatureFile.save(TEST_DATA_FOLDER, "_test2.sig");
   BOOST_TEST_MESSAGE("===Tested FMainMemoryBTree.");
@@ -1217,7 +1218,7 @@ BOOST_AUTO_TEST_CASE(ssb_random_query) {
   }
   BOOST_TEST_MESSAGE("===Tested SSB Random Queries.");
 }
-*/
+
 
 BOOST_AUTO_TEST_CASE(engine_family_merge_btree) {
   BOOST_TEST_MESSAGE("===Testing Fracture Family Merging for BTree...");
