@@ -9,6 +9,7 @@
 #include "../storage/fpage.h"
 #include "../util/stopwatch.h"
 #include <algorithm>
+#include <cstdio>
 #include <cassert>
 #include <sstream>
 
@@ -459,6 +460,7 @@ std::string FFamilyImpl::mergeBTreeFractures (FEngine *engine, const std::vector
 // ==========================================================================
 
 std::string FFamilyImpl::mergeCStoreFractures (FEngine *engine, const std::vector<std::string> &fractureNames, bool deleteOldFractures, long long mergeBufferSize) {
+  return ""; //TODO
 }
 
 } // fdb
