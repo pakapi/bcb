@@ -15,7 +15,7 @@ struct FFileSignature {
     : signatureVersion(FFILE_SIGNATURE_CUR_VER), fileId(0), totalTupleCount(0),
     pageCount (0), rootPageStart(0), rootPageCount(0), rootPageLevel(0),
     keyEntrySize(0), keyCompareFuncType(KEY_CMP_INVALID), leafEntrySize(0), tableType(TABLE_TYPE_INVALID),
-    columnFile (false), columnIndex(0), columnType(COLUMN_INVALID), columnMaxLength(0), columnOffset(0), columnCompression(COMPRESSION_INVALID), dictionaryEntryCount (0)
+    columnFile (false), columnIndex(0), columnType(COLUMN_INVALID), columnMaxLength(0), columnOffset(0), columnCompression(COMPRESSION_INVALID), dictionaryBits(0), dictionaryEntryCount (0)
   {}
 
   int signatureVersion;
@@ -37,6 +37,7 @@ struct FFileSignature {
   int columnMaxLength; //length of the column
   int columnOffset; //offset of the column in tuple format
   CompressionScheme columnCompression; //the type of compression for this column
+  int dictionaryBits; // for dictionary compression
   int dictionaryEntryCount; // for dictionary compression
 };
 

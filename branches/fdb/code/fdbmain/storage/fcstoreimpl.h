@@ -18,7 +18,7 @@
 #pragma warning( disable : 4250) // I do know there's diamond inheritance, but it's virtual inheritance!
 #endif //_MSC_VER
 
-class StringHashSet;
+template <typename T> class StringHashMap;
 namespace fdb {
 
 // pimpl object for FMainMemoryCStore.
@@ -111,14 +111,9 @@ struct CStoreDumpContext {
   int dictionaryBits;
   unsigned char currentPackedByte;
   int currentBitOffset; // for 1bit-4bit dictionary
-  char *dictionary;
-  StringHashSet *dictionaryHashSet; // used for >4bit dictionary.
-
-  // used for 1bit-4bit dictionary.
-  // linearly search in small dictionary (this dictionary is very small. faster than map or unordered_map)
-  int searchInSmallDictionary (const char* value);
-  // used for >4bit dictionary. uses hashtable
-  int searchInLargeDictionary (const char* value); 
+  StringHashMap<uint16_t> *dictionaryHashmap;
+  std::vector<const char*> dictionaryEntries;
+  void writeDictionary ();
 
   // for RLE/Dic
   int rootPageStart;

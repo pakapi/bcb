@@ -43,6 +43,8 @@ public:
 
   // merge the given files (specified by name) of the family to one new fracture.
   // returns the name of the new fracture.
+  // @param deleteOldFractures if true, delete the old fractures from filesystem.
+  // @param mergeBufferSize the total size of RAM in bytes to be consumed for reading/writing fractures.
   std::string mergeFractures (FEngine *engine, const std::vector<std::string> &fractureNames, bool deleteOldFractures, long long mergeBufferSize);
 
 

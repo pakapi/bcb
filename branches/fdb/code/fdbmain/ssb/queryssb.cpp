@@ -752,9 +752,10 @@ boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQuery
   FColumnReader *revReader = mv.getColumnReader("l_revenue");
   assert (revReader->getColumn().compression == UNCOMPRESSED);
   FColumnReaderDictionary *brandReader = dynamic_cast<FColumnReaderDictionary*>(mv.getColumnReader("p_brand"));
-  assert (brandReader->getColumn().compression == DICTIONARY_COMPRESSED_16BIT);
+  assert (brandReader->getColumn().compression == DICTIONARY_COMPRESSED);
+  int brandDictionaryBits = brandReader->getDictionaryEntrySizeInBits ();
   FColumnReaderDictionary *categoryReader = dynamic_cast<FColumnReaderDictionary*>(mv.getColumnReader("p_category"));
-  assert (categoryReader->getColumn().compression == DICTIONARY_COMPRESSED_8BIT);
+  assert (categoryReader->getColumn().compression == DICTIONARY_COMPRESSED);
 
   string p_category = categoryReader->normalize(param.strings[0]);
   string s_region = sregionReader->normalize(param.strings[1]);
@@ -779,8 +780,8 @@ boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQuery
 
   scoped_array<int32_t> revBufferPtr(new int32_t[maxLen]);
   int32_t *revBuffer = (revBufferPtr.get());
-  scoped_array<int16_t> brandBufferPtr(new int16_t[maxLen]);
-  int16_t *brandBuffer = (brandBufferPtr.get());
+  scoped_array<unsigned char> brandBufferPtr(new unsigned char[(maxLen * brandDictionaryBits / 8) + 1]);
+  unsigned char *brandBuffer = (brandBufferPtr.get());
   vector<string> brands;
   brandReader->getAllDictionaryEntries(brands);
   size_t brandDictionarySize = brands.size();
@@ -808,14 +809,20 @@ boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQuery
     boost::shared_ptr<PositionBitmap> position = positions[i];
     const unsigned char *bitmap = position->bitmap;
     int bitOffset = 0;
-    brandReader->getDictionaryCompressedData(range, brandBuffer, maxLen * sizeof(int16_t), bitOffset);
+    brandReader->getDictionaryCompressedData(range, brandBuffer, (maxLen * brandDictionaryBits / 8) + 1, bitOffset);
     assert (bitOffset == 0);
 
     for (size_t j = 0; j < length; ++j) {
       unsigned char byte = bitmap[j / 8];
       unsigned char bitmask = (unsigned char) 1 << (j % 8);
       if ((byte & bitmask) == bitmask) {
-        int16_t brandId = brandBuffer[j];
+        int16_t brandId = -1;
+        switch (brandDictionaryBits) {
+        case 8: brandId = reinterpret_cast<uint8_t*>(brandBuffer)[j]; break;
+        case 16: brandId = reinterpret_cast<uint16_t*>(brandBuffer)[j]; break;
+        default:
+          assert (false); // NOTE: could be less bits, depending on test data.
+        }
         assert (brandId >= 0);
         assert ((size_t) brandId < brandDictionarySize);
         sumBuffer[brandId] += revBuffer[j];
@@ -940,6 +947,7 @@ boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQuery
   FColumnReaderRLE *yearReader = dynamic_cast<FColumnReaderRLE*>(mv.getColumnReader("d_year"));
   FColumnReader *revReader = mv.getColumnReader("l_revenue");
   FColumnReaderDictionary *brandReader = dynamic_cast<FColumnReaderDictionary*>(mv.getColumnReader("p_brand"));
+  int brandDictionaryBits = brandReader->getDictionaryEntrySizeInBits ();
 
   string p_brand_from = brandReader->normalize(param.strings[0]);
   string p_brand_to = brandReader->normalize(param.strings[1]);
@@ -962,8 +970,8 @@ boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQuery
 
   scoped_array<int32_t> revBufferPtr(new int32_t[maxLen]);
   int32_t *revBuffer = (revBufferPtr.get());
-  scoped_array<int16_t> brandBufferPtr(new int16_t[maxLen]);
-  int16_t *brandBuffer = (brandBufferPtr.get());
+  scoped_array<unsigned char> brandBufferPtr(new unsigned char[(maxLen * brandDictionaryBits / 8) + 1]);
+  unsigned char *brandBuffer = (brandBufferPtr.get());
   vector<string> brands;
   brandReader->getAllDictionaryEntries(brands);
   size_t brandDictionarySize = brands.size();
@@ -985,11 +993,17 @@ boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQuery
     revReader->getDecompressedData(range, revBuffer, maxLen * sizeof(int32_t));
 
     int bitOffset = 0;
-    brandReader->getDictionaryCompressedData(range, brandBuffer, maxLen * sizeof(int16_t), bitOffset);
+    brandReader->getDictionaryCompressedData(range, brandBuffer, (maxLen * brandDictionaryBits / 8) + 1, bitOffset);
     assert (bitOffset == 0);
 
     for (size_t j = 0; j < length; ++j) {
-      int16_t brandId = brandBuffer[j];
+      int brandId = -1;
+      switch (brandDictionaryBits) {
+      case 8: brandId = reinterpret_cast<uint8_t*>(brandBuffer)[j]; break;
+      case 16: brandId = reinterpret_cast<uint16_t*>(brandBuffer)[j]; break;
+      default:
+        assert (false); // NOTE: could be less bits, depending on test data.
+      }
       assert (brandId >= 0);
       assert ((size_t) brandId < brandDictionarySize);
       bool matched = std::find(matchingBrandIds.begin(), matchingBrandIds.end(), brandId) != matchingBrandIds.end();

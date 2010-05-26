@@ -47,8 +47,8 @@ std::vector<FCStoreColumn> FCStoreUtil::getPhysicalDesignsOf(TableType table) {
       ret.push_back (FCStoreColumn("partkey", COLUMN_INT32, calculateOffset(&(l.partkey), lp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("suppkey", COLUMN_INT32, calculateOffset(&(l.suppkey), lp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("orderdate", COLUMN_INT32, calculateOffset(&(l.orderdate), lp), UNCOMPRESSED));
-      ret.push_back (FCStoreColumn("orderpriority", COLUMN_CHAR, sizeof(l.orderpriority), calculateOffset(&(l.orderpriority), lp), DICTIONARY_COMPRESSED_4BIT));
-      ret.push_back (FCStoreColumn("shippriority", COLUMN_CHAR, sizeof(l.shippriority), calculateOffset(&(l.shippriority), lp), DICTIONARY_COMPRESSED_1BIT));
+      ret.push_back (FCStoreColumn("orderpriority", COLUMN_CHAR, sizeof(l.orderpriority), calculateOffset(&(l.orderpriority), lp), DICTIONARY_COMPRESSED));
+      ret.push_back (FCStoreColumn("shippriority", COLUMN_CHAR, sizeof(l.shippriority), calculateOffset(&(l.shippriority), lp), DICTIONARY_COMPRESSED));
       ret.push_back (FCStoreColumn("quantity", COLUMN_INT8, calculateOffset(&(l.quantity), lp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("extendedprice", COLUMN_INT32, calculateOffset(&(l.extendedprice), lp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("ordertotalprice", COLUMN_INT32, calculateOffset(&(l.ordertotalprice), lp), UNCOMPRESSED));
@@ -57,40 +57,40 @@ std::vector<FCStoreColumn> FCStoreUtil::getPhysicalDesignsOf(TableType table) {
       ret.push_back (FCStoreColumn("supplycost", COLUMN_INT32, calculateOffset(&(l.supplycost), lp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("tax", COLUMN_INT8, calculateOffset(&(l.tax), lp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("commitdate", COLUMN_INT32, calculateOffset(&(l.commitdate), lp), UNCOMPRESSED));
-      ret.push_back (FCStoreColumn("shipmode", COLUMN_CHAR, sizeof(l.shipmode), calculateOffset(&(l.shipmode), lp), DICTIONARY_COMPRESSED_4BIT));
+      ret.push_back (FCStoreColumn("shipmode", COLUMN_CHAR, sizeof(l.shipmode), calculateOffset(&(l.shipmode), lp), DICTIONARY_COMPRESSED));
       totalSize = sizeof(Lineorder);
       break;
     case  CUSTOMER_PK_SORT:
       ret.push_back (FCStoreColumn("custkey", COLUMN_INT32, calculateOffset(&(c.custkey), cp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("name", COLUMN_CHAR, sizeof(c.name), calculateOffset(&(c.name), cp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("address", COLUMN_CHAR, sizeof(c.address), calculateOffset(&(c.address), cp), UNCOMPRESSED));
-      ret.push_back (FCStoreColumn("city", COLUMN_CHAR, sizeof(c.city), calculateOffset(&(c.city), cp), DICTIONARY_COMPRESSED_16BIT));
-      ret.push_back (FCStoreColumn("nation", COLUMN_CHAR, sizeof(c.nation), calculateOffset(&(c.nation), cp), DICTIONARY_COMPRESSED_8BIT));
-      ret.push_back (FCStoreColumn("region", COLUMN_CHAR, sizeof(c.region), calculateOffset(&(c.region), cp), DICTIONARY_COMPRESSED_4BIT));
+      ret.push_back (FCStoreColumn("city", COLUMN_CHAR, sizeof(c.city), calculateOffset(&(c.city), cp), DICTIONARY_COMPRESSED));
+      ret.push_back (FCStoreColumn("nation", COLUMN_CHAR, sizeof(c.nation), calculateOffset(&(c.nation), cp), DICTIONARY_COMPRESSED));
+      ret.push_back (FCStoreColumn("region", COLUMN_CHAR, sizeof(c.region), calculateOffset(&(c.region), cp), DICTIONARY_COMPRESSED));
       ret.push_back (FCStoreColumn("phone", COLUMN_CHAR, sizeof(c.phone), calculateOffset(&(c.phone), cp), UNCOMPRESSED));
-      ret.push_back (FCStoreColumn("mktsegment", COLUMN_CHAR, sizeof(c.mktsegment), calculateOffset(&(c.mktsegment), cp), DICTIONARY_COMPRESSED_16BIT));
+      ret.push_back (FCStoreColumn("mktsegment", COLUMN_CHAR, sizeof(c.mktsegment), calculateOffset(&(c.mktsegment), cp), DICTIONARY_COMPRESSED));
       totalSize = sizeof(Customer);
       break;
     case  SUPPLIER_PK_SORT:
       ret.push_back (FCStoreColumn("suppkey", COLUMN_INT32, calculateOffset(&(s.suppkey), sp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("name", COLUMN_CHAR, sizeof(s.name), calculateOffset(&(s.name), sp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("address", COLUMN_CHAR, sizeof(s.address), calculateOffset(&(s.address), sp), UNCOMPRESSED));
-      ret.push_back (FCStoreColumn("city", COLUMN_CHAR, sizeof(s.city), calculateOffset(&(s.city), sp), DICTIONARY_COMPRESSED_16BIT));
-      ret.push_back (FCStoreColumn("nation", COLUMN_CHAR, sizeof(s.nation), calculateOffset(&(s.nation), sp), DICTIONARY_COMPRESSED_8BIT));
-      ret.push_back (FCStoreColumn("region", COLUMN_CHAR, sizeof(s.region), calculateOffset(&(s.region), sp), DICTIONARY_COMPRESSED_4BIT));
+      ret.push_back (FCStoreColumn("city", COLUMN_CHAR, sizeof(s.city), calculateOffset(&(s.city), sp), DICTIONARY_COMPRESSED));
+      ret.push_back (FCStoreColumn("nation", COLUMN_CHAR, sizeof(s.nation), calculateOffset(&(s.nation), sp), DICTIONARY_COMPRESSED));
+      ret.push_back (FCStoreColumn("region", COLUMN_CHAR, sizeof(s.region), calculateOffset(&(s.region), sp), DICTIONARY_COMPRESSED));
       ret.push_back (FCStoreColumn("phone", COLUMN_CHAR, sizeof(s.phone), calculateOffset(&(s.phone), sp), UNCOMPRESSED));
       totalSize = sizeof(Supplier);
       break;
     case  PART_PK_SORT:
       ret.push_back (FCStoreColumn("partkey", COLUMN_INT32, calculateOffset(&(p.partkey), pp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("name", COLUMN_CHAR, sizeof(p.name), calculateOffset(&(p.name), pp), UNCOMPRESSED));
-      ret.push_back (FCStoreColumn("mfgr", COLUMN_CHAR, sizeof(p.mfgr), calculateOffset(&(p.mfgr), pp), DICTIONARY_COMPRESSED_4BIT));
-      ret.push_back (FCStoreColumn("category", COLUMN_CHAR, sizeof(p.category), calculateOffset(&(p.category), pp), DICTIONARY_COMPRESSED_8BIT));
-      ret.push_back (FCStoreColumn("brand", COLUMN_CHAR, sizeof(p.brand), calculateOffset(&(p.brand), pp), DICTIONARY_COMPRESSED_16BIT));
-      ret.push_back (FCStoreColumn("color", COLUMN_CHAR, sizeof(p.color), calculateOffset(&(p.color), pp), DICTIONARY_COMPRESSED_8BIT));
+      ret.push_back (FCStoreColumn("mfgr", COLUMN_CHAR, sizeof(p.mfgr), calculateOffset(&(p.mfgr), pp), DICTIONARY_COMPRESSED));
+      ret.push_back (FCStoreColumn("category", COLUMN_CHAR, sizeof(p.category), calculateOffset(&(p.category), pp), DICTIONARY_COMPRESSED));
+      ret.push_back (FCStoreColumn("brand", COLUMN_CHAR, sizeof(p.brand), calculateOffset(&(p.brand), pp), DICTIONARY_COMPRESSED));
+      ret.push_back (FCStoreColumn("color", COLUMN_CHAR, sizeof(p.color), calculateOffset(&(p.color), pp), DICTIONARY_COMPRESSED));
       ret.push_back (FCStoreColumn("type", COLUMN_CHAR, sizeof(p.type), calculateOffset(&(p.type), pp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("size", COLUMN_INT8, calculateOffset(&(p.size), pp), UNCOMPRESSED));
-      ret.push_back (FCStoreColumn("container", COLUMN_CHAR, sizeof(p.container), calculateOffset(&(p.container), pp), DICTIONARY_COMPRESSED_8BIT));
+      ret.push_back (FCStoreColumn("container", COLUMN_CHAR, sizeof(p.container), calculateOffset(&(p.container), pp), DICTIONARY_COMPRESSED));
       totalSize = sizeof(Part);
       break;
     case  DATE_PK_SORT:
@@ -132,9 +132,9 @@ std::vector<FCStoreColumn> FCStoreUtil::getPhysicalDesignsOf(TableType table) {
       ret.push_back (FCStoreColumn("l_discount", COLUMN_INT8, calculateOffset(&(m.l_discount), mp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("l_revenue", COLUMN_INT32, calculateOffset(&(m.l_revenue), mp), UNCOMPRESSED));
       ret.push_back (FCStoreColumn("l_supplycost", COLUMN_INT32, calculateOffset(&(m.l_supplycost), mp), UNCOMPRESSED));
-      ret.push_back (FCStoreColumn("p_mfgr", COLUMN_CHAR, sizeof(m.p_mfgr), calculateOffset(&(m.p_mfgr), mp), DICTIONARY_COMPRESSED_4BIT));
-      ret.push_back (FCStoreColumn("p_category", COLUMN_CHAR, sizeof(m.p_category), calculateOffset(&(m.p_category), mp), DICTIONARY_COMPRESSED_8BIT));
-      ret.push_back (FCStoreColumn("p_brand", COLUMN_CHAR, sizeof(m.p_brand), calculateOffset(&(m.p_brand), mp), DICTIONARY_COMPRESSED_16BIT));
+      ret.push_back (FCStoreColumn("p_mfgr", COLUMN_CHAR, sizeof(m.p_mfgr), calculateOffset(&(m.p_mfgr), mp), DICTIONARY_COMPRESSED));
+      ret.push_back (FCStoreColumn("p_category", COLUMN_CHAR, sizeof(m.p_category), calculateOffset(&(m.p_category), mp), DICTIONARY_COMPRESSED));
+      ret.push_back (FCStoreColumn("p_brand", COLUMN_CHAR, sizeof(m.p_brand), calculateOffset(&(m.p_brand), mp), DICTIONARY_COMPRESSED));
       ret.push_back (FCStoreColumn("d_weeknuminyear", COLUMN_INT8, calculateOffset(&(m.d_weeknuminyear), mp), UNCOMPRESSED));
       totalSize = sizeof(MVProjection);
       break;
@@ -227,7 +227,7 @@ void FCStoreUtil::dumpToNewCStoreFile (
       dumpUncompressedColumn (context, btree);
     } else if (column.compression == RLE_COMPRESSED) {
       dumpRLECompressedColumn (context, btree);
-    } else if (isDictionaryCompression(column.compression)) {
+    } else if (column.compression == DICTIONARY_COMPRESSED) {
       dumpDictionaryCompressedColumn(context, btree);
     } else {
       LOG(ERROR) << "Unsupported compression type:" << column.compression;
@@ -257,6 +257,7 @@ CStoreDumpContext::CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, c
   tupleCount = btree.size();
   column = column_;
   dictionaryBits = 0;
+  dictionaryHashmap = NULL;
   switch (column.compression) {
   case UNCOMPRESSED:
     leafEntrySize = column.maxLength;
@@ -266,30 +267,10 @@ CStoreDumpContext::CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, c
     leafEntrySize = column.maxLength + sizeof(int); // value + runlength
     entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / leafEntrySize;
     break;
-  case DICTIONARY_COMPRESSED_1BIT:
-    dictionaryBits = 1;
-    leafEntrySize = 1; // not acutually true. but anyway this values is not used in dictionary compression
-    entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 8;
-    break;
-  case DICTIONARY_COMPRESSED_2BIT:
-    dictionaryBits = 2;
-    leafEntrySize = 1;
-    entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 4;
-    break;
-  case DICTIONARY_COMPRESSED_4BIT:
-    dictionaryBits = 4;
-    leafEntrySize = 1;
-    entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 2;
-    break;
-  case DICTIONARY_COMPRESSED_8BIT:
-    dictionaryBits = 8;
-    leafEntrySize = 1;
-    entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader));
-    break;
-  case DICTIONARY_COMPRESSED_16BIT:
-    dictionaryBits = 16;
-    leafEntrySize = 2;
-    entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / leafEntrySize;
+  case DICTIONARY_COMPRESSED:
+    leafEntrySize = 0; // determined later
+    entryPerLeafPage = 0; // determined later
+    dictionaryHashmap = new StringHashMap<uint16_t>(column.maxLength, 16);
     break;
   default:
       // unsupported type
@@ -306,22 +287,12 @@ CStoreDumpContext::CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, c
   dictionarySize = 0;
   currentPackedByte = 0;
   currentBitOffset = 0;
-  dictionary = NULL;
-  dictionaryHashSet = NULL;
-  if (dictionaryBits > 0) {
-    dictionary = new char[column.maxLength << dictionaryBits];
-    ::memset (dictionary, 0, column.maxLength << dictionaryBits);
-    if (dictionaryBits >= 8) {
-      dictionaryHashSet = new StringHashSet (column.maxLength, dictionaryBits);
-    }
-  }
   rootPageStart = 0;
   rootPageCount = 0;
   rootPageLevel = 0;
 }
 CStoreDumpContext::~CStoreDumpContext() {
-  if (dictionary != NULL) delete[] dictionary;
-  if (dictionaryHashSet != NULL) delete dictionaryHashSet;
+  if (dictionaryHashmap != NULL) delete dictionaryHashmap;
 }
 
 void CStoreDumpContext::updateFileSignature(FFileSignature &signature, TableType tableType, int columnIndex) const {
@@ -341,6 +312,7 @@ void CStoreDumpContext::updateFileSignature(FFileSignature &signature, TableType
   signature.rootPageLevel = rootPageLevel;
   signature.tableType = tableType;
   signature.pageCount = currentPageId;
+  signature.dictionaryBits = dictionaryBits;
   signature.dictionaryEntryCount = dictionarySize;
 }
 
@@ -428,45 +400,42 @@ void CStoreDumpContext::writeRootEntryRLE(int64_t beginningPos, int pageId) {
   ++entryInCurrentPage;
 }
 
-int CStoreDumpContext::searchInSmallDictionary (const char* value) {
-  assert (dictionaryBits <= 4);
-  int columnLength = column.maxLength;
-  int foundIndex = -1;
-  for (int i = dictionarySize - 1; i >= 0; --i) {
-    if (::memcmp(value, dictionary + i * columnLength, columnLength) == 0) {
-      foundIndex = i;
-      break;
+void CStoreDumpContext::writeDictionary () {
+  // flush last pages
+  flipPage();
+  flushBuffer();
+
+  // then, write root (dictionary) pages
+  int entriesInRootPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / column.maxLength;
+  rootPageStart = currentPageId;
+  rootPageCount = (dictionarySize / entriesInRootPage) + (dictionarySize % entriesInRootPage == 0 ? 0 : 1);
+  rootPageLevel = 1;
+  for (int i = 0; i < rootPageCount; ++i) {
+    bool lastSibling;
+    int countInThisPage;
+    if (i == rootPageCount - 1) {
+      countInThisPage = dictionarySize - i * entriesInRootPage;
+      assert (countInThisPage <= entriesInRootPage);
+      assert (countInThisPage > 0);
+      lastSibling = true;
+    } else {
+      countInThisPage = entriesInRootPage;
+      lastSibling = false;
     }
+    writePageHeader(countInThisPage, lastSibling, 0, 1, true, column.maxLength);
+
+    char *p = buffer + (FDB_PAGE_SIZE * bufferedPages) + currentPageOffset;
+    for (int j = 0; j < countInThisPage; ++j, p += column.maxLength) {
+      ::memcpy(p, dictionaryEntries[j + i * entriesInRootPage], column.maxLength);
+    }
+    currentPageOffset += column.maxLength * countInThisPage;
+    entryInCurrentPage += countInThisPage;
+    flipPage();
+    flushBufferIfNeeded();
   }
-  if (foundIndex == -1) {
-    // new value!
-    foundIndex = dictionarySize;
-    assert (foundIndex < (1 << dictionaryBits));
-    ::memcpy (dictionary + foundIndex * columnLength, value, columnLength);
-    ++dictionarySize;
-  }
-  return foundIndex;
-}
-int CStoreDumpContext::searchInLargeDictionary (const char* value) {
-  assert (dictionaryBits > 4);
-  assert (dictionaryHashSet != NULL);
-  int columnLength = column.maxLength;
-  const char *ptr = dictionaryHashSet->find(value);
-  if (ptr != NULL) {
-      // key found. the pointer tells the position in dictionary
-      int index = (ptr - dictionary) / columnLength;
-      assert (index >= 0);
-      assert (index < dictionarySize);
-      return index;
-  }
-  // new value!
-  int index = dictionarySize;
-  assert (index < (1 << dictionaryBits));
-  char *newPtr = dictionary + index * columnLength;
-  ::memcpy (newPtr, value, columnLength);
-  dictionaryHashSet->insert(newPtr);
-  ++dictionarySize;
-  return index;
+  VLOG(1) << "Wrote dictionary. " << dictionarySize << " entries. " << rootPageCount << " root pages";
+  flipPage();
+  flushBuffer();
 }
 
 void CStoreDumpContext::prepareForNewPageUniform () {
@@ -623,10 +592,10 @@ void dumpSmallDictionaryCompressedColumnCallback (void *context, const void *key
   }
 
   const char* value = ((char*) data) + dumpContext->column.offset;
-  int foundIndex = dumpContext->searchInSmallDictionary(value);
+  uint8_t foundIndex = dumpContext->dictionaryHashmap->find(value);
 
   // <=4bits have to pack to a byte.
-  dumpContext->currentPackedByte |= (((uint8_t) foundIndex) << dumpContext->currentBitOffset);
+  dumpContext->currentPackedByte |= (foundIndex << dumpContext->currentBitOffset);
   ++(dumpContext->entryInCurrentPage);
   (dumpContext->currentBitOffset) += dumpContext->dictionaryBits;
   if (dumpContext->currentBitOffset == 8) {
@@ -645,69 +614,102 @@ void dumpLargeDictionaryCompressedColumnCallback (void *context, const void *key
   dumpContext->prepareForNewPageUniform();
   const char* value = ((char*) data) + dumpContext->column.offset;
   // simply write the current data, but in given length of int
-  INT_TYPE foundIndex = static_cast<INT_TYPE>(dumpContext->searchInLargeDictionary(value)); //uses hash table to search
+  INT_TYPE foundIndex = dumpContext->dictionaryHashmap->find(value);
   dumpContext->writeLeafEntry(reinterpret_cast<char*>(&foundIndex));
 }
 
-void writeDictionary (CStoreDumpContext &context) {
-  // flush last pages
-  context.flipPage();
-  context.flushBuffer();
-
-  // then, write root (dictionary) pages
-  int entriesInRootPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / context.column.maxLength;
-  context.rootPageStart = context.currentPageId;
-  context.rootPageCount = (context.dictionarySize / entriesInRootPage) + (context.dictionarySize % entriesInRootPage == 0 ? 0 : 1);
-  context.rootPageLevel = 1;
-  for (int i = 0; i < context.rootPageCount; ++i) {
-    bool lastSibling;
-    int countInThisPage;
-    if (i == context.rootPageCount - 1) {
-      countInThisPage = context.dictionarySize - i * entriesInRootPage;
-      assert (countInThisPage <= entriesInRootPage);
-      assert (countInThisPage > 0);
-      lastSibling = true;
-    } else {
-      countInThisPage = entriesInRootPage;
-      lastSibling = false;
-    }
-    context.writePageHeader(countInThisPage, lastSibling, 0, 1, true, context.column.maxLength);
-
-    ::memcpy(context.buffer + (FDB_PAGE_SIZE * context.bufferedPages) + context.currentPageOffset, context.dictionary + context.column.maxLength * i * entriesInRootPage, context.column.maxLength * countInThisPage);
-    context.currentPageOffset += context.column.maxLength * countInThisPage;
-    context.entryInCurrentPage += countInThisPage;
-    context.flipPage();
-    context.flushBufferIfNeeded();
+struct CompFunctor {
+  CompFunctor (int columnLength) : _columnLength (columnLength) {}
+  bool operator() (const char *k1, const char *k2) {
+    return ::memcmp (k1, k2, _columnLength) < 0;
   }
-  VLOG(1) << "Wrote dictionary. " << context.dictionarySize << " entries. " << context.rootPageCount << " root pages";
-  context.flipPage();
-  context.flushBuffer();
-}
+  int _columnLength;
+};
 
 void dumpDictionaryCompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree &btree) {
-  switch (context.dictionaryBits) {
-  case 1:
-    assert (true);
-  case 2:
-  case 4:
-    btree.traverse(dumpSmallDictionaryCompressedColumnCallback, &context);
-    // flush last bits
-    if (context.currentBitOffset != 0) {
-      flushCurrentPackedByte(&context);
+#ifndef NDEBUG
+  StopWatch watch;
+  watch.init();
+#endif // NDEBUG
+
+  // at most 2^16 entries. so far.
+  StringHashSet hashset (context.column.maxLength, 16);
+  assert (context.dictionarySize == 0);
+
+  // this is to just bulid dictionaries. order doesn't matter.
+  // so, unsorted buffer is enough
+  const char *value = reinterpret_cast<const char *>(btree.getUnsortedBuffer());
+  value += context.column.offset;
+  const int columnLength = context.column.maxLength;
+  const int dataSize = btree.getDataSize();
+  const int64_t tuples = btree.size();
+
+  for (int64_t i = 0; i < tuples; ++i, value += dataSize) {
+    if (hashset.find(value) == NULL) {
+      // new value!
+      if (context.dictionarySize >= (1 << 16)) {
+        LOG (ERROR) << "more than 2^16 distinct values. too many for dictionary encoding.";
+        assert (false);
+      }
+      // note that the data resides until we erase the on-memory table.
+      // we don't have to copy the data.
+      hashset.insert (value);
+      context.dictionaryEntries.push_back (value);
+      ++(context.dictionarySize);
     }
-    break;
-  case 8:
-    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<uint8_t>, &context);
-    break;
-  case 16:
-    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<uint16_t>, &context);
-    break;
-  default:
-      // not supported yet
-      assert (false);
-      throw std::exception();
   }
-  writeDictionary(context);
+  assert ((int) context.dictionaryEntries.size() == context.dictionarySize);
+
+  // to assure that dictionary is equivalent in comparison (<,>)
+  // sort the entries and assign IDs.
+  std::sort (context.dictionaryEntries.begin(), context.dictionaryEntries.end(), CompFunctor(columnLength));
+  for (int i = 0; i < context.dictionarySize; ++i) {
+    context.dictionaryHashmap->insert(context.dictionaryEntries[i], i);
+  }
+
+#ifndef NDEBUG
+  watch.stop();
+  VLOG(2) << "Dictionary built. " << context.dictionarySize << " entries. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
+
+  assert (context.currentBitOffset == 0);
+
+  // decide the bits to store one value, and then traverse the BTree in key sort order.
+  if (context.dictionarySize <= (1 << 1)) {
+    context.dictionaryBits = 1;
+    context.leafEntrySize = 1;
+    context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 8;
+    btree.traverse(dumpSmallDictionaryCompressedColumnCallback, &context);
+  } else if (context.dictionarySize <= (1 << 2)) {
+    context.dictionaryBits = 2;
+    context.leafEntrySize = 1;
+    context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 4;
+    btree.traverse(dumpSmallDictionaryCompressedColumnCallback, &context);
+  } else if (context.dictionarySize <= (1 << 4)) {
+    context.dictionaryBits = 4;
+    context.leafEntrySize = 1;
+    context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 2;
+    btree.traverse(dumpSmallDictionaryCompressedColumnCallback, &context);
+  } else if (context.dictionarySize <= (1 << 8)) {
+    context.dictionaryBits = 8;
+    context.leafEntrySize = 1;
+    context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader));
+    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<uint8_t>, &context);
+  } else {
+    assert (context.dictionarySize <= (1 << 16));
+    context.dictionaryBits = 16;
+    context.leafEntrySize = 2;
+    context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / 2;
+    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<uint8_t>, &context);
+  }
+
+  // flush last bits
+  if (context.currentBitOffset != 0) {
+    flushCurrentPackedByte(&context);
+  }
+  context.writeDictionary();
+
+  VLOG(2) << "Dumped Dictionary Compressed column";
 }
 
 // ==========================================================================
@@ -741,11 +743,7 @@ FReadOnlyCStore::FReadOnlyCStore (FBufferPool *bufferpool, TableType type, const
     case RLE_COMPRESSED:
       reader = boost::shared_ptr<FColumnReader>(new FColumnReaderImplRLE(bufferpool, column, signature));
       break;
-    case DICTIONARY_COMPRESSED_1BIT:
-    case DICTIONARY_COMPRESSED_2BIT:
-    case DICTIONARY_COMPRESSED_4BIT:
-    case DICTIONARY_COMPRESSED_8BIT:
-    case DICTIONARY_COMPRESSED_16BIT:
+    case DICTIONARY_COMPRESSED:
       reader = boost::shared_ptr<FColumnReader>(new FColumnReaderImplDictionary(bufferpool, column, signature));
       break;
     default:
@@ -811,6 +809,7 @@ std::string FColumnReaderImpl::toDebugStr (const void *key) const {
   }
 }
 void FColumnReaderImpl::logSearchCond (const SearchCond &cond) const {
+#ifndef NDEBUG
   switch (cond.type) {
   case SCT_EQUAL:
   case SCT_LT:
@@ -826,6 +825,7 @@ void FColumnReaderImpl::logSearchCond (const SearchCond &cond) const {
     VLOG(1) << "Searching " << cond.keys.size() << " values for IN clause in " << _searchRanges.size() << " ranges (type=" << (_searchRangeSet ? "range set" : "full scan") << ")...";
     break;
   }
+#endif // NDEBUG
 }
 
 // ============================
@@ -882,9 +882,11 @@ int FColumnReaderImplUncompressed::processPageStringIn(const SearchCond &cond, c
 }
 
 void FColumnReaderImplUncompressed::getPositionBitmaps (const SearchCond &cond, std::vector<boost::shared_ptr<PositionBitmap> > &positions) {
+#ifndef NDEBUG
   logSearchCond (cond);
   StopWatch watch;
   watch.init();
+#endif // NDEBUG
   if (_searchRangeSet == false) {
     // this should not happen. very inefficient if happens
     assert (false);
@@ -959,16 +961,20 @@ void FColumnReaderImplUncompressed::getPositionBitmaps (const SearchCond &cond, 
     bitmap->matchedCount = matchCount;
     totalMatchCount += matchCount;
   }
+#ifndef NDEBUG
   watch.stop();
   VLOG(2) << "Uncompressed::getPositionBitmaps Done. " << totalMatchCount << " entries matched. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
 }
 
 void FColumnReaderImplUncompressed::getDecompressedData (const PositionRange &range, void *buffer, size_t bufferSize) {
   assert (range.begin >= 0);
   assert (range.end >= 0);
   assert (range.begin <= range.end);
+#ifndef NDEBUG
   StopWatch watch;
   watch.init();
+#endif // NDEBUG
   int64_t length = range.end - range.begin;
   assert (bufferSize >= length * _column.maxLength);
 
@@ -1010,8 +1016,10 @@ void FColumnReaderImplUncompressed::getDecompressedData (const PositionRange &ra
     bytesOffset += bytesToRead;
   }
 
+#ifndef NDEBUG
   watch.stop();
   VLOG(2) << "Uncompressed::getDecompressedData Done. " << length << " entries read. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
 }
 
 // ============================
@@ -1020,13 +1028,15 @@ void FColumnReaderImplUncompressed::getDecompressedData (const PositionRange &ra
 FColumnReaderImplDictionary::FColumnReaderImplDictionary(
   FBufferPool *bufferpool, const FCStoreColumn &column, const FFileSignature &signature)
 : FColumnReaderImpl(bufferpool, column, signature)  {
-  _dictionaryBits = toDictionaryCompressionBits (_column.compression);
+  _dictionaryBits = signature.dictionaryBits;
   _entriesPerPage = (FDB_PAGE_SIZE - sizeof(FPageHeader)) * 8 / _dictionaryBits;
 }
 
 std::vector<int> FColumnReaderImplDictionary::searchDictionary (const SearchCond &cond) {
+#ifndef NDEBUG
   StopWatch watch;
   watch.init();
+#endif // NDEBUG
   std::vector<int> matchingIds;
   int currentEntryId = 0;
   for (int i = 0; i < _signature.rootPageCount; ++i) {
@@ -1047,15 +1057,19 @@ std::vector<int> FColumnReaderImplDictionary::searchDictionary (const SearchCond
       }
     }
   }
+#ifndef NDEBUG
   watch.stop();
   VLOG(2) << "Searched Dictionary. " << matchingIds.size() << " entries matched. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
   return matchingIds;
 }
 
 void FColumnReaderImplDictionary::getPositionBitmaps (const SearchCond &cond, std::vector<boost::shared_ptr<PositionBitmap> > &positions) {
+#ifndef NDEBUG
   logSearchCond (cond);
   StopWatch watch;
   watch.init();
+#endif // NDEBUG
   if (_searchRangeSet == false) {
     // this should not happen. very inefficient if happens
     assert (false);
@@ -1132,8 +1146,10 @@ void FColumnReaderImplDictionary::getPositionBitmaps (const SearchCond &cond, st
     bitmap->matchedCount = matchCount;
     totalMatchCount += matchCount;
   }
+#ifndef NDEBUG
   watch.stop();
   VLOG(2) << "Dictionary::getPositionBitmaps Done. " << totalMatchCount << " entries matched. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
 }
 
 int FColumnReaderImplDictionary::processPageBitOffset(const std::vector<int> &matchingIds, const uint8_t *cursor, int bitOffset, size_t tuplesToRead, PositionBitmap *bitmap, int64_t bitmapPageOffset) {
@@ -1191,8 +1207,10 @@ int FColumnReaderImplDictionary::processPageBitOffset(const std::vector<int> &ma
 }
 
 void FColumnReaderImplDictionary::getDictionaryCompressedData (const PositionRange &range, void *buffer, size_t bufferSize, int &bitOffset) {
+#ifndef NDEBUG
   StopWatch watch;
   watch.init();
+#endif // NDEBUG
   size_t tupleCount = range.end - range.begin;
   if (bufferSize < (tupleCount * _dictionaryBits / 8) + (_dictionaryBits % 8 == 0 ? 0 : 2)) {
     assert (false);
@@ -1257,8 +1275,10 @@ void FColumnReaderImplDictionary::getDictionaryCompressedData (const PositionRan
       bufferOffset += (copyTo - copyFrom);
     }
   }
+#ifndef NDEBUG
   watch.stop();
   VLOG(2) << "Done. " << tupleCount << " entries read. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
 }
 int FColumnReaderImplDictionary::getDictionaryEntryId (const void *value) {
   vector<int> entries = searchDictionary (SearchCond(SCT_EQUAL, value));
@@ -1273,8 +1293,10 @@ int FColumnReaderImplDictionary::getDictionaryEntryCount () {
 }
 void FColumnReaderImplDictionary::getAllDictionaryEntries (std::vector<string> &entries) {
   assert (_column.type == COLUMN_CHAR);
+#ifndef NDEBUG
   StopWatch watch;
   watch.init();
+#endif // NDEBUG
   for (int i = 0; i < _signature.rootPageCount; ++i) {
     const int pageId = i + _signature.rootPageStart;
     const char *page = _bufferpool->readPage(_signature, pageId);
@@ -1285,8 +1307,10 @@ void FColumnReaderImplDictionary::getAllDictionaryEntries (std::vector<string> &
       entries.push_back (string (cursor, _column.maxLength));
     }
   }
+#ifndef NDEBUG
   watch.stop();
   VLOG(2) << "Done. all dictionary entries copied. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
 }
 
 // ============================
@@ -1299,8 +1323,10 @@ FColumnReaderImplRLE::FColumnReaderImplRLE (FBufferPool *bufferpool, const FCSto
 
 void FColumnReaderImplRLE::getPositionRanges (const SearchCond &cond, std::vector<PositionRange> &positions) {
   logSearchCond(cond);
+#ifndef NDEBUG
   StopWatch watch;
   watch.init();
+#endif // NDEBUG
   if (!_searchRangeSet) {
     getPositionRangesFullscan (cond, positions);
   } else {
@@ -1308,8 +1334,10 @@ void FColumnReaderImplRLE::getPositionRanges (const SearchCond &cond, std::vecto
       getPositionRangesPartialScan (cond, positions, _searchRanges[i]);
     }
   }
+#ifndef NDEBUG
   watch.stop();
   VLOG(2) << "RLE::getPositionRanges Done. " << positions.size() << " ranges matched. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
 }
 
 pair<int, int> FColumnReaderImplRLE::getPageRange (const PositionRange &scanRange) {
@@ -1445,8 +1473,10 @@ void FColumnReaderImplRLE::getRLECompressedData (const PositionRange &range, voi
   assert (range.begin >= 0);
   assert (range.end >= 0);
   assert (range.begin <= range.end);
+#ifndef NDEBUG
   StopWatch watch;
   watch.init();
+#endif // NDEBUG
 
   pair<int, int> pageRange = getPageRange(range);
   int beginPageId = pageRange.first;
@@ -1497,8 +1527,10 @@ void FColumnReaderImplRLE::getRLECompressedData (const PositionRange &range, voi
     }
   }
 
+#ifndef NDEBUG
   watch.stop();
   VLOG(2) << "RLE::getRLECompressedData Done. " << count << " runs read. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
 }
 
 // ============================

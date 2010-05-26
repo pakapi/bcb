@@ -46,38 +46,16 @@ enum CompressionScheme {
   COMPRESSION_INVALID = 0,
   UNCOMPRESSED = 1,
   RLE_COMPRESSED = 2,
-
-  DICTIONARY_COMPRESSED_1BIT = 10, // upto 2 values
-  DICTIONARY_COMPRESSED_2BIT = 11, // upto 4 values
-  DICTIONARY_COMPRESSED_4BIT = 12, // upto 16 values
-  DICTIONARY_COMPRESSED_8BIT = 13, // upto 256 values
-  DICTIONARY_COMPRESSED_16BIT = 14,  // upto 65536 values
+  DICTIONARY_COMPRESSED = 3,
 };
 inline const char *toCompressionSchemeName (CompressionScheme compression) {
   switch (compression) {
   case COMPRESSION_INVALID: return "COMPRESSION_INVALID";
   case UNCOMPRESSED: return "UNCOMPRESSED";
   case RLE_COMPRESSED: return "RLE_COMPRESSED";
-  case DICTIONARY_COMPRESSED_1BIT: return "DICTIONARY_COMPRESSED_1BIT";
-  case DICTIONARY_COMPRESSED_2BIT: return "DICTIONARY_COMPRESSED_2BIT";
-  case DICTIONARY_COMPRESSED_4BIT: return "DICTIONARY_COMPRESSED_4BIT";
-  case DICTIONARY_COMPRESSED_8BIT: return "DICTIONARY_COMPRESSED_8BIT";
-  case DICTIONARY_COMPRESSED_16BIT: return "DICTIONARY_COMPRESSED_16BIT";
+  case DICTIONARY_COMPRESSED: return "DICTIONARY_COMPRESSED";
   default: return "UNKNOWN";
   }
-}
-inline int toDictionaryCompressionBits (CompressionScheme compression) {
-  switch (compression) {
-  case DICTIONARY_COMPRESSED_1BIT: return 1;
-  case DICTIONARY_COMPRESSED_2BIT: return 2;
-  case DICTIONARY_COMPRESSED_4BIT: return 4;
-  case DICTIONARY_COMPRESSED_8BIT: return 8;
-  case DICTIONARY_COMPRESSED_16BIT: return 16;
-  default: return -1;
-  }
-}
-inline bool isDictionaryCompression(CompressionScheme compression) {
-  return compression >= DICTIONARY_COMPRESSED_1BIT && compression <= DICTIONARY_COMPRESSED_16BIT;
 }
 
 enum ColumnType {
