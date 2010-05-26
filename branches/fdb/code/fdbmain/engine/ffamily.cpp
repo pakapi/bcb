@@ -146,8 +146,8 @@ public:
   }
   void readBulk () {
     int pagesToRead = _bufferSize;
-    if (_nextPageId + pagesToRead > _signature.rootPageStart) {
-      pagesToRead = _signature.rootPageStart - _nextPageId;
+    if (_nextPageId + pagesToRead > _signature.leafPageCount) {
+      pagesToRead = _signature.leafPageCount - _nextPageId;
     }
     if (pagesToRead > 0) {
       _bufferpool->readPages(_signature, _nextPageId, pagesToRead, _buffer);
@@ -431,6 +431,7 @@ std::string FFamilyImpl::mergeBTreeFractures (FEngine *engine, const std::vector
   signature.leafEntrySize = tupleSize;
   signature.keyCompareFuncType = toKeyCompareFuncType(_type);
   signature.pageCount = totalPageCount;
+  signature.leafPageCount = leafPageCount;
   signature.rootPageStart = rootPageStart;
   signature.rootPageCount = rootPageCount;
   signature.rootPageLevel = rootPageLevel;

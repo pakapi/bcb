@@ -95,6 +95,7 @@ struct CStoreDumpContext {
   int64_t currentTuple;
   int64_t tupleCount;
   FCStoreColumn column;
+  int leafPageCount;
   int leafEntrySize; // this is not same as column.maxLength with RLE/Dictionary encoding
   int entryInCurrentPage;
   int entryPerLeafPage;
