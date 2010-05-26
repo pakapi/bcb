@@ -15,16 +15,16 @@ clearcache() {
 # clearcache
 # ./fdbmain loadssbmvcstore
 clearcache
-./fdbmain runbench 1000 false false 10 400000 40
+./build/fdbmain runbench 1000 false false 10 400000 40
 clearcache
-./fdbmain runbench 1000 false true 10 400000 40
+./build/fdbmain runbench 1000 false true 10 400000 40
 clearcache
-./fdbmain runbench 1000 true false 10 400000 40
+./build/fdbmain runbench 1000 true false 10 400000 40
 clearcache
-./fdbmain runbench 1000 true true 10 400000 40
+./build/fdbmain runbench 1000 true true 10 400000 40
 clearcache
-./fdbmain runbench 1000 false false 10 0 40
+./build/fdbmain runbench 1000 false false 10 0 40
 clearcache
-./fdbmain runbench 1000 true false 10 0 40
+./build/fdbmain runbench 1000 true false 10 0 40
 clearcache
 
