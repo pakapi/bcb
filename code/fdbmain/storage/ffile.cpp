@@ -234,6 +234,7 @@ std::vector<FFileSignature> FSignatureSet::dumpToNewCStoreFiles (const std::stri
   assert (signatures.size () == columns.size());
   FCStoreUtil::dumpToNewCStoreFile(signatures, btree);
   for (size_t i = 0; i < columns.size(); ++i) {
+    assert (signatures[i].totalTupleCount == btree.size());
     addFileSignature(signatures[i]);
   }
   return signatures;
