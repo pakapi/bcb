@@ -1,7 +1,11 @@
 This project is a CMake project.
 
+# move to build folder
+mkdir build
+cd build
+
 # launch ccmake to find appropriate package locations
-ccmake .
+ccmake ../
 
 # cmake to make Makefile, and make it
 cmake .
