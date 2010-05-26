@@ -6,7 +6,6 @@
 #include "../io/fis.h"
 #include "../ssb/ssb.h"
 #include "../util/stopwatch.h"
-#include "../util/hashmap.h"
 #include <stdint.h>
 #include <string.h>
 #include <cstdio>
@@ -183,9 +182,36 @@ std::vector<SortOrder> FCStoreUtil::getSortOrdersOf(TableType table) {
 // ==========================================================================
 //  Dump method for RowStore temporary table to CStore file
 // ==========================================================================
-void dumpUncompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree &btree);
-void dumpRLECompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree &btree);
-void dumpDictionaryCompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree &btree);
+void buildDictionaryFromBTree(FCStoreWriter &context, const FMainMemoryBTree &btree);
+
+/* this is concise, but has some overhead for _each value_. below are the specialized ones.
+void dumpCStoreCallback (void *context, const void *key, const void *data) {
+  FCStoreWriter *writer = reinterpret_cast<FCStoreWriter*> (context);
+  const char *value = reinterpret_cast<const char*>(data) + (writer->column.offset);
+  writer->addValue(value);
+}
+*/
+void dumpCStoreCallbackUncompressed (void *context, const void *key, const void *data) {
+  FCStoreWriter *writer = reinterpret_cast<FCStoreWriter*> (context);
+  const char *value = reinterpret_cast<const char*>(data) + (writer->column.offset);
+  writer->addValueUncompressed(value);
+}
+void dumpCStoreCallbackRLE (void *context, const void *key, const void *data) {
+  FCStoreWriter *writer = reinterpret_cast<FCStoreWriter*> (context);
+  const char *value = reinterpret_cast<const char*>(data) + (writer->column.offset);
+  writer->addValueRLE(value);
+}
+void dumpCStoreCallbackSmallDictionary (void *context, const void *key, const void *data) {
+  FCStoreWriter *writer = reinterpret_cast<FCStoreWriter*> (context);
+  const char *value = reinterpret_cast<const char*>(data) + (writer->column.offset);
+  writer->addValueSmallDictionary(value);
+}
+template <typename T>
+void dumpCStoreCallbackLargeDictionary (void *context, const void *key, const void *data) {
+  FCStoreWriter *writer = reinterpret_cast<FCStoreWriter*> (context);
+  const char *value = reinterpret_cast<const char*>(data) + (writer->column.offset);
+  writer->addValueLargeDictionary<T>(value);
+}
 
 void FCStoreUtil::dumpToNewCStoreFile (
   std::vector<FFileSignature> &signatures, const FMainMemoryBTree &btree) {
@@ -206,10 +232,8 @@ void FCStoreUtil::dumpToNewCStoreFile (
     FFileSignature &signature = signatures[i];
     const FCStoreColumn &column = columns[i];
 
-#ifdef DEBUG
     StopWatch watchColumn;
     watchColumn.init();
-#endif //DEBUG
 
     assert (signature.fileId > 0);
     assert (signature.filepath != NULL);
@@ -220,33 +244,40 @@ void FCStoreUtil::dumpToNewCStoreFile (
     VLOG(1) << "dumping an on-memory btree to a new CStore file " << filepath << " (compression=" << toCompressionSchemeName(column.compression) << ")...";
 
     scoped_ptr<DirectFileOutputStream> fd(new DirectFileOutputStream(filepath, FDB_USE_DIRECT_IO));
-    CStoreDumpContext context(signature.fileId, fd.get(), (char*) buffer, column, btree);
-
+    FCStoreWriter context(signature.fileId, fd.get(), (char*) buffer, column, btree.size());
     ::memset (buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
-    if (column.compression == UNCOMPRESSED) {
-      dumpUncompressedColumn (context, btree);
-    } else if (column.compression == RLE_COMPRESSED) {
-      dumpRLECompressedColumn (context, btree);
-    } else if (column.compression == DICTIONARY_COMPRESSED) {
-      dumpDictionaryCompressedColumn(context, btree);
-    } else {
-      LOG(ERROR) << "Unsupported compression type:" << column.compression;
-      throw std::exception();
+
+    if (column.compression == DICTIONARY_COMPRESSED) {
+      buildDictionaryFromBTree (context, btree);
     }
+
+    if (column.compression == UNCOMPRESSED) {
+      btree.traverse (dumpCStoreCallbackUncompressed, &context);
+    } else if (column.compression == RLE_COMPRESSED) {
+      btree.traverse (dumpCStoreCallbackRLE, &context);
+    } else {
+      assert (column.compression == DICTIONARY_COMPRESSED);
+      if (context.dictionaryBits == 16) btree.traverse (dumpCStoreCallbackLargeDictionary<uint16_t>, &context);
+      else if (context.dictionaryBits == 8) btree.traverse (dumpCStoreCallbackLargeDictionary<uint8_t>, &context);
+      else {
+        assert (context.dictionaryBits < 8);
+        btree.traverse (dumpCStoreCallbackSmallDictionary, &context);
+      }
+    }
+
     // done. flush and close
+    context.finishWriting();
     fd->sync();
     fd->close();
     context.updateFileSignature(signature, btree.getTableType(), i);
-#ifdef DEBUG
     watchColumn.stop();
     VLOG(1) << "finished writing " << signature.pageCount << " pages in " << watchColumn.getElapsed() << " microsec.";
-#endif //DEBUG
   }
   watch.stop();
   LOG(INFO) << "completed all dumping. " << watch.getElapsed() << " micsosec";
 }
 
-CStoreDumpContext::CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, char *buffer_, const FCStoreColumn &column_, const FMainMemoryBTree &btree) {
+FCStoreWriter::FCStoreWriter(int fileId_, DirectFileOutputStream *fd_, char *buffer_, const FCStoreColumn &column_, int64_t tupleCount_) {
   fileId = fileId_;
   fd = fd_;
   buffer = buffer_;
@@ -254,7 +285,7 @@ CStoreDumpContext::CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, c
   currentPageId = 0;
   currentPageOffset = 0;
   currentTuple = 0;
-  tupleCount = btree.size();
+  tupleCount = tupleCount_;
   column = column_;
   dictionaryBits = 0;
   dictionaryHashmap = NULL;
@@ -292,11 +323,37 @@ CStoreDumpContext::CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, c
   rootPageLevel = 0;
   leafPageCount = 0;
 }
-CStoreDumpContext::~CStoreDumpContext() {
+FCStoreWriter::~FCStoreWriter() {
   if (dictionaryHashmap != NULL) delete dictionaryHashmap;
 }
 
-void CStoreDumpContext::updateFileSignature(FFileSignature &signature, TableType tableType, int columnIndex) const {
+
+void FCStoreWriter::addValue (const char* value) {
+  if (column.compression == UNCOMPRESSED) {
+    addValueUncompressed(value);
+  } else if (column.compression == RLE_COMPRESSED) {
+    addValueRLE(value);
+  } else {
+    assert (column.compression == DICTIONARY_COMPRESSED);
+    if (dictionaryBits == 16) addValueLargeDictionary<uint16_t>(value);
+    else if (dictionaryBits == 8) addValueLargeDictionary<uint8_t>(value);
+    else {
+      assert (dictionaryBits < 8);
+      addValueSmallDictionary(value);
+    }
+  }
+}
+void FCStoreWriter::finishWriting () {
+  if (column.compression == UNCOMPRESSED) {
+    finishWritingUncompressed();
+  } else if (column.compression == RLE_COMPRESSED) {
+    finishWritingRLE();
+  } else {
+    finishWritingDictionary();
+  }
+}
+
+void FCStoreWriter::updateFileSignature(FFileSignature &signature, TableType tableType, int columnIndex) const {
   signature.columnFile = true;
   signature.columnType = column.type;
   signature.columnMaxLength = column.maxLength;
@@ -318,7 +375,7 @@ void CStoreDumpContext::updateFileSignature(FFileSignature &signature, TableType
   signature.dictionaryEntryCount = dictionarySize;
 }
 
-bool CStoreDumpContext::flushBufferIfNeeded() {
+bool FCStoreWriter::flushBufferIfNeeded() {
   // check if we need to flush buffered pages
   assert (currentPageOffset == 0);
   assert (bufferedPages <= FDB_DISK_WRITE_BUFFER_PAGES);
@@ -328,7 +385,7 @@ bool CStoreDumpContext::flushBufferIfNeeded() {
   }
   return false;
 }
-void CStoreDumpContext::flushBuffer() {
+void FCStoreWriter::flushBuffer() {
   assert (currentPageOffset == 0);
   assert (currentBitOffset == 0);
   assert (bufferedPages <= FDB_DISK_WRITE_BUFFER_PAGES);
@@ -340,7 +397,7 @@ void CStoreDumpContext::flushBuffer() {
   }
 }
 
-bool CStoreDumpContext::flipPageIfNeeded() {
+bool FCStoreWriter::flipPageIfNeeded() {
   assert (entryInCurrentPage <= entryPerLeafPage);
   if (entryPerLeafPage == entryInCurrentPage) {
     flipPage();
@@ -348,7 +405,7 @@ bool CStoreDumpContext::flipPageIfNeeded() {
   }
   return false;
 }
-void CStoreDumpContext::flipPage() {
+void FCStoreWriter::flipPage() {
   if (currentPageOffset > 0) {
     ++(currentPageId);
     currentPageOffset = 0;
@@ -358,10 +415,10 @@ void CStoreDumpContext::flipPage() {
   }
 }
 
-void CStoreDumpContext::writeLeafPageHeader(int countInThisPage, bool lastSibling, int64_t beginningPos) {
+void FCStoreWriter::writeLeafPageHeader(int countInThisPage, bool lastSibling, int64_t beginningPos) {
   writePageHeader (countInThisPage, lastSibling, beginningPos, 0, false, leafEntrySize);
 }
-void CStoreDumpContext::writePageHeader(int countInThisPage, bool lastSibling, int64_t beginningPos, int level, bool root, int entrySize) {
+void FCStoreWriter::writePageHeader(int countInThisPage, bool lastSibling, int64_t beginningPos, int level, bool root, int entrySize) {
   FPageHeader *header = reinterpret_cast<FPageHeader*> (buffer + (FDB_PAGE_SIZE * bufferedPages));
   header->magicNumber = MAGIC_NUMBER;
   header->fileId = fileId;
@@ -380,14 +437,14 @@ void CStoreDumpContext::writePageHeader(int countInThisPage, bool lastSibling, i
   currentPageOffset = sizeof (FPageHeader);
 }
 
-void CStoreDumpContext::writeLeafEntry(const char *entryData) {
+void FCStoreWriter::writeLeafEntry(const char *entryData) {
   ::memcpy(buffer + (FDB_PAGE_SIZE * bufferedPages) + currentPageOffset, entryData, leafEntrySize);
   currentPageOffset += leafEntrySize;
   ++entryInCurrentPage;
   ++currentTuple;
 }
 
-void CStoreDumpContext::writeLeafEntryRLE(int runLength, const char *entryData) {
+void FCStoreWriter::writeLeafEntryRLE(int runLength, const char *entryData) {
   assert ((int) sizeof(int) + column.maxLength == leafEntrySize);
   ::memcpy(buffer + (FDB_PAGE_SIZE * bufferedPages) + currentPageOffset, &runLength, sizeof(int));
   ::memcpy(buffer + (FDB_PAGE_SIZE * bufferedPages) + currentPageOffset + sizeof(int), entryData, column.maxLength);
@@ -395,14 +452,14 @@ void CStoreDumpContext::writeLeafEntryRLE(int runLength, const char *entryData) 
   ++entryInCurrentPage;
 }
 
-void CStoreDumpContext::writeRootEntryRLE(int64_t beginningPos, int pageId) {
+void FCStoreWriter::writeRootEntryRLE(int64_t beginningPos, int pageId) {
   ::memcpy(buffer + (FDB_PAGE_SIZE * bufferedPages) + currentPageOffset, &beginningPos, sizeof(int64_t));
   ::memcpy(buffer + (FDB_PAGE_SIZE * bufferedPages) + currentPageOffset + sizeof(int64_t), &pageId, sizeof(int));
   currentPageOffset += sizeof(int64_t) + sizeof(int);
   ++entryInCurrentPage;
 }
 
-void CStoreDumpContext::writeDictionary () {
+void FCStoreWriter::writeDictionary () {
   // flush last pages
   flipPage();
   flushBuffer();
@@ -440,7 +497,7 @@ void CStoreDumpContext::writeDictionary () {
   flushBuffer();
 }
 
-void CStoreDumpContext::prepareForNewPageUniform () {
+void FCStoreWriter::prepareForNewPageUniform () {
   flipPageIfNeeded();
   if (currentPageOffset == 0) {
     VLOG(2) << "new page!";
@@ -463,97 +520,85 @@ void CStoreDumpContext::prepareForNewPageUniform () {
 // ========================================
 //  Uncompressed Column
 // ========================================
-void dumpUncompressedColumnCallback (void *context, const void *key, const void *data) {
-  CStoreDumpContext *dumpContext = reinterpret_cast<CStoreDumpContext*>(context);
-  assert (dumpContext->currentTuple < dumpContext->tupleCount);
-  dumpContext->prepareForNewPageUniform();
-  dumpContext->writeLeafEntry (((char*) data) + dumpContext->column.offset);
+
+void FCStoreWriter::addValueUncompressed (const char* value) {
+  assert (currentTuple < tupleCount);
+  prepareForNewPageUniform();
+  writeLeafEntry (value);
 }
-
-void dumpUncompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree &btree) {
-  btree.traverse(dumpUncompressedColumnCallback, &context);
-
-  // flush last pages
-  context.flipPage();
-  context.flushBuffer();
-
-  context.leafPageCount = context.currentPageId;
+void FCStoreWriter::finishWritingUncompressed () {
+  flipPage();
+  flushBuffer();
+  leafPageCount = currentPageId;
 }
 
 // ========================================
 //  RLE Compressed Column
 // ========================================
-void flushCurrentRun (CStoreDumpContext *dumpContext) {
+void FCStoreWriter::flushCurrentRun () {
   // flush the last run
-  dumpContext->flipPageIfNeeded();
-  if (dumpContext->currentPageOffset == 0) {
+  flipPageIfNeeded();
+  if (currentPageOffset == 0) {
     VLOG(2) << "new page!";
-    dumpContext->flushBufferIfNeeded();
+    flushBufferIfNeeded();
     // determining countInThisPage and whether it's last or not is difficult in RLE
     // this will be overwritten when this page turns out to be the last sibling
-    dumpContext->writeLeafPageHeader(dumpContext->entryPerLeafPage, false, dumpContext->currentRunBeginningPos);
-    dumpContext->pageBeginningPositions.push_back (dumpContext->currentRunBeginningPos);
-    assert ((int) dumpContext->pageBeginningPositions.size() == dumpContext->currentPageId + 1);
+    writeLeafPageHeader(entryPerLeafPage, false, currentRunBeginningPos);
+    pageBeginningPositions.push_back (currentRunBeginningPos);
+    assert ((int) pageBeginningPositions.size() == currentPageId + 1);
   }
-  if (dumpContext->currentRunValue != NULL) {
-    dumpContext->writeLeafEntryRLE(dumpContext->currentRunCount, dumpContext->currentRunValue);
+  if (currentRunValue != NULL) {
+    writeLeafEntryRLE(currentRunCount, currentRunValue);
   }
 }
-void dumpRLECompressedColumnCallback (void *context, const void *key, const void *data) {
-  CStoreDumpContext *dumpContext = reinterpret_cast<CStoreDumpContext*>(context);
-  assert (dumpContext->currentTuple < dumpContext->tupleCount);
+void FCStoreWriter::addValueRLE (const char* value) {
+  assert (currentTuple < tupleCount);
 
   // write RLE data only when the value changes
-  const char *currentValue = ((char*) data) + dumpContext->column.offset;
-  if (dumpContext->currentRunValue == NULL || ::memcmp(dumpContext->currentRunValue, currentValue, dumpContext->column.maxLength) != 0) {
+  if (currentRunValue == NULL || ::memcmp(currentRunValue, value, column.maxLength) != 0) {
     VLOG(2) << "new run!";
-    flushCurrentRun (dumpContext);
+    flushCurrentRun ();
 
     // Start a new run
-    dumpContext->currentRunBeginningPos = dumpContext->currentTuple;
-    dumpContext->currentRunValue = currentValue;
-    dumpContext->currentRunCount = 1;
-    ++(dumpContext->runTotal);
+    currentRunBeginningPos = currentTuple;
+    currentRunValue = value;
+    currentRunCount = 1;
+    ++runTotal;
   } else {
-    ++(dumpContext->currentRunCount);
+    ++currentRunCount;
   }
-  ++(dumpContext->currentTuple);
+  ++currentTuple;
 }
-
-void dumpRLECompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree &btree) {
-  btree.traverse(dumpRLECompressedColumnCallback, &context);
-
+void FCStoreWriter::finishWritingRLE () {
   // flush last run
-  flushCurrentRun (&context);
+  flushCurrentRun ();
   // overwrite count/lastSibling of the last page
   {
-    FPageHeader *header = reinterpret_cast<FPageHeader*>(context.buffer + (FDB_PAGE_SIZE * context.bufferedPages));
+    FPageHeader *header = reinterpret_cast<FPageHeader*>(buffer + (FDB_PAGE_SIZE * bufferedPages));
     assert (header->lastSibling == false);
-    assert (header->count == context.entryPerLeafPage);
+    assert (header->count == entryPerLeafPage);
     header->lastSibling = true;
-    header->count = context.entryInCurrentPage;
+    header->count = entryInCurrentPage;
   }
 
   // flush last pages
-  context.flipPage();
-  context.flushBuffer();
+  flipPage();
+  flushBuffer();
 
-  context.leafPageCount = context.currentPageId;
+  leafPageCount = currentPageId;
 
-  VLOG(1) << "in total " << context.runTotal << " runs";
+  VLOG(1) << "in total " << runTotal << " runs";
 
   // then, write root pages for position search
   size_t rootEntrySize = sizeof(int64_t) + sizeof (int);
-  int leafPageCount = context.pageBeginningPositions.size();
-  assert (leafPageCount == context.currentPageId);
   int entriesInRootPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / rootEntrySize;
-  context.rootPageStart = context.currentPageId;
-  context.rootPageCount = (leafPageCount / entriesInRootPage) + (leafPageCount % entriesInRootPage == 0 ? 0 : 1);
-  context.rootPageLevel = 1;
-  for (int i = 0; i < context.rootPageCount; ++i) {
+  rootPageStart = currentPageId;
+  rootPageCount = (leafPageCount / entriesInRootPage) + (leafPageCount % entriesInRootPage == 0 ? 0 : 1);
+  rootPageLevel = 1;
+  for (int i = 0; i < rootPageCount; ++i) {
     bool lastSibling;
     int countInThisPage;
-    if (i == context.rootPageCount - 1) {
+    if (i == rootPageCount - 1) {
       countInThisPage = leafPageCount - i * entriesInRootPage;
       assert (countInThisPage <= entriesInRootPage);
       assert (countInThisPage > 0);
@@ -562,67 +607,62 @@ void dumpRLECompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree 
       countInThisPage = entriesInRootPage;
       lastSibling = false;
     }
-    context.writePageHeader(countInThisPage, lastSibling, context.pageBeginningPositions[i * entriesInRootPage], 1, true, rootEntrySize);
+    writePageHeader(countInThisPage, lastSibling, pageBeginningPositions[i * entriesInRootPage], 1, true, rootEntrySize);
     for (int j = 0; j < countInThisPage; ++j) {
       int pageId = i * entriesInRootPage + j;
-      int64_t beginningPos = context.pageBeginningPositions[pageId];
-      context.writeRootEntryRLE(beginningPos, pageId);
+      int64_t beginningPos = pageBeginningPositions[pageId];
+      writeRootEntryRLE(beginningPos, pageId);
     }
-    context.flipPage();
-    context.flushBufferIfNeeded();
+    flipPage();
+    flushBufferIfNeeded();
   }
-  VLOG(1) << "RLE " << context.rootPageCount << " root pages";
-  context.flipPage();
-  context.flushBuffer();
+  VLOG(1) << "RLE " << rootPageCount << " root pages";
+  flipPage();
+  flushBuffer();
 }
 
 // ========================================
 //  Dictionary Encoded Column
 // ========================================
-void flushCurrentPackedByte(CStoreDumpContext *dumpContext) {
-  assert (dumpContext->currentBitOffset >= 0);
-  assert (dumpContext->currentBitOffset <= 8);
-  dumpContext->currentBitOffset = 0;
-  *reinterpret_cast<unsigned char*>(dumpContext->buffer + (FDB_PAGE_SIZE * dumpContext->bufferedPages) + dumpContext->currentPageOffset) = dumpContext->currentPackedByte;
-  dumpContext->currentPackedByte = 0;
-  ++(dumpContext->currentPageOffset);
+void FCStoreWriter::flushCurrentPackedByte() {
+  assert (currentBitOffset >= 0);
+  assert (currentBitOffset <= 8);
+  currentBitOffset = 0;
+  *reinterpret_cast<unsigned char*>(buffer + (FDB_PAGE_SIZE * bufferedPages) + currentPageOffset) = currentPackedByte;
+  currentPackedByte = 0;
+  ++currentPageOffset;
 }
 
-void dumpSmallDictionaryCompressedColumnCallback (void *context, const void *key, const void *data) {
-  CStoreDumpContext *dumpContext = reinterpret_cast<CStoreDumpContext*>(context);
-  assert (dumpContext->dictionaryBits <= 4);
-  assert (dumpContext->currentTuple < dumpContext->tupleCount);
+void FCStoreWriter::addValueSmallDictionary (const char* value) {
+  assert (dictionaryBits <= 4);
+  assert (currentTuple < tupleCount);
 
-  if (dumpContext->currentBitOffset == 0) {
-    dumpContext->prepareForNewPageUniform();
+  if (currentBitOffset == 0) {
+    prepareForNewPageUniform();
   }
 
-  const char* value = ((char*) data) + dumpContext->column.offset;
-  uint8_t foundIndex = dumpContext->dictionaryHashmap->find(value);
+  uint8_t foundIndex = dictionaryHashmap->find(value);
 
   // <=4bits have to pack to a byte.
-  dumpContext->currentPackedByte |= (foundIndex << dumpContext->currentBitOffset);
-  ++(dumpContext->entryInCurrentPage);
-  (dumpContext->currentBitOffset) += dumpContext->dictionaryBits;
-  if (dumpContext->currentBitOffset == 8) {
-    flushCurrentPackedByte(dumpContext);
+  currentPackedByte |= (foundIndex << currentBitOffset);
+  ++entryInCurrentPage;
+  currentBitOffset += dictionaryBits;
+  if (currentBitOffset == 8) {
+    flushCurrentPackedByte();
   }
-  ++(dumpContext->currentTuple);
+  ++currentTuple;
+}
+void FCStoreWriter::finishWritingDictionary () {
+  // flush last bits
+  if (currentBitOffset != 0) {
+    flushCurrentPackedByte();
+  }
+  leafPageCount = currentPageId;
+  writeDictionary();
+
+  VLOG(2) << "Dumped Dictionary Compressed column";
 }
 
-template <typename INT_TYPE>
-void dumpLargeDictionaryCompressedColumnCallback (void *context, const void *key, const void *data) {
-  CStoreDumpContext *dumpContext = reinterpret_cast<CStoreDumpContext*>(context);
-  assert (dumpContext->dictionaryBits >= 8);
-  assert (dumpContext->currentTuple < dumpContext->tupleCount);
-  assert (sizeof(INT_TYPE) == dumpContext->leafEntrySize);
-
-  dumpContext->prepareForNewPageUniform();
-  const char* value = ((char*) data) + dumpContext->column.offset;
-  // simply write the current data, but in given length of int
-  INT_TYPE foundIndex = dumpContext->dictionaryHashmap->find(value);
-  dumpContext->writeLeafEntry(reinterpret_cast<char*>(&foundIndex));
-}
 
 struct CompFunctor {
   CompFunctor (int columnLength) : _columnLength (columnLength) {}
@@ -632,7 +672,7 @@ struct CompFunctor {
   int _columnLength;
 };
 
-void dumpDictionaryCompressedColumn(CStoreDumpContext &context, const FMainMemoryBTree &btree) {
+void buildDictionaryFromBTree(FCStoreWriter &context, const FMainMemoryBTree &btree) {
 #ifndef NDEBUG
   StopWatch watch;
   watch.init();
@@ -677,46 +717,31 @@ void dumpDictionaryCompressedColumn(CStoreDumpContext &context, const FMainMemor
   watch.stop();
   VLOG(2) << "Dictionary built. " << context.dictionarySize << " entries. " << watch.getElapsed() << " microsec";
 #endif // NDEBUG
-
-  assert (context.currentBitOffset == 0);
-
-  // decide the bits to store one value, and then traverse the BTree in key sort order.
-  if (context.dictionarySize <= (1 << 1)) {
-    context.dictionaryBits = 1;
-    context.leafEntrySize = 1;
-    context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 8;
-    btree.traverse(dumpSmallDictionaryCompressedColumnCallback, &context);
-  } else if (context.dictionarySize <= (1 << 2)) {
-    context.dictionaryBits = 2;
-    context.leafEntrySize = 1;
-    context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 4;
-    btree.traverse(dumpSmallDictionaryCompressedColumnCallback, &context);
-  } else if (context.dictionarySize <= (1 << 4)) {
-    context.dictionaryBits = 4;
-    context.leafEntrySize = 1;
-    context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 2;
-    btree.traverse(dumpSmallDictionaryCompressedColumnCallback, &context);
-  } else if (context.dictionarySize <= (1 << 8)) {
-    context.dictionaryBits = 8;
-    context.leafEntrySize = 1;
-    context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader));
-    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<uint8_t>, &context);
+  context.determineDictionaryBits ();
+}
+void FCStoreWriter::determineDictionaryBits() {
+  if (dictionarySize <= (1 << 1)) {
+    dictionaryBits = 1;
+    leafEntrySize = 1;
+    entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 8;
+  } else if (dictionarySize <= (1 << 2)) {
+    dictionaryBits = 2;
+    leafEntrySize = 1;
+    entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 4;
+  } else if (dictionarySize <= (1 << 4)) {
+    dictionaryBits = 4;
+    leafEntrySize = 1;
+    entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) * 2;
+  } else if (dictionarySize <= (1 << 8)) {
+    dictionaryBits = 8;
+    leafEntrySize = 1;
+    entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader));
   } else {
-    assert (context.dictionarySize <= (1 << 16));
-    context.dictionaryBits = 16;
-    context.leafEntrySize = 2;
-    context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / 2;
-    btree.traverse(dumpLargeDictionaryCompressedColumnCallback<uint16_t>, &context);
+    assert (dictionarySize <= (1 << 16));
+    dictionaryBits = 16;
+    leafEntrySize = 2;
+    entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / 2;
   }
-
-  // flush last bits
-  if (context.currentBitOffset != 0) {
-    flushCurrentPackedByte(&context);
-  }
-  context.leafPageCount = context.currentPageId;
-  context.writeDictionary();
-
-  VLOG(2) << "Dumped Dictionary Compressed column";
 }
 
 // ==========================================================================

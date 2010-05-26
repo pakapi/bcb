@@ -4,6 +4,7 @@
 #include "ffilesig.h"
 #include "fcstore.h"
 #include "searchcond.h"
+#include "../util/hashmap.h"
 #include <glog/logging.h>
 #include <stdint.h>
 #include <string.h>
@@ -18,7 +19,6 @@
 #pragma warning( disable : 4250) // I do know there's diamond inheritance, but it's virtual inheritance!
 #endif //_MSC_VER
 
-template <typename T> class StringHashMap;
 namespace fdb {
 
 // pimpl object for FMainMemoryCStore.
@@ -62,13 +62,13 @@ public:
 */
 };
 
-
-// context object for callback function in disk dump
 class DirectFileOutputStream;
-class FMainMemoryBTree;
-struct CStoreDumpContext {
-  CStoreDumpContext(int fileId_, DirectFileOutputStream *fd_, char *buffer_, const FCStoreColumn &column, const FMainMemoryBTree &btree);
-  ~CStoreDumpContext();
+
+// class to write a column file.
+class FCStoreWriter {
+public:
+  FCStoreWriter(int fileId_, DirectFileOutputStream *fd_, char *buffer_, const FCStoreColumn &column, int64_t tupleCount_);
+  ~FCStoreWriter();
   void updateFileSignature(FFileSignature &signature, TableType tableType, int columnIndex) const;
 
   void prepareForNewPageUniform (); // for uncompressed/dictionary encoded file
@@ -85,6 +85,36 @@ struct CStoreDumpContext {
   void writeLeafEntry(const char *entryData);
   void writeLeafEntryRLE(int runLength, const char *entryData);
   void writeRootEntryRLE(int64_t beginningPos, int pageId);
+
+  void addValue (const char* value);
+  void finishWriting ();
+
+  void addValueUncompressed (const char* value);
+  void finishWritingUncompressed ();
+
+  void flushCurrentRun ();
+  void addValueRLE (const char* value);
+  void finishWritingRLE ();
+
+  // sets leafEntrySize/entryPerLeafPage/dictionaryBits according to dictionarySize
+  void determineDictionaryBits();
+
+  void flushCurrentPackedByte();
+  // before calling these, leafEntrySize/entryPerLeafPage/dictionaryBits/dictionaryHashmap have to be set properly
+  void addValueSmallDictionary (const char* value);
+  template <typename INT_TYPE>
+  void addValueLargeDictionary (const char* value) {
+    assert (dictionaryBits >= 8);
+    assert (currentTuple < tupleCount);
+    assert (sizeof(INT_TYPE) == leafEntrySize);
+    prepareForNewPageUniform();
+    // simply write the current data, but in given length of int
+    INT_TYPE foundIndex = dictionaryHashmap->find(value);
+    writeLeafEntry(reinterpret_cast<char*>(&foundIndex));
+  }
+  // before calling this, dictionaryEntries have to be set properly
+  void finishWritingDictionary ();
+
 
   int fileId;
   DirectFileOutputStream *fd;
