@@ -1,6 +1,7 @@
 #ifndef ENGINE_FFAMILY_H
 #define ENGINE_FFAMILY_H
 
+#include "../configvalues.h"
 #include <vector>
 #include <string>
 
@@ -9,11 +10,12 @@ namespace fdb {
 // a family consists of versions of fractures which might be on-disk file (up to any number)
 // or a on-memory table (up to one, and always the latest).
 
+class FEngine;
 class FFamilyImpl;
 class FMainMemoryBTree;
 class FFamily {
 public:
-  FFamily (); // TODO maybe constructed from some file?
+  FFamily (const std::string &name, TableType type, bool cstore); // TODO maybe constructed from some file?
   ~FFamily ();
 
   // returns the list of name (which chould be path of data file or its prefix if c-store)
@@ -33,7 +35,16 @@ public:
   // this class does not gain the ownership thus never deletes the pointer.
   void setCurrentFracture(FMainMemoryBTree *fracture);
 
+  const std::string& getName() const;
+  TableType getTableType () const;
+  bool isCStore () const;
+
   // TODO methods for saving to file?
+
+  // merge the given files (specified by name) of the family to one new fracture.
+  // returns the name of the new fracture.
+  std::string mergeFractures (FEngine *engine, const std::vector<std::string> &fractureNames, bool deleteOldFractures, long long mergeBufferSize);
+
 
   FFamilyImpl* getImpl () {return _impl; } // just for testcases
 private:

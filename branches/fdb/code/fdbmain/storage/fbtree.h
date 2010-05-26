@@ -108,6 +108,56 @@ public:
   void scanTuplesGreaterEqual (TupleCallback callback, void *context, const char *key);
 
   FReadOnlyDiskBTreeImpl* getImpl () { return _impl; } // only used by testcases
+
+  // Iterator to scan all leaf pages.
+  class LeafPageIterator {
+  public:
+    LeafPageIterator(FReadOnlyDiskBTreeImpl *impl);
+    LeafPageIterator(const LeafPageIterator &other) {
+      *this = other;
+    }
+
+    inline const void* operator *() const {
+      return reinterpret_cast<const char*>(currentPage) + currentTuple * tupleSize;
+    }
+    inline void operator ++() {
+      ++currentTuple;
+      if (currentTuple >= currentPageTupleCount) {
+        readPage(true);
+      }
+    }
+    inline void operator ++(int) {
+      operator ++();
+    }
+    inline void operator --() {
+      --currentTuple;
+      if (currentTuple < 0) {
+        readPage(false);
+      }
+    }
+    inline void operator --(int) {
+      operator --();
+    }
+    // equivalent to "!= std::iterator::end()"
+    inline bool hasCurrent() {
+      return currentPageId >= 0 && currentPageId < leafPageCount && currentTuple >= 0 && currentTuple <= currentPageTupleCount;
+    }
+  private:
+    LeafPageIterator(); // prohibit default constructure
+    void readPage(bool forward);
+
+    int currentPageId;
+    int currentTuple;
+    int tupleSize;
+    const void* currentPage; // starting from the end of header
+    int currentPageTupleCount;
+    int leafPageCount;
+    FReadOnlyDiskBTreeImpl *impl;
+  };
+
+  LeafPageIterator scanLeafPages ();
+  const char* getLeafPage (int pageId);
+  int getLeafPageCount () const;
 private:
   FReadOnlyDiskBTreeImpl *_impl; //pimpl object
 };

@@ -34,7 +34,7 @@ public:
 
   // get/set of fracture families.
   FFamily* getFractureFamily (const std::string &name);
-  FFamily* createNewFractureFamily (const std::string &name);
+  FFamily* createNewFractureFamily (const std::string &name, TableType type, bool cstore);
   bool eraseFractureFamily (const std::string &name);
 
   FSignatureSet& getSignatureSet ();

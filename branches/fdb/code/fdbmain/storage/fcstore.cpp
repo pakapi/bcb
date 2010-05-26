@@ -332,6 +332,7 @@ void CStoreDumpContext::updateFileSignature(FFileSignature &signature, TableType
   signature.columnOffset = column.offset;
   signature.columnCompression = column.compression;
 
+  signature.totalTupleCount = tupleCount;
   signature.keyEntrySize = 0; // no meaning in column store
   signature.leafEntrySize = 0; // no meaning in column store
   signature.keyCompareFuncType = KEY_CMP_INVALID;

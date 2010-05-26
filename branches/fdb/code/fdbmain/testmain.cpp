@@ -52,9 +52,11 @@ BOOST_AUTO_TEST_CASE(init) {
   google::InitGoogleLogging ("testmain");
   google::SetLogDestination(google::INFO, "testmain.log.");
   google::SetStderrLogging(google::INFO);
+  // google::SetVLOGLevel ("", 1); this crashes.. wtf?
   BOOST_TEST_MESSAGE("===Initialized tests.");
 }
 
+/*
 BOOST_AUTO_TEST_CASE(storage_test_sig) {
   BOOST_TEST_MESSAGE("===Testing FSignatureSet...");
 
@@ -813,8 +815,8 @@ BOOST_AUTO_TEST_CASE(ssb_query) {
 
   // to add a few additional data
   FFamily *family[2];
-  family[0] = engine.createNewFractureFamily(CSTORE_MV_FAMILY);
-  family[1] = engine.createNewFractureFamily(BTREE_MV_FAMILY);
+  family[0] = engine.createNewFractureFamily(CSTORE_MV_FAMILY, MV_PROJECTION, true);
+  family[1] = engine.createNewFractureFamily(BTREE_MV_FAMILY, MV_PROJECTION, false);
   FMainMemoryBTree fractureSorted (MV_PROJECTION, 10, true);
   FMainMemoryBTree fractureUnsorted (MV_PROJECTION, 10, false);
   const char* REGIONS[] = {"AFRICA", "MIDDLE EAST", "ASIA", "ASIA", "MIDDLE EAST"};
@@ -1214,4 +1216,60 @@ BOOST_AUTO_TEST_CASE(ssb_random_query) {
     BOOST_TEST_MESSAGE("Q" << it->first << ":" << it->second);
   }
   BOOST_TEST_MESSAGE("===Tested SSB Random Queries.");
+}
+*/
+
+BOOST_AUTO_TEST_CASE(engine_family_merge_btree) {
+  BOOST_TEST_MESSAGE("===Testing Fracture Family Merging for BTree...");
+  std::remove((TEST_DATA_FOLDER + string("_btreemerge.sig")).c_str());
+  FEngine engine (TEST_DATA_FOLDER, string(TEST_DATA_FOLDER) + "_btreemerge.sig", 100);
+  std::string TEST_FAMILY ("test_family");
+  FFamily *family = engine.createNewFractureFamily(TEST_FAMILY, MV_PROJECTION, false);
+
+  DBGen gen ("../../data/tinyssb/", 100);
+  std::vector<std::string> names;
+  std::vector<int> counts;
+  int totalCount = 0;
+  for (size_t i = 0; i < 2 * 3; ++i) {
+    gen.generateNextBatch();
+    size_t batchSize = gen.getCurrentBatchSize();
+    FMainMemoryBTree fracture (MV_PROJECTION, 200, false);
+    MVProjection *mb = gen.getMVBuffer();
+    for (size_t j = 0; j < batchSize; ++j) {
+      const MVProjection &m = mb[j];
+      fracture.insert(&(m.key), &m);
+    }
+    fracture.finishInserts();
+    stringstream str;
+    str << "formerge_" << i << ".db";
+    FFileSignature sig = engine.getSignatureSet().dumpToNewRowStoreFile(TEST_DATA_FOLDER, str.str(), fracture);
+    family->addOnDiskFracture(sig.filepath);
+    names.push_back (sig.filepath);
+    BOOST_CHECK_EQUAL (sig.totalTupleCount, batchSize);
+    counts.push_back(batchSize);
+    BOOST_TEST_MESSAGE("-tuples[" << i << "]=" << batchSize);
+    totalCount += batchSize;
+  }
+  BOOST_TEST_MESSAGE("-made fractures");
+  BOOST_CHECK_EQUAL (family->getOnDiskFractures().size(), 2 * 3);
+
+  BOOST_TEST_MESSAGE("-going to do 2 way merges");
+  std::vector<std::string> newNames;
+  for (int i = 0; i < 3; ++i) {
+    std::vector<std::string> merged;
+    merged.push_back (names[i * 2]);
+    merged.push_back (names[i * 2 + 1]);
+    std::string newName = family->mergeFractures(&engine, merged, true, 1 << 20);
+    const FFileSignature &sig = engine.getSignatureSet().getFileSignature(newName);
+    BOOST_CHECK_EQUAL (sig.totalTupleCount, counts[i * 2] + counts[i * 2 + 1]);
+    newNames.push_back (newName);
+  }
+  BOOST_CHECK_EQUAL (family->getOnDiskFractures().size(), 3);
+  BOOST_TEST_MESSAGE("-going to do 3 way merge");
+  std::string newName = family->mergeFractures(&engine, newNames, false, 1 << 21);
+  const FFileSignature &sig = engine.getSignatureSet().getFileSignature(newName);
+  BOOST_CHECK_EQUAL (family->getOnDiskFractures().size(), 1);
+  BOOST_CHECK_EQUAL (sig.totalTupleCount, totalCount);
+
+  BOOST_TEST_MESSAGE("===Tested Fracture Family Merging for BTree.");
 }

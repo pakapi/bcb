@@ -21,11 +21,6 @@ namespace fdb {
 // Like BTree (row-store), however, we have two versions of
 // implementation; one for main-memory dump-only, one for disk-based read-only.
 
-// TODO : nonetheless, for now we don't implement FMainMemoryCStore for now.
-// we just use BTree to keep on-memory stuff row-store.
-// FMainMemoryCStore will be implemented later to compare the advantage/disadvantage
-// to keep temporary fracture in C-store.
-
 // represents a column in CStore.
 // Could be compressed or uncompressed.
 struct FCStoreColumn {
@@ -58,8 +53,16 @@ class FMainMemoryCStoreImpl;
 // Each column will be saved to a file named like <prefix>_columnname.db.
 class FMainMemoryCStore {
 public:
-  FMainMemoryCStore (TableType type, int maxTuples);
-  bool insert (const void *data);
+  FMainMemoryCStore (TableType type, int maxSize);
+
+  // same functions as FMainMemoryBTree
+  bool insert (const void *key, const void *data);
+  void finishInserts ();
+  int64_t size () const;
+  int getKeySize() const;
+  int getDataSize() const;
+  TableType getTableType() const;
+  const void* getBuffer(size_t column) const;
 
   FMainMemoryCStoreImpl* getImpl () { return _impl; } // only used by testcases
 private:

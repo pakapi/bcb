@@ -37,12 +37,7 @@ void runSSBBench(size_t bufferPoolSize, bool cstore, bool sortedBuffer, int batc
   }
   FMainMemoryBTree fractureMv (MV_PROJECTION, MAX_TUPLE, sortedBuffer);
   FMainMemoryBTree fractureLineorder (LINEORDER_PK_SORT, MAX_TUPLE, sortedBuffer);
-  FFamily *family;
-  if (cstore) {
-    family = engine.createNewFractureFamily(CSTORE_MV_FAMILY);
-  } else {
-    family = engine.createNewFractureFamily(BTREE_MV_FAMILY);
-  }
+  FFamily *family = engine.createNewFractureFamily(cstore ? CSTORE_MV_FAMILY : BTREE_MV_FAMILY, MV_PROJECTION, cstore);
   family->setCurrentFracture(&fractureMv);
   SSBQueryExecutor exec (&engine);
   StopWatch watchTotal;

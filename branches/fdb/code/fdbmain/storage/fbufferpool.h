@@ -47,6 +47,13 @@ public:
   // we have to add pinning/unpinning options to each method, or
   // the pages must be copied before using.
 
+  // this method is special. it's similar to readPages(), but the result is not stored in the bufferpool
+  // but instead copied to the given buffer pointer.
+  // this method is useful if the caller knows the pages will not be read again (ex. when merging fractures).
+  // note that the buffer pointer has to be allocated by DirectFileStream::allocateMemoryForIO.
+  void readPages (const FFileSignature &signature, int beginningPageId, int pageCount, char *buffer);
+
+
   // should be only used from testcases..
   FBufferPoolImpl* getImpl () { return _impl; };
 private:

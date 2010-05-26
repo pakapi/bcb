@@ -172,6 +172,8 @@ public:
 
   void checkNonLeafPageHeader(const FPageHeader *header, int pageId, int currentLevel);
   void checkLeafPageHeader(const FPageHeader *header, int pageId);
+  const char* getLeafPage (int pageId);
+  int getLeafPageCount () const;
 
   FBufferPool *_bufferpool;
   FFileSignature _signature;

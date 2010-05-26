@@ -47,6 +47,7 @@ public:
 
   const char* readPage (const FFileSignature &signature, int pageId);
   std::vector<const char*> readPages (const FFileSignature &signature, int beginningPageId, int pageCount);
+  void readPages (const FFileSignature &signature, int beginningPageId, int pageCount, char *buffer);
 
   DirectFileInputStream* getOrOpenFile (const FFileSignature &signature);
 
