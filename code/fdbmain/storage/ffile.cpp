@@ -245,6 +245,7 @@ void FSignatureSet::debugout() const {
     const FFileSignature &signature = iter->second;
     cout << "fileId=" << signature.fileId << ","
       << "filepath=" << signature.filepath << ","
+      << "totalTupleCount=" << signature.totalTupleCount << ","
       << "pageCount=" << signature.pageCount << ","
       << "rootPageStart=" << signature.rootPageStart << ","
       << "rootPageCount=" << signature.rootPageCount << ","
