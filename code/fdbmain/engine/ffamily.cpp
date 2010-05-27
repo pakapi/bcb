@@ -2,6 +2,7 @@
 #include "ffamilyimpl.h"
 #include "../io/fis.h"
 #include "../storage/fbtree.h"
+#include "../storage/fbtreeimpl.h" // reuse the btree dumping implementation.
 #include "../storage/fbufferpool.h"
 #include "../storage/fcstore.h"
 #include "../storage/fcstoreimpl.h" // reuse the cstore dumping implementation.
@@ -178,163 +179,6 @@ public:
 private:
   FractureReadBuffer (const FractureReadBuffer&);
 };
-struct PageSignature {
-  int pageId;
-  int64_t beginningPos;
-  std::string firstKey;
-};
-struct FractureWriteBuffer {
-public:
-  FractureWriteBuffer (int fileId, TableType type, DirectFileOutputStream *fd, int bufferSize, int tupleSize)
-    : _fileId(fileId), _type(type), _fd (fd), _bufferSize (bufferSize), _tupleSize(tupleSize), _totalTuplesWritten(0) {
-    _buffer = reinterpret_cast<char*>(DirectFileStream::allocateMemoryForIO (bufferSize * FDB_PAGE_SIZE, FDB_DIRECT_IO_ALIGNMENT, FDB_USE_DIRECT_IO));
-    ::memset (_buffer, 0, bufferSize * FDB_PAGE_SIZE);
-    _keySize = toKeySize (type);
-    _keyBuffer = new char[_keySize];
-    ::memset (_keyBuffer, 0, _keySize);
-    _nextPageId = 0;
-    _currentPageInBuffer = 0;
-    _currentPageOffset = 0;
-    _extractFunc = toExtractKeyFromTupleFunc(type);
-  }
-  ~FractureWriteBuffer () {
-    DirectFileStream::deallocateMemoryForIO(FDB_USE_DIRECT_IO, _buffer);
-    delete[] _keyBuffer;
-  }
-  void writePageHeader (int level, bool root, int entrySize, bool lastSibling) {
-    FPageHeader *header = reinterpret_cast<FPageHeader*> (_buffer + (FDB_PAGE_SIZE * _currentPageInBuffer));
-    header->magicNumber = MAGIC_NUMBER;
-    header->fileId = _fileId;
-    header->pageId = _currentPageSignature.pageId;
-    assert (header->pageId >= 0);
-    header->level = level;
-    header->root = root;
-    header->entrySize = entrySize;
-    header->beginningPos = _currentPageSignature.beginningPos;
-    assert ((_currentPageOffset - sizeof (FPageHeader)) % entrySize == 0);
-    header->count = (_currentPageOffset - sizeof (FPageHeader)) / entrySize;
-  }
-  void flush () {
-    VLOG(1) << "flush!";
-    _fd->write (_buffer, _currentPageInBuffer * FDB_PAGE_SIZE);
-    _currentPageInBuffer = 0;
-    _nextPageId += _currentPageInBuffer;
-    ::memset (_buffer, 0, _bufferSize * FDB_PAGE_SIZE);
-  }
-  // check if we need to flush buffered pages
-  void flushIfFull () {
-    assert (_currentPageInBuffer <= _bufferSize);
-    if (_currentPageInBuffer == _bufferSize) {
-      flush ();
-    }
-  }
-  void addPageSignature (int64_t beginningPos, const void *key) {
-    _currentPageSignature.beginningPos = beginningPos;
-    _currentPageSignature.firstKey.assign(reinterpret_cast<const char*>(key), _keySize);
-    _currentPageSignature.pageId = _nextPageId + _currentPageInBuffer;
-    assert (_currentPageSignature.pageId >= 0);
-    _pageSignatures.push_back (_currentPageSignature);
-  }
-  void write (const char *tuple) {
-    // do we need a new page?
-    if (FDB_PAGE_SIZE - _currentPageOffset < _tupleSize) {
-      writePageHeader(0, false, _tupleSize, false);
-      ++_currentPageInBuffer;
-      _currentPageOffset = 0;
-    }
-
-    if (_currentPageOffset == 0) {
-      VLOG(2) << "new leaf page!";
-      flushIfFull ();
-      _currentPageOffset = sizeof(FPageHeader);
-      _extractFunc (tuple, _keyBuffer);
-      addPageSignature(_totalTuplesWritten, _keyBuffer);
-    }
-    ::memcpy(_buffer + (FDB_PAGE_SIZE * _currentPageInBuffer) + _currentPageOffset, tuple, _tupleSize);
-    _currentPageOffset += _tupleSize;
-    ++_totalTuplesWritten;
-  }
-  void flushLastPages (int level, bool root, int entrySize) {
-    VLOG(2) << "flushing last pages...";
-    if (_currentPageOffset > 0) {
-      writePageHeader(level, root, entrySize, true);
-      ++_currentPageInBuffer;
-    }
-    if (_currentPageInBuffer > 0) {
-      _fd->write (_buffer, FDB_PAGE_SIZE * _currentPageInBuffer);
-      _nextPageId += _currentPageInBuffer;
-    }
-  }
-  void dumpNonLeafPages (int currentLevel, int &rootPageStart, int &rootPageCount, int &rootPageLevel) {
-    int entryPerNonLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / (_keySize + sizeof(int));
-    std::vector<PageSignature> currentPageSignatures (_pageSignatures);
-    _currentPageInBuffer = 0;
-    _currentPageOffset = 0;
-    ::memset (_buffer, 0, _bufferSize * FDB_PAGE_SIZE);
-    int entryCount = currentPageSignatures.size();
-    _pageSignatures.clear ();
-
-    int pageCount = entryCount / entryPerNonLeafPage + (entryCount % entryPerNonLeafPage != 0 ? 1 : 0);
-    bool root = (pageCount <= FDB_MAX_ROOT_PAGES);
-    if (root) {
-      rootPageStart = _nextPageId;
-      rootPageCount = pageCount;
-    }
-
-    for (int i = 0; i < entryCount; ++i) {
-      const PageSignature &cursig = currentPageSignatures[i];
-      // do we need a new page?
-      if (FDB_PAGE_SIZE - _currentPageOffset < (int) (_keySize + sizeof(int))) {
-        writePageHeader(currentLevel, root, _keySize + sizeof(int), false);
-        ++_currentPageInBuffer;
-        _currentPageOffset = 0;
-      }
-
-      if (_currentPageOffset == 0) {
-        VLOG(2) << "new non-leaf page!";
-        flushIfFull ();
-        _currentPageOffset = sizeof(FPageHeader);
-        addPageSignature(cursig.beginningPos, cursig.firstKey.data());
-      }
-
-      // write page entries
-      ::memcpy(_buffer + (FDB_PAGE_SIZE * _currentPageInBuffer) + _currentPageOffset, cursig.firstKey.data(), _keySize);
-      _currentPageOffset += _keySize;
-      ::memcpy(_buffer + (FDB_PAGE_SIZE * _currentPageInBuffer) + _currentPageOffset, &(cursig.pageId), sizeof(int));
-      _currentPageOffset += sizeof(int);
-    }
-
-    flushLastPages (currentLevel, root, _keySize + sizeof(int));
-
-    if (root) {
-      VLOG(2) << "last non-leaf level";
-      rootPageLevel = currentLevel;
-    } else {
-      VLOG(2) << "recurse for higher level";
-      dumpNonLeafPages (currentLevel + 1, rootPageStart, rootPageCount, rootPageLevel);
-    }
-  }
-
-  char *_buffer;
-  char *_keyBuffer;
-  int _fileId;
-  TableType _type;
-  DirectFileOutputStream *_fd;
-  int _bufferSize;
-  int _keySize;
-  int _tupleSize;
-  ExtractKeyFromTupleFunc _extractFunc;
-
-  int _nextPageId;
-  int _currentPageInBuffer;
-  int _currentPageOffset;
-  int64_t _totalTuplesWritten;
-  PageSignature _currentPageSignature;
-  std::vector<PageSignature> _pageSignatures;
-private:
-  FractureWriteBuffer (const FractureWriteBuffer &);
-};
-
 std::string FFamilyImpl::mergeBTreeFractures (FEngine *engine, const std::vector<std::string> &fractureNames, bool deleteOldFractures, long long mergeBufferSize) {
   StopWatch watch;
   watch.init();
@@ -364,11 +208,10 @@ std::string FFamilyImpl::mergeBTreeFractures (FEngine *engine, const std::vector
     const FFileSignature &signature = signatures.getFileSignature (fractureNames[i]);
     grandTotalTupleCount += signature.totalTupleCount;
   }
-  grandTotalTupleCount *= 2; // for output buffer
   assert (grandTotalTupleCount > 0);
   for (size_t i = 0; i < fractureCount; ++i) {
     const FFileSignature &signature = signatures.getFileSignature (fractureNames[i]);
-    int bufferedPages = (int) ((double) totalBufferedPages * signature.totalTupleCount / grandTotalTupleCount);
+    int bufferedPages = (int) ((double) totalBufferedPages * signature.totalTupleCount / grandTotalTupleCount / 2);
     if (bufferedPages == 0) bufferedPages = 1;
     boost::shared_ptr<FractureReadBuffer> buffer (new FractureReadBuffer(engine->getBufferPool(), signature, bufferedPages, tupleSize));
     bufferPtrs.push_back (buffer);
@@ -387,80 +230,50 @@ std::string FFamilyImpl::mergeBTreeFractures (FEngine *engine, const std::vector
   str << folder << _name << "." << _nextFractureId;
   std::string filepath = str.str();
 
-  if (std::remove((filepath).c_str()) == 0) {
-    LOG(INFO) << "deleted existing file " << (filepath) << ".";
-  }
-  boost::scoped_ptr<DirectFileOutputStream> fd(new DirectFileOutputStream(filepath, FDB_USE_DIRECT_IO));
-  int newFileId = signatures.issueNextFileId();
-  int outputBufferPages = totalBufferedPages / 2;
-  if (outputBufferPages == 0) outputBufferPages = 1;
-  FractureWriteBuffer writeBuffer(newFileId, _type, fd.get(), outputBufferPages, tupleSize);
-
-  DataDataCompareFunc func = toDataDataCompareFunc(_type);
-  while (finishedFractures < fractureCount) {
-    const char *minTuple = NULL;
-    int minTupleIndex = -1;
-    for (size_t i = 0; i < fractureCount; ++i) {
-      if (finished[i]) continue;
-      const char *tuple = buffers[i]->getCurrent();
-      if (minTuple == NULL || func(tuple, minTuple) < 0) {
-        minTuple = tuple;
-        minTupleIndex = i;
+  {
+    FFileSignature signature;
+    signature.fileId = signatures.issueNextFileId();
+    signature.setFilepath(filepath);
+    int outputBufferPages = totalBufferedPages / 2;
+    if (outputBufferPages == 0) outputBufferPages = 1;
+    ScopedMemoryForIO buffer(outputBufferPages * FDB_PAGE_SIZE, FDB_DIRECT_IO_ALIGNMENT, FDB_USE_DIRECT_IO);
+    FBTreeWriter writer (signature, _type, reinterpret_cast<char*>(buffer.get()), outputBufferPages, grandTotalTupleCount, toKeySize(_type), tupleSize);
+  
+    DataDataCompareFunc func = toDataDataCompareFunc(_type);
+    while (finishedFractures < fractureCount) {
+      const char *minTuple = NULL;
+      int minTupleIndex = -1;
+      for (size_t i = 0; i < fractureCount; ++i) {
+        if (finished[i]) continue;
+        const char *tuple = buffers[i]->getCurrent();
+        if (minTuple == NULL || func(tuple, minTuple) < 0) {
+          minTuple = tuple;
+          minTupleIndex = i;
+        }
+      }
+      assert (minTuple);
+      assert (minTupleIndex >= 0);
+      writer.addTuple(minTuple);
+      if (writer.currentTuple % 1000000 == 0) {
+        VLOG (1) << "writing " << writer.currentTuple << "...";
+      }
+      bool hasNext = buffers[minTupleIndex]->next ();
+      if (!hasNext) {
+        finished[minTupleIndex] = true;
+        ++finishedFractures;
       }
     }
-    assert (minTuple);
-    assert (minTupleIndex >= 0);
-    writeBuffer.write(minTuple);
-    if (writeBuffer._totalTuplesWritten % 1000000 == 0) {
-      VLOG (1) << "writing " << writeBuffer._totalTuplesWritten << "...";
-    }
-    bool hasNext = buffers[minTupleIndex]->next ();
-    if (!hasNext) {
-      finished[minTupleIndex] = true;
-      ++finishedFractures;
-    }
-  }
-
-  // flush last leaf pages
-  writeBuffer.flushLastPages (0, false, writeBuffer._tupleSize);
-
-  int leafPageCount = writeBuffer._pageSignatures.size();
-  LOG(INFO) << "finished writing " << leafPageCount << " leaf pages, " << writeBuffer._totalTuplesWritten << "tuples.";
-
-  // then, construct non-leaf pages from context.pageSignatures
-  int rootPageStart = 0, rootPageCount = 0, rootPageLevel = 0;
-  writeBuffer.dumpNonLeafPages(1, rootPageStart, rootPageCount, rootPageLevel);
-
-  int totalPageCount = writeBuffer._nextPageId;
-  LOG(INFO) << "finished writing " << totalPageCount << " pages in total(" << (totalPageCount - leafPageCount) << " non-leaf pages).";
-
-  // done. flush and close
-  fd->sync();
-  fd->close();
-
-  FFileSignature signature;
-  signature.fileId = newFileId;
-  signature.totalTupleCount = writeBuffer._totalTuplesWritten;
-  signature.setFilepath(filepath);
-  signature.keyEntrySize = writeBuffer._keySize;
-  signature.leafEntrySize = tupleSize;
-  signature.keyCompareFuncType = toKeyCompareFuncType(_type);
-  signature.pageCount = totalPageCount;
-  signature.leafPageCount = leafPageCount;
-  signature.rootPageStart = rootPageStart;
-  signature.rootPageCount = rootPageCount;
-  signature.rootPageLevel = rootPageLevel;
-  signature.tableType = _type;
-
-  signatures.addFileSignature(signature);
-  addOnDiskFracture(signature.getFilepath());
-  for (size_t i = 0; i < fractureCount; ++i) {
-    signatures.removeFileSignature(fractureNames[i]);
-    std::vector<std::string>::iterator iter = std::find (_fractures.begin(), _fractures.end(), fractureNames[i]);
-    _fractures.erase (iter);
-    if (deleteOldFractures) {
-      if (std::remove((fractureNames[i]).c_str()) == 0) {
-        LOG(INFO) << "deleted existing file " << (fractureNames[i]) << ".";
+    writer.finishWriting();
+    signatures.addFileSignature(writer.signature);
+    addOnDiskFracture(signature.getFilepath());
+    for (size_t i = 0; i < fractureCount; ++i) {
+      signatures.removeFileSignature(fractureNames[i]);
+      std::vector<std::string>::iterator iter = std::find (_fractures.begin(), _fractures.end(), fractureNames[i]);
+      _fractures.erase (iter);
+      if (deleteOldFractures) {
+        if (std::remove((fractureNames[i]).c_str()) == 0) {
+          LOG(INFO) << "deleted existing file " << (fractureNames[i]) << ".";
+        }
       }
     }
   }
