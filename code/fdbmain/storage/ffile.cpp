@@ -129,13 +129,13 @@ const FFileSignature& FSignatureSet::getFileSignature (const std::string &filepa
 void FSignatureSet::removeFileSignature (int fileId) {
   const FFileSignature& signature = getFileSignature(fileId);
   _idMap.erase(signature.fileId);
-  _pathMap.erase(signature.filepath);
+  _pathMap.erase(signature.getFilepath());
   _dirty = true;
 }
 void FSignatureSet::removeFileSignature (const std::string &filepath) {
   const FFileSignature& signature = getFileSignature(filepath);
   _idMap.erase(signature.fileId);
-  _pathMap.erase(signature.filepath);
+  _pathMap.erase(signature.getFilepath());
   _dirty = true;
 }
 void FSignatureSet::addFileSignature (const FFileSignature &signature) {
@@ -151,7 +151,7 @@ void FSignatureSet::addFileSignature (const FFileSignature &signature) {
     assert (signature.keyCompareFuncType > 0);
   }
   assert (signature.tableType > 0);
-  assert (signature.filepath != NULL);
+  assert (signature.filepathlen > 0);
   assert (signature.fileId > 0);
   if (signature.columnFile) {
     assert (signature.columnType > 0);
@@ -162,9 +162,9 @@ void FSignatureSet::addFileSignature (const FFileSignature &signature) {
   }
   _dirty = true;
   assert (_idMap.find (signature.fileId) == _idMap.end());
-  assert (_pathMap.find (signature.filepath) == _pathMap.end());
+  assert (_pathMap.find (signature.getFilepath()) == _pathMap.end());
   _idMap.insert(std::pair<int, FFileSignature>(signature.fileId, signature));
-  _pathMap.insert(std::pair<string, FFileSignature>(signature.filepath, signature));
+  _pathMap.insert(std::pair<string, FFileSignature>(signature.getFilepath(), signature));
   assert (_idMap.size() == _pathMap.size());
 }
 
@@ -185,8 +185,7 @@ FFileSignature FSignatureSet::dumpToNewRowStoreFile (const std::string &folder, 
   // register the new signature
   FFileSignature signature;
   signature.fileId = fileId;
-  ::memcpy(signature.filepath, filepath.data(), filepath.size());
-  signature.filepath[filepath.size()] = '\0';
+  signature.setFilepath(filepath);
   btree.dumpToNewRowStoreFile(signature);
   addFileSignature(signature);
 
@@ -201,6 +200,7 @@ std::vector<FFileSignature> FSignatureSet::getCStoreFileSignatures (const std::s
     string filepath = folder + (addsSl ? "/" : "") + filenamePrefix + "." + column.name + ".db";
     if (!existsFile(filepath)) {
       LOG(ERROR) << "the file " << filepath << " wasn't found in the database.";
+      assert (false);
       throw std::exception();
     }
     ret.push_back (getFileSignature(filepath));
@@ -208,7 +208,16 @@ std::vector<FFileSignature> FSignatureSet::getCStoreFileSignatures (const std::s
   return ret;
 }
 std::vector<FFileSignature> FSignatureSet::dumpToNewCStoreFiles (const std::string &folder, const std::string &filenamePrefix, const FMainMemoryBTree &btree) {
-  std::vector<FCStoreColumn> columns = FCStoreUtil::getPhysicalDesignsOf(btree.getTableType());
+  std::vector<FFileSignature> signatures = createNewCStoreFileSignatures(folder, filenamePrefix, btree.getTableType());
+  FCStoreUtil::dumpToNewCStoreFile(signatures, btree);
+  for (size_t i = 0; i < signatures.size(); ++i) {
+    assert (signatures[i].totalTupleCount == btree.size());
+    addFileSignature(signatures[i]);
+  }
+  return signatures;
+}
+std::vector<FFileSignature> FSignatureSet::createNewCStoreFileSignatures (const std::string &folder, const std::string &filenamePrefix, TableType type) {
+  std::vector<FCStoreColumn> columns = FCStoreUtil::getPhysicalDesignsOf(type);
   std::vector<FFileSignature> signatures;
 
   bool addsSl = (folder.size() > 0 && folder[folder.size() - 1] != '/');
@@ -228,16 +237,10 @@ std::vector<FFileSignature> FSignatureSet::dumpToNewCStoreFiles (const std::stri
 
     FFileSignature signature;
     signature.fileId = issueNextFileId();
-    ::memcpy(signature.filepath, filepath.data(), filepath.size());
-    signature.filepath[filepath.size()] = '\0';
+    signature.setFilepath(filepath);
     signatures.push_back (signature);
   }
   assert (signatures.size () == columns.size());
-  FCStoreUtil::dumpToNewCStoreFile(signatures, btree);
-  for (size_t i = 0; i < columns.size(); ++i) {
-    assert (signatures[i].totalTupleCount == btree.size());
-    addFileSignature(signatures[i]);
-  }
   return signatures;
 }
 
@@ -245,7 +248,7 @@ void FSignatureSet::debugout() const {
   for (std::map<int, FFileSignature>::const_iterator iter = _idMap.begin(); iter != _idMap.end(); ++iter) {
     const FFileSignature &signature = iter->second;
     cout << "fileId=" << signature.fileId << ","
-      << "filepath=" << signature.filepath << ","
+      << "filepath=" << signature.getFilepath() << ","
       << "totalTupleCount=" << signature.totalTupleCount << ","
       << "pageCount=" << signature.pageCount << ","
       << "leafPageCount=" << signature.leafPageCount << ","

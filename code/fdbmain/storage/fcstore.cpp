@@ -236,16 +236,15 @@ void FCStoreUtil::dumpToNewCStoreFile (
     watchColumn.init();
 
     assert (signature.fileId > 0);
-    assert (signature.filepath != NULL);
-    std::string filepath (signature.filepath);
+    assert (signature.filepathlen > 0);
+    std::string filepath (signature.getFilepath());
     if (std::remove((filepath).c_str()) == 0) {
       VLOG(1) << "deleted existing file " << (filepath) << ".";
     }
     VLOG(1) << "dumping an on-memory btree to a new CStore file " << filepath << " (compression=" << toCompressionSchemeName(column.compression) << ")...";
 
     scoped_ptr<DirectFileOutputStream> fd(new DirectFileOutputStream(filepath, FDB_USE_DIRECT_IO));
-    FCStoreWriter context(signature.fileId, fd.get(), (char*) buffer, column, btree.size());
-    ::memset (buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
+    FCStoreWriter context(signature.fileId, fd.get(), (char*) buffer, FDB_DISK_WRITE_BUFFER_PAGES, column, btree.size());
 
     if (column.compression == DICTIONARY_COMPRESSED) {
       buildDictionaryFromBTree (context, btree);
@@ -277,10 +276,12 @@ void FCStoreUtil::dumpToNewCStoreFile (
   LOG(INFO) << "completed all dumping. " << watch.getElapsed() << " micsosec";
 }
 
-FCStoreWriter::FCStoreWriter(int fileId_, DirectFileOutputStream *fd_, char *buffer_, const FCStoreColumn &column_, int64_t tupleCount_) {
+FCStoreWriter::FCStoreWriter(int fileId_, DirectFileOutputStream *fd_, char *buffer_, int bufferSize_, const FCStoreColumn &column_, int64_t tupleCount_) {
   fileId = fileId_;
   fd = fd_;
   buffer = buffer_;
+  bufferSize = bufferSize_;
+  ::memset (buffer, 0, bufferSize * FDB_PAGE_SIZE);
   bufferedPages = 0;
   currentPageId = 0;
   currentPageOffset = 0;
@@ -378,8 +379,8 @@ void FCStoreWriter::updateFileSignature(FFileSignature &signature, TableType tab
 bool FCStoreWriter::flushBufferIfNeeded() {
   // check if we need to flush buffered pages
   assert (currentPageOffset == 0);
-  assert (bufferedPages <= FDB_DISK_WRITE_BUFFER_PAGES);
-  if (bufferedPages == FDB_DISK_WRITE_BUFFER_PAGES) {
+  assert (bufferedPages <= bufferSize);
+  if (bufferedPages == bufferSize) {
     flushBuffer();
     return true;
   }
@@ -388,12 +389,12 @@ bool FCStoreWriter::flushBufferIfNeeded() {
 void FCStoreWriter::flushBuffer() {
   assert (currentPageOffset == 0);
   assert (currentBitOffset == 0);
-  assert (bufferedPages <= FDB_DISK_WRITE_BUFFER_PAGES);
+  assert (bufferedPages <= bufferSize);
   if (bufferedPages > 0) {
     VLOG(2) << "flush!";
     fd->write (buffer, FDB_PAGE_SIZE * bufferedPages);
     bufferedPages = 0;
-    ::memset (buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
+    ::memset (buffer, 0, bufferSize * FDB_PAGE_SIZE);
   }
 }
 
@@ -411,7 +412,7 @@ void FCStoreWriter::flipPage() {
     currentPageOffset = 0;
     entryInCurrentPage = 0;
     ++(bufferedPages);
-    assert (bufferedPages <= FDB_DISK_WRITE_BUFFER_PAGES);
+    assert (bufferedPages <= bufferSize);
   }
 }
 
@@ -460,10 +461,6 @@ void FCStoreWriter::writeRootEntryRLE(int64_t beginningPos, int pageId) {
 }
 
 void FCStoreWriter::writeDictionary () {
-  // flush last pages
-  flipPage();
-  flushBuffer();
-
   // then, write root (dictionary) pages
   int entriesInRootPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / column.maxLength;
   rootPageStart = currentPageId;
@@ -657,6 +654,9 @@ void FCStoreWriter::finishWritingDictionary () {
   if (currentBitOffset != 0) {
     flushCurrentPackedByte();
   }
+  // flush last pages
+  flipPage();
+  flushBuffer();
   leafPageCount = currentPageId;
   writeDictionary();
 

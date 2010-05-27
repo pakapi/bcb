@@ -319,8 +319,8 @@ void dumpNonLeafPages (int currentLevel, DumpContext *dumpContext,
 
 void FMainMemoryBTreeImpl::dumpToNewRowStoreFile (FFileSignature &signature) const {
   assert (signature.fileId > 0);
-  assert (signature.filepath != NULL);
-  std::string filepath (signature.filepath);
+  assert (signature.filepathlen > 0);
+  std::string filepath (signature.getFilepath());
   LOG(INFO) << "dumping an on-memory btree to a new file " << filepath << "...";
 
   StopWatch watch;
