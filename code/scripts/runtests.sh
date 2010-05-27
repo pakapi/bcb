@@ -1,3 +1,3 @@
 #!/bin/sh
-./build/testmain --log_level=message
+./build/test/testmain --log_level=message
 

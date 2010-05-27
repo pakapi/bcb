@@ -12,40 +12,26 @@
 #include <iomanip>
 #include <boost/shared_ptr.hpp>
 
-#include "configvalues.h"
-#include "engine/fengine.h"
-#include "engine/ffamily.h"
-#include "ssb/dbgen.h"
-#include "ssb/ssb.h"
-#include "ssb/loadssb.h"
-#include "ssb/queryssb.h"
-#include "ssb/queryssbimpl.h"
-#include "ssb/maketiny.h"
-#include "storage/ffile.h"
-#include "storage/fbufferpool.h"
-#include "storage/fbufferpoolimpl.h"
-#include "storage/fbtree.h"
-#include "storage/fcstore.h"
-#include "storage/searchcond.h"
-#include "util/hashmap.h"
-
-#ifdef WIN32
-  #define NOGDI
-  #include <windows.h>
-  void sleepSec (int sec) {
-    ::Sleep (sec * 1000);
-  }
-#else //WIN32
-  void sleepSec (int sec) {
-    ::sleep (sec);
-  }
-#endif //WIN32
-
+#include "../configvalues.h"
+#include "../engine/fengine.h"
+#include "../engine/ffamily.h"
+#include "../ssb/dbgen.h"
+#include "../ssb/ssb.h"
+#include "../ssb/loadssb.h"
+#include "../ssb/queryssb.h"
+#include "../ssb/queryssbimpl.h"
+#include "../ssb/maketiny.h"
+#include "../storage/ffile.h"
+#include "../storage/fbufferpool.h"
+#include "../storage/fbufferpoolimpl.h"
+#include "../storage/fbtree.h"
+#include "../storage/fcstore.h"
+#include "../storage/searchcond.h"
+#include "../util/hashmap.h"
+#include "testmain.h"
 
 using namespace std;
 using namespace fdb;
-
-#define TEST_DATA_FOLDER "../../data/test/"
 
 BOOST_AUTO_TEST_CASE(init) {
   BOOST_TEST_MESSAGE("===Initializing tests...");
@@ -250,14 +236,6 @@ BOOST_AUTO_TEST_CASE(storage_test_mainmemory_btree) {
   signatureFile.save(TEST_DATA_FOLDER, "_test2.sig");
   BOOST_TEST_MESSAGE("===Tested FMainMemoryBTree.");
 }
-#if 0
-BOOST_AUTO_TEST_CASE(ssb_test_load) {
-  BOOST_TEST_MESSAGE("===Testing SSB loading...");
-  std::remove((TEST_DATA_FOLDER + string("_tinyssb.sig")).c_str());
-  loadSSBPipedFile(TEST_DATA_FOLDER, "_tinyssb.sig", "../../data/tinyssb/");
-  BOOST_TEST_MESSAGE("===Tested SSB loading.");
-}
-#endif
 BOOST_AUTO_TEST_CASE(ssb_test_maketiny) {
   BOOST_TEST_MESSAGE("===Testing tiny SSB data generation...");
   makeTinySSB("../../data/tinyssb/", TEST_DATA_FOLDER, 5);

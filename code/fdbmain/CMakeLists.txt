@@ -34,17 +34,8 @@ ADD_SUBDIRECTORY (engine)
 ADD_SUBDIRECTORY (storage)
 ADD_SUBDIRECTORY (ssb)
 ADD_SUBDIRECTORY (io)
+ADD_SUBDIRECTORY (test)
 
-#list all source files here
 ADD_EXECUTABLE(fdbmain main.cpp)
-ADD_EXECUTABLE(testmain testmain.cpp)
 
-# required packages
-# db (BDB)
-# db_cxx (BDB c++ binding)
-# glog (Google logging)
-# tedious to write cmake find modules. please make sure you have these installed in /usr/lib...
 TARGET_LINK_LIBRARIES(fdbmain ${GLOG_LIBRARIES} fdbstorage fdbssb fengine)
-
-# and boost test
-TARGET_LINK_LIBRARIES(testmain ${GLOG_LIBRARIES} fdbstorage fdbssb fengine boost_unit_test_framework)
