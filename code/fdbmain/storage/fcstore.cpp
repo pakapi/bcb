@@ -1062,6 +1062,8 @@ FColumnReaderImplDictionary::FColumnReaderImplDictionary(
 : FColumnReaderImpl(bufferpool, column, signature)  {
   _dictionaryBits = signature.dictionaryBits;
   _entriesPerPage = (FDB_PAGE_SIZE - sizeof(FPageHeader)) * 8 / _dictionaryBits;
+  _dictionaryEntriesRead = false;
+  _mask = (uint8_t) ((1 << _dictionaryBits) - 1);
 }
 
 std::vector<int> FColumnReaderImplDictionary::searchDictionary (const SearchCond &cond) {
@@ -1069,24 +1071,20 @@ std::vector<int> FColumnReaderImplDictionary::searchDictionary (const SearchCond
   StopWatch watch;
   watch.init();
 #endif // NDEBUG
+  if (!_dictionaryEntriesRead) {
+    getAllDictionaryEntries();
+  }
   std::vector<int> matchingIds;
-  int currentEntryId = 0;
-  for (int i = 0; i < _signature.rootPageCount; ++i) {
-    const int pageId = i + _signature.rootPageStart;
-    const char *page = _bufferpool->readPage(_signature, pageId);
-    const FPageHeader *header = reinterpret_cast<const FPageHeader*> (page);
-    assert (header->root);
-    for (int j = 0; j < header->count; ++j, ++currentEntryId) {
-      const char *cursor = page + sizeof (FPageHeader) + j * _column.maxLength;
-      bool matched = false;
-      if (_column.type == COLUMN_CHAR) {
-        matched = cond.matchString(cursor, _column.maxLength);
-      } else {
-        matched = cond.matchInts(cursor, _column.maxLength);
-      }
-      if (matched) {
-        matchingIds.push_back (currentEntryId);
-      }
+  for (size_t i = 0; i < _dictionaryEntries.size(); ++i) {
+    bool matched = false;
+    assert ((int) _dictionaryEntries[i].size() == _column.maxLength);
+    if (_column.type == COLUMN_CHAR) {
+      matched = cond.matchString(_dictionaryEntries[i].data(), _column.maxLength);
+    } else {
+      matched = cond.matchInts(_dictionaryEntries[i].data(), _column.maxLength);
+    }
+    if (matched) {
+      matchingIds.push_back (i);
     }
   }
 #ifndef NDEBUG
@@ -1160,9 +1158,8 @@ void FColumnReaderImplDictionary::getPositionBitmaps (const SearchCond &cond, st
       size_t tupleToRead = end - begin;
       int64_t bitmapPageOffset = tuplePageOffset + begin - range.begin;
       const char *cursor = page + sizeof (FPageHeader) + begin * _dictionaryBits / 8;
-      if (_dictionaryBits >= 8) {
+      if (_dictionaryBits % 8 == 0) {
         // no bit offset. simple
-        assert (_dictionaryBits % 8 == 0);
         if (_dictionaryBits == 8) {
           matchCount += processPageNoBitOffset<uint8_t>(matchingIds, reinterpret_cast<const uint8_t*>(cursor), tupleToRead, bitmap, bitmapPageOffset);
         } else if (_dictionaryBits == 16) {
@@ -1171,6 +1168,7 @@ void FColumnReaderImplDictionary::getPositionBitmaps (const SearchCond &cond, st
           assert (false); // not supported
         }
       } else {
+        assert (_dictionaryBits < 8);
         int bitOffset = begin * _dictionaryBits % 8;
         matchCount += processPageBitOffset(matchingIds, reinterpret_cast<const uint8_t*>(cursor), bitOffset, tupleToRead, bitmap, bitmapPageOffset);
       }
@@ -1187,29 +1185,17 @@ void FColumnReaderImplDictionary::getPositionBitmaps (const SearchCond &cond, st
 int FColumnReaderImplDictionary::processPageBitOffset(const std::vector<int> &matchingIds, const uint8_t *cursor, int bitOffset, size_t tuplesToRead, PositionBitmap *bitmap, int64_t bitmapPageOffset) {
   assert (matchingIds.size() > 0);
   int matchCount = 0;
-  uint8_t mask;
-  if (_dictionaryBits == 1) {
-    mask = 0x1;
-  } else if (_dictionaryBits == 2) {
-    mask = 0x3;
-  } else if (_dictionaryBits == 4) {
-    mask = 0xf;
-  } else {
-    assert (false);
-    return 0;
-  }
   // branch to improve performance when matchingIds.size() == 1, which is often.
   if (matchingIds.size() == 1) {
     const uint8_t key = matchingIds[0];
     uint8_t curByte = *cursor;
     for (size_t i = 0; i < tuplesToRead; ++i, bitOffset += _dictionaryBits) {
-      assert (bitOffset <= 8);
-      if (bitOffset == 8) {
-        bitOffset = 0;
+      if (bitOffset >= 8) {
+        bitOffset -= 8;
         ++cursor;
         curByte = *cursor;
       }
-      uint8_t curKey = (curByte >> bitOffset) & mask;
+      uint8_t curKey = (curByte >> bitOffset) & _mask;
       if (curKey == key) {
         bitmap->setBit(i + bitmapPageOffset);
         ++matchCount;
@@ -1219,13 +1205,12 @@ int FColumnReaderImplDictionary::processPageBitOffset(const std::vector<int> &ma
     const size_t s = matchingIds.size();
     uint8_t curByte = *cursor;
     for (size_t i = 0; i < tuplesToRead; ++i, bitOffset += _dictionaryBits) {
-      assert (bitOffset <= 8);
-      if (bitOffset == 8) {
-        bitOffset = 0;
+      if (bitOffset >= 8) {
+        bitOffset -= 8;
         ++cursor;
         curByte = *cursor;
       }
-      uint8_t curKey = (curByte >> bitOffset) & mask;
+      uint8_t curKey = (curByte >> bitOffset) & _mask;
       for (size_t j = 0; j < s; ++j) {
         if (curKey == matchingIds[j]) {
           bitmap->setBit(i + bitmapPageOffset);
@@ -1236,6 +1221,89 @@ int FColumnReaderImplDictionary::processPageBitOffset(const std::vector<int> &ma
     }
   }
   return matchCount;
+}
+void FColumnReaderImplDictionary::readDecompressDictionaryPageBitOffset(int begin, int end, const char *page, char *buffer) {
+  assert (_dictionaryBits < 8);
+  const uint8_t *cursor = reinterpret_cast<const uint8_t*>(page + sizeof (FPageHeader) + begin * _dictionaryBits / 8);
+  int bitOffset = (begin * _dictionaryBits) % 8;
+  uint8_t curByte = *cursor;
+  for (int i = begin; i < end; ++i) {
+    uint8_t entryId = (curByte >> bitOffset) & _mask;
+    assert (entryId < _dictionaryEntries.size());
+    const std::string &entry = _dictionaryEntries[entryId];
+    assert ((int) entry.size() == _column.maxLength);
+    ::memcpy(buffer, entry.data(), _column.maxLength);
+    buffer += _column.maxLength;
+
+    bitOffset += _dictionaryBits;
+    if (bitOffset >= 8) {
+      ++cursor;
+      curByte = *cursor;
+      bitOffset -= 8;
+    }
+  }
+}
+
+void FColumnReaderImplDictionary::getDecompressedData (const PositionRange &range, void *buffer, size_t bufferSize) {
+#ifndef NDEBUG
+  StopWatch watch;
+  watch.init();
+#endif // NDEBUG
+
+  if (!_dictionaryEntriesRead) {
+    getAllDictionaryEntries();
+  }
+
+  size_t tupleCount = range.end - range.begin;
+  if (bufferSize < tupleCount * _column.maxLength) {
+    assert (false);
+    throw std::exception();
+  }
+
+  char *bufferChar = reinterpret_cast<char*>(buffer);
+  int firstPageId = range.begin / _entriesPerPage;
+  int lastPageId = (range.end - 1) / _entriesPerPage;
+  for (int pageId = firstPageId; pageId <= lastPageId; ++pageId) {
+    const int64_t tuplePageOffset = pageId * _entriesPerPage;
+    const char *page = _bufferpool->readPage(_signature, pageId);
+    const FPageHeader *header = reinterpret_cast<const FPageHeader*> (page);
+    int64_t begin = 0;
+    if (pageId == firstPageId) {
+      begin = range.begin - tuplePageOffset;
+    }
+    if (begin >= header->count) {
+      begin = header->count;
+    }
+    assert (begin >= 0);
+    assert (begin < _entriesPerPage);
+    assert (begin < header->count);
+    int64_t end = _entriesPerPage;
+    if (pageId == lastPageId) {
+      end = range.end - tuplePageOffset;
+    }
+    if (end > header->count) {
+      end = header->count;
+    }
+    assert (end >= 0);
+    assert (end <= _entriesPerPage);
+    assert (end <= header->count);
+    assert (end >= begin);
+    if (end == begin) continue;
+
+    if (_dictionaryBits == 16) {
+      readDecompressDictionaryPageNoBitOffset<uint16_t> (begin, end, page, bufferChar);
+    } else if (_dictionaryBits == 8) {
+      readDecompressDictionaryPageNoBitOffset<uint8_t> (begin, end, page, bufferChar);
+    } else {
+      readDecompressDictionaryPageBitOffset(begin, end, page, bufferChar);
+    }
+    bufferChar += _column.maxLength * (end - begin);
+  }
+
+#ifndef NDEBUG
+  watch.stop();
+  VLOG(2) << "Done. " << tupleCount << " decompressed entries read. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
 }
 
 void FColumnReaderImplDictionary::getDictionaryCompressedData (const PositionRange &range, void *buffer, size_t bufferSize, int &bitOffset) {
@@ -1323,8 +1391,10 @@ int FColumnReaderImplDictionary::getDictionaryEntrySizeInBits () {
 int FColumnReaderImplDictionary::getDictionaryEntryCount () {
   return _signature.dictionaryEntryCount;
 }
-void FColumnReaderImplDictionary::getAllDictionaryEntries (std::vector<string> &entries) {
-  assert (_column.type == COLUMN_CHAR);
+const std::vector<string>& FColumnReaderImplDictionary::getAllDictionaryEntries () {
+  if (_dictionaryEntriesRead) {
+    return _dictionaryEntries;
+  }
 #ifndef NDEBUG
   StopWatch watch;
   watch.init();
@@ -1336,13 +1406,15 @@ void FColumnReaderImplDictionary::getAllDictionaryEntries (std::vector<string> &
     assert (header->root);
     for (int j = 0; j < header->count; ++j) {
       const char *cursor = page + sizeof (FPageHeader) + j * _column.maxLength;
-      entries.push_back (string (cursor, _column.maxLength));
+      _dictionaryEntries.push_back (string (cursor, _column.maxLength));
     }
   }
 #ifndef NDEBUG
   watch.stop();
   VLOG(2) << "Done. all dictionary entries copied. " << watch.getElapsed() << " microsec";
 #endif // NDEBUG
+  _dictionaryEntriesRead = true;
+  return _dictionaryEntries;
 }
 
 // ============================
@@ -1562,6 +1634,65 @@ void FColumnReaderImplRLE::getRLECompressedData (const PositionRange &range, voi
 #ifndef NDEBUG
   watch.stop();
   VLOG(2) << "RLE::getRLECompressedData Done. " << count << " runs read. " << watch.getElapsed() << " microsec";
+#endif // NDEBUG
+}
+
+void FColumnReaderImplRLE::getDecompressedData (const PositionRange &range, void *buffer, size_t bufferSize) {
+#ifndef NDEBUG
+  StopWatch watch;
+  watch.init();
+#endif // NDEBUG
+
+  size_t tupleCount = range.end - range.begin;
+  if (bufferSize < tupleCount * _column.maxLength) {
+    assert (false);
+    throw std::exception();
+  }
+
+  char *bufferChar = reinterpret_cast<char*>(buffer);
+
+
+  // beginPage.beginningPos <= range.begin  AND endPage.beginningPos >= range.end
+  pair<int, int> pageRange = getPageRange(range);
+  int beginPageId = pageRange.first;
+  int endPageId = pageRange.second;
+  assert (beginPageId >= 0);
+  if (endPageId < 0) {
+    endPageId = beginPageId + 1; //until the end
+  }
+  assert (endPageId <= _signature.leafPageCount);
+
+  // then, we read the RLE compressed pages
+  for (int pageId = beginPageId; pageId < endPageId; ++pageId) {
+    const char *page = _bufferpool->readPage(_signature, pageId);
+    const FPageHeader *header = reinterpret_cast<const FPageHeader*> (page);
+    const char *cursor = page + sizeof(FPageHeader);
+    int64_t pos = header->beginningPos;
+    for (int j = 0; j < header->count; ++j, cursor += (_column.maxLength + sizeof(int))) {
+      int runLength = *reinterpret_cast<const int*> (cursor);
+      if (pos + runLength <= range.begin) {
+        assert (pageId == beginPageId);
+        pos += runLength;
+        continue;
+      }
+      if (pos >= range.end) {
+        assert (pageId == endPageId - 1);
+        break;
+      }
+      int64_t end = pos + runLength;
+      if (pos < range.begin) {
+        pos = range.begin;
+      }
+      for (; pos < end; ++pos) {
+        ::memcpy (bufferChar, cursor + sizeof(int), _column.maxLength);
+        bufferChar += _column.maxLength + sizeof(int);
+      }
+    }
+  }
+  assert ((int) tupleCount * _column.maxLength == (bufferChar - reinterpret_cast<char*>(buffer)));
+#ifndef NDEBUG
+  watch.stop();
+  VLOG(2) << "Done. " << tupleCount << " decompressed entries read. " << watch.getElapsed() << " microsec";
 #endif // NDEBUG
 }
 
