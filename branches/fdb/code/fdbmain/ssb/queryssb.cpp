@@ -782,8 +782,7 @@ boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query21C (const SSBQuery
   int32_t *revBuffer = (revBufferPtr.get());
   scoped_array<unsigned char> brandBufferPtr(new unsigned char[(maxLen * brandDictionaryBits / 8) + 1]);
   unsigned char *brandBuffer = (brandBufferPtr.get());
-  vector<string> brands;
-  brandReader->getAllDictionaryEntries(brands);
+  const vector<string> &brands = brandReader->getAllDictionaryEntries();
   size_t brandDictionarySize = brands.size();
 
   boost::shared_ptr<SSBQueryResult> result (new SSBQueryResult(RESULT_GROUP_INT16, RESULT_GROUP_STRING));
@@ -972,8 +971,7 @@ boost::shared_ptr<SSBQueryResult> SSBQueryExecutorImpl::query22C (const SSBQuery
   int32_t *revBuffer = (revBufferPtr.get());
   scoped_array<unsigned char> brandBufferPtr(new unsigned char[(maxLen * brandDictionaryBits / 8) + 1]);
   unsigned char *brandBuffer = (brandBufferPtr.get());
-  vector<string> brands;
-  brandReader->getAllDictionaryEntries(brands);
+  const vector<string> &brands = brandReader->getAllDictionaryEntries();
   size_t brandDictionarySize = brands.size();
   vector<int> matchingBrandIds = brandReader->searchDictionary(SearchCond(p_brand_from.data(), p_brand_to.data()));
 

@@ -3,6 +3,7 @@
 
 #include "ffilesig.h"
 #include "fcstore.h"
+#include "fpage.h"
 #include "searchcond.h"
 #include "../util/hashmap.h"
 #include <glog/logging.h>
@@ -303,21 +304,21 @@ public:
 
   void getPositionBitmaps (const SearchCond &cond, std::vector<boost::shared_ptr<PositionBitmap> > &positions);
 
-  void getDecompressedData (const PositionRange &range, void *buffer, size_t bufferSize) {
-    assert (false);
-    throw std::runtime_error ("not implemented yet!");
-  }
+  void getDecompressedData (const PositionRange &range, void *buffer, size_t bufferSize);
 
   void getDictionaryCompressedData (const PositionRange &range, void *buffer, size_t bufferSize, int &bitOffset);
   int getDictionaryEntryId (const void *value);
   int getDictionaryEntrySizeInBits ();
   int getDictionaryEntryCount ();
-  void getAllDictionaryEntries (std::vector<std::string> &entries);
+  const std::vector<std::string>& getAllDictionaryEntries ();
   std::vector<int> searchDictionary (const SearchCond &cond);
 
 private:
   int _dictionaryBits;
   int _entriesPerPage;
+  uint8_t _mask;
+  bool _dictionaryEntriesRead; // kinda works as cache with _dictionaryEntries
+  std::vector<std::string> _dictionaryEntries;
 
 
   // for 1bit-4bits.
@@ -351,6 +352,23 @@ private:
     }
     return matchCount;
   }
+
+  // for 1bit-4bits.
+  void readDecompressDictionaryPageBitOffset(int begin, int end, const char *page, char *buffer);
+  // for 8bits/16bits.
+  template <typename INT_TYPE>
+  void readDecompressDictionaryPageNoBitOffset(int begin, int end, const char *page, char *buffer) {
+    for (int i = begin; i < end; ++i) {
+      const INT_TYPE *cursor = reinterpret_cast<const INT_TYPE*>(page + sizeof (FPageHeader) + i * sizeof(INT_TYPE));
+      assert (*cursor < _dictionaryEntries.size());
+      INT_TYPE entryId = *cursor;
+      const std::string &entry = _dictionaryEntries[entryId];
+      assert ((int) entry.data() == _column.maxLength);
+      ::memcpy(buffer, entry.data(), _column.maxLength);
+      buffer += _column.maxLength;
+    }
+  }
+
 };
 
 class FColumnReaderImplRLE : public FColumnReaderImpl, virtual public FColumnReaderRLE {
@@ -365,10 +383,7 @@ public:
     throw std::runtime_error ("not implemented yet!");
   }
 
-  void getDecompressedData (const PositionRange &range, void *buffer, size_t bufferSize) {
-    assert (false);
-    throw std::runtime_error ("not implemented yet!");
-  }
+  void getDecompressedData (const PositionRange &range, void *buffer, size_t bufferSize);
 
   void getRLECompressedData (const PositionRange &range, std::vector<std::pair<PositionRange, int8_t> > &result) {
     assert (_column.type == COLUMN_INT8);

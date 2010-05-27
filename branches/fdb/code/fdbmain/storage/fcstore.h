@@ -182,7 +182,8 @@ public:
   virtual int getDictionaryEntrySizeInBits () = 0;
   virtual int getDictionaryEntryCount () = 0;
   // returns all entries. for CHAR columns. (INT version is not implemented yet. rarely used though)
-  virtual void getAllDictionaryEntries (std::vector<std::string> &entries) = 0;
+  // can be used by manually casting even for INT.
+  virtual const std::vector<std::string>& getAllDictionaryEntries () = 0;
 
   // read dictionary pages (root pages) and returns the ID of
   // entries matching with the search condition.
