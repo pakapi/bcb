@@ -49,6 +49,7 @@ public:
   // whose file name prefix is given in the parameter.
   // this is for temp=rowstore, file=cstore pattern.
   std::vector<FFileSignature> dumpToNewCStoreFiles (const std::string &folder, const std::string &filenamePrefix, const FMainMemoryBTree &btree);
+  std::vector<FFileSignature> createNewCStoreFileSignatures (const std::string &folder, const std::string &filenamePrefix, TableType type);
 
   // TODO another method for temp=file=cstore pattern
 

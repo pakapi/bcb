@@ -67,7 +67,7 @@ class DirectFileOutputStream;
 // class to write a column file.
 class FCStoreWriter {
 public:
-  FCStoreWriter(int fileId_, DirectFileOutputStream *fd_, char *buffer_, const FCStoreColumn &column, int64_t tupleCount_);
+  FCStoreWriter(int fileId_, DirectFileOutputStream *fd_, char *buffer_, int bufferSize, const FCStoreColumn &column, int64_t tupleCount_);
   ~FCStoreWriter();
   void updateFileSignature(FFileSignature &signature, TableType tableType, int columnIndex) const;
 
@@ -119,6 +119,7 @@ public:
   int fileId;
   DirectFileOutputStream *fd;
   char *buffer;
+  int bufferSize;
   int bufferedPages;
   int currentPageId;
   int currentPageOffset;

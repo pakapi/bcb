@@ -54,7 +54,7 @@ DirectFileInputStream* FBufferPoolImpl::getOrOpenFile (const FFileSignature &sig
     // not opened yet -> open it
     FBufferedFileStatus newFile;
     newFile.signature = signature;
-    newFile.stream = new DirectFileInputStream (signature.filepath, FDB_USE_DIRECT_IO);
+    newFile.stream = new DirectFileInputStream (signature.getFilepath(), FDB_USE_DIRECT_IO);
     _fileMap [signature.fileId] = newFile;
     return newFile.stream;
   }
@@ -146,8 +146,8 @@ std::vector<const char*> FBufferPoolImpl::readPages (const FFileSignature &signa
 void FBufferPoolImpl::readPages (const FFileSignature &signature, int beginningPageId, int pageCount, char *buffer) {
   assert (beginningPageId >= 0);
   assert (pageCount >= 0);
-  assert (beginningPageId + pageCount < signature.pageCount);
-  VLOG (1) << "reading bulk (" << beginningPageId << "-" << (beginningPageId + pageCount) << ") from " << signature.filepath;
+  assert (beginningPageId + pageCount <= signature.pageCount);
+  VLOG (1) << "reading bulk (" << beginningPageId << "-" << (beginningPageId + pageCount) << ") from " << signature.getFilepath();
   DirectFileInputStream *stream = getOrOpenFile (signature);
   stream->setNextLocation(((int64_t) beginningPageId) * FDB_PAGE_SIZE);
   stream->read(buffer, FDB_PAGE_SIZE * pageCount);

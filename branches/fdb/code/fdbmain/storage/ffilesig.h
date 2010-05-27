@@ -2,6 +2,9 @@
 #define STORAGE_FFILESIG_H
 
 #include "../configvalues.h"
+#include <cassert>
+#include <string>
+#include <string.h>
 
 namespace fdb {
 
@@ -18,8 +21,18 @@ struct FFileSignature {
     columnFile (false), columnIndex(0), columnType(COLUMN_INVALID), columnMaxLength(0), columnOffset(0), columnCompression(COMPRESSION_INVALID), dictionaryBits(0), dictionaryEntryCount (0)
   {}
 
+  std::string getFilepath () const {
+    return std::string(filepathstr, filepathlen);
+  }
+  void setFilepath (const std::string &filepath) {
+    assert (filepath.size() <= FFILE_MAX_FILEPATH);
+    filepathlen = filepath.size();
+    ::memcpy (filepathstr, filepath.data(), filepath.size());
+  }
+
   int signatureVersion;
-  char filepath[FFILE_MAX_FILEPATH];
+  int filepathlen;
+  char filepathstr[FFILE_MAX_FILEPATH];
   int fileId; // sequentially assigned ID for each file
   int64_t totalTupleCount; // total count of tuples in this file
   int pageCount; // total count of all pages in the file
