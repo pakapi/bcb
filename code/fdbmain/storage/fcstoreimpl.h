@@ -136,7 +136,8 @@ public:
   int64_t runTotal;
   int64_t currentRunBeginningPos;
   int currentRunCount;
-  const char *currentRunValue;
+  char *currentRunValue;
+  bool currentRunValueSet;
   std::vector<int64_t> pageBeginningPositions;
 
   // for Dictionary Encoding

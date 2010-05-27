@@ -145,7 +145,7 @@ public:
       return currentPageId >= 0 && currentPageId < leafPageCount && currentTuple >= 0 && currentTuple <= currentPageTupleCount;
     }
   private:
-    LeafPageIterator(); // prohibit default constructure
+    LeafPageIterator(); // prohibit default constructor
     void readPage(bool forward);
 
     int currentPageId;
