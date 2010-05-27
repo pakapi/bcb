@@ -21,7 +21,7 @@ struct FPageHeader {
   int64_t beginningPos; // accumulated position (tuple id) of the first entry in this page
   int level; // 0=leaf
   bool root; // true if this is a root node.
-  int entrySize; // byte size of one tuple/key
+  int entrySize; // byte size of one entry in this page (tuplesize in BTree leaf, key+sizeof(int) in BTree non-leaf)
   int count; // number of tuples/keys in this page
   bool lastSibling; // true if this page is the last of this level
 };

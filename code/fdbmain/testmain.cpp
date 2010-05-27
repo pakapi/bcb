@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(init) {
   BOOST_TEST_MESSAGE("===Initialized tests.");
 }
 
-/*
+
 BOOST_AUTO_TEST_CASE(storage_test_sig) {
   BOOST_TEST_MESSAGE("===Testing FSignatureSet...");
 
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(storage_test_sig) {
   sig1.keyEntrySize = 16;
   sig1.keyCompareFuncType = INT32_ASC_NODUP;
   sig1.tableType = LINEORDER_PK_SORT;
-  ::memcpy(sig1.filepath, "_test.1", 7);
+  sig1.setFilepath("_test.1");
   BOOST_CHECK_EQUAL (sig1.fileId, 0);
   sig1.fileId = signatureFile.issueNextFileId();
   BOOST_CHECK_EQUAL (sig1.fileId, 1);
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(storage_test_sig) {
   sig2.keyEntrySize = 32;
   sig2.keyCompareFuncType = INT64_ASC_NODUP;
   sig2.tableType = LINEORDER_PK_SORT;
-  ::memcpy(sig2.filepath, "_test.2", 7);
+  sig2.setFilepath("_test.2");
   BOOST_CHECK_EQUAL (sig2.fileId, 0);
   sig2.fileId = signatureFile.issueNextFileId();
   BOOST_CHECK_EQUAL (sig2.fileId, 2);
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(storage_test_sig) {
   BOOST_CHECK_EQUAL (sig1Loaded.leafEntrySize, 150);
   BOOST_CHECK_EQUAL (sig1Loaded.keyEntrySize, 16);
   BOOST_CHECK_EQUAL (sig1Loaded.keyCompareFuncType, INT32_ASC_NODUP);
-  BOOST_CHECK_EQUAL (sig1Loaded.filepath, "_test.1");
+  BOOST_CHECK_EQUAL (sig1Loaded.getFilepath().c_str(), "_test.1");
   BOOST_CHECK_EQUAL (sig1Loaded.fileId, 1);
 
 
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(storage_test_sig) {
   BOOST_CHECK_EQUAL (sig2Loaded.leafEntrySize, 250);
   BOOST_CHECK_EQUAL (sig2Loaded.keyEntrySize, 32);
   BOOST_CHECK_EQUAL (sig2Loaded.keyCompareFuncType, INT64_ASC_NODUP);
-  BOOST_CHECK_EQUAL (sig2Loaded.filepath, "_test.2");
+  BOOST_CHECK_EQUAL (sig2Loaded.getFilepath().c_str(), "_test.2");
   BOOST_CHECK_EQUAL (sig2Loaded.fileId, 2);
 
   BOOST_TEST_MESSAGE("===Tested FSignatureSet.");
@@ -1219,7 +1219,7 @@ BOOST_AUTO_TEST_CASE(ssb_random_query) {
   BOOST_TEST_MESSAGE("===Tested SSB Random Queries.");
 }
 
-*/
+
 BOOST_AUTO_TEST_CASE(engine_family_merge_btree) {
   BOOST_TEST_MESSAGE("===Testing Fracture Family Merging for BTree...");
   {
