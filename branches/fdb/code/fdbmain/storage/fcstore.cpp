@@ -288,6 +288,8 @@ FCStoreWriter::FCStoreWriter(int fileId_, DirectFileOutputStream *fd_, char *buf
   currentTuple = 0;
   tupleCount = tupleCount_;
   column = column_;
+  currentRunValue = NULL;
+  currentRunValueSet = false;
   dictionaryBits = 0;
   dictionaryHashmap = NULL;
   switch (column.compression) {
@@ -298,6 +300,7 @@ FCStoreWriter::FCStoreWriter(int fileId_, DirectFileOutputStream *fd_, char *buf
   case RLE_COMPRESSED:
     leafEntrySize = column.maxLength + sizeof(int); // value + runlength
     entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / leafEntrySize;
+    currentRunValue = new char[column.maxLength];
     break;
   case DICTIONARY_COMPRESSED:
     leafEntrySize = 0; // determined later
@@ -314,7 +317,6 @@ FCStoreWriter::FCStoreWriter(int fileId_, DirectFileOutputStream *fd_, char *buf
   runTotal = 0;
   currentRunCount = 0;
   currentRunBeginningPos = 0;
-  currentRunValue = NULL;
 
   dictionarySize = 0;
   currentPackedByte = 0;
@@ -326,6 +328,7 @@ FCStoreWriter::FCStoreWriter(int fileId_, DirectFileOutputStream *fd_, char *buf
 }
 FCStoreWriter::~FCStoreWriter() {
   if (dictionaryHashmap != NULL) delete dictionaryHashmap;
+  if (currentRunValue != NULL) delete[] currentRunValue;
 }
 
 
@@ -544,7 +547,7 @@ void FCStoreWriter::flushCurrentRun () {
     pageBeginningPositions.push_back (currentRunBeginningPos);
     assert ((int) pageBeginningPositions.size() == currentPageId + 1);
   }
-  if (currentRunValue != NULL) {
+  if (currentRunValueSet) {
     writeLeafEntryRLE(currentRunCount, currentRunValue);
   }
 }
@@ -552,13 +555,14 @@ void FCStoreWriter::addValueRLE (const char* value) {
   assert (currentTuple < tupleCount);
 
   // write RLE data only when the value changes
-  if (currentRunValue == NULL || ::memcmp(currentRunValue, value, column.maxLength) != 0) {
+  if (!currentRunValueSet || ::memcmp(currentRunValue, value, column.maxLength) != 0) {
     VLOG(2) << "new run!";
     flushCurrentRun ();
 
     // Start a new run
     currentRunBeginningPos = currentTuple;
-    currentRunValue = value;
+    ::memcpy(currentRunValue, value, column.maxLength);
+    currentRunValueSet = true;
     currentRunCount = 1;
     ++runTotal;
   } else {
@@ -1685,11 +1689,11 @@ void FColumnReaderImplRLE::getDecompressedData (const PositionRange &range, void
       }
       for (; pos < end; ++pos) {
         ::memcpy (bufferChar, cursor + sizeof(int), _column.maxLength);
-        bufferChar += _column.maxLength + sizeof(int);
+        bufferChar += _column.maxLength;
       }
     }
   }
-  assert ((int) tupleCount * _column.maxLength == (bufferChar - reinterpret_cast<char*>(buffer)));
+  assert ((int) (tupleCount * _column.maxLength) == (bufferChar - reinterpret_cast<char*>(buffer)));
 #ifndef NDEBUG
   watch.stop();
   VLOG(2) << "Done. " << tupleCount << " decompressed entries read. " << watch.getElapsed() << " microsec";

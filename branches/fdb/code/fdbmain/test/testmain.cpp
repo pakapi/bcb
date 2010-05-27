@@ -5,11 +5,13 @@
 
 #include <glog/logging.h>
 
+#include <map>
 #include <string.h>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "../configvalues.h"
@@ -32,6 +34,61 @@
 
 using namespace std;
 using namespace fdb;
+
+void countDistinctString (std::map<std::string, int> &result, const char *value, size_t length) {
+  std::string str(value, length);
+  std::map<std::string, int>::iterator iter = result.find (str);
+  if (iter == result.end()) {
+    result [str] = 1;
+  } else {
+    ++(iter->second);
+  }
+}
+void outDistinctString (std::map<std::string, int> &result) {
+  BOOST_TEST_MESSAGE("- " << result.size() << " distinct entries");
+  for(std::map<std::string, int>::const_iterator iter = result.begin (); iter != result.end(); ++iter) {
+    BOOST_TEST_MESSAGE("--- " << iter->first << " : " << iter->second);
+  }
+}
+std::map<std::string, int> countDistinctEntriesString (const char* buffer, int entryLength, int entryCount) {
+  std::map<std::string, int> result;
+  for (int i = 0; i < entryCount; ++i) {
+    countDistinctString (result, buffer + i * entryLength, entryLength);
+  }
+  outDistinctString (result);
+  return result;
+}
+
+template <typename INT_TYPE>
+void countDistinct (std::map<INT_TYPE, int> &result, INT_TYPE value) {
+  typedef typename std::map<INT_TYPE, int>::iterator Iterator;
+  Iterator iter = result.find (value);
+  if (iter == result.end()) {
+    result [value] = 1;
+  } else {
+    ++(iter->second);
+  }
+}
+
+template <typename INT_TYPE>
+void outDistinct (std::map<INT_TYPE, int> &result) {
+  BOOST_TEST_MESSAGE("- " << result.size() << " distinct entries");
+  typedef typename std::map<INT_TYPE, int>::iterator Iterator;
+  for(Iterator iter = result.begin (); iter != result.end(); ++iter) {
+    BOOST_TEST_MESSAGE("--- " << iter->first << " : " << iter->second);
+  }
+}
+
+template <typename INT_TYPE>
+std::map<INT_TYPE, int> countDistinctEntries (const char* buffer, int entryCount) {
+  std::map<INT_TYPE, int> result;
+  for (int i = 0; i < entryCount; ++i) {
+    INT_TYPE value = *reinterpret_cast<const INT_TYPE*>(buffer + i * sizeof(INT_TYPE));
+    countDistinct<INT_TYPE> (result, value);
+  }
+  outDistinct<INT_TYPE> (result);
+  return result;
+}
 
 BOOST_AUTO_TEST_CASE(init) {
   BOOST_TEST_MESSAGE("===Initializing tests...");
@@ -313,6 +370,16 @@ BOOST_AUTO_TEST_CASE(storage_cstore_uncompressed) {
     BOOST_CHECK_EQUAL (bitmap->bitmap[0], (1 << 1) | (1 << 3) | (1 << 4) | (1 << 5));
     BOOST_CHECK_EQUAL (bitmap->bitmap[1], (1 << 0));
     BOOST_CHECK_EQUAL (bitmap->matchedCount, 5);
+
+    int32_t buffer[20];
+    reader->getDecompressedData(PositionRange (0, 20), buffer, 20 * sizeof(int32_t));
+    BOOST_CHECK_EQUAL (buffer[0], 2032150);
+    BOOST_CHECK_EQUAL (buffer[15], 5703844);
+    BOOST_CHECK_EQUAL (buffer[19], 3093206);
+    for (int i = 0; i < 20; ++i) {
+      BOOST_CHECK (buffer[i] >= 0);
+      BOOST_CHECK (buffer[i] < 10000000);
+    }
   }
 
   vector<PositionRange> cranges;
@@ -342,6 +409,12 @@ BOOST_AUTO_TEST_CASE(storage_cstore_uncompressed) {
     BOOST_CHECK_EQUAL (bitmap->byteLength, 1);
     BOOST_CHECK_EQUAL (bitmap->bitmap[0], (1 << 0) | (1 << 1));
     BOOST_CHECK_EQUAL (bitmap->matchedCount, 2);
+
+    Customer c;
+    char buffer[6 * sizeof(c.name)];
+    reader->getDecompressedData(PositionRange (0, 6), buffer, 6 * sizeof(c.name));
+    BOOST_CHECK (std::string(buffer, sizeof(c.name)) == reader->normalize("Customer#000002020"));
+    BOOST_CHECK (std::string(buffer + sizeof(c.name) * 2, sizeof(c.name)) == reader->normalize("Customer#000013813"));
   }
   BOOST_TEST_MESSAGE("===Tested Uncompressed CStore column.");
 }
@@ -389,6 +462,24 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     BOOST_CHECK_EQUAL (bitmap->bitmap[0], 0x80);
     BOOST_CHECK_EQUAL (bitmap->bitmap[1], 0x3);
     BOOST_CHECK_EQUAL (bitmap->matchedCount, 3);
+
+    Lineorder l;
+    char buffer[20 * sizeof(l.orderpriority)];
+    reader->getDecompressedData(PositionRange (0, 20), buffer, 20 * sizeof(l.orderpriority));
+    for (int i = 0; i < 20; ++i) {
+      std::string str(buffer + i * sizeof(l.orderpriority), sizeof(l.orderpriority));
+      if (i < 7) {
+        BOOST_CHECK (str == reader->normalize("2-HIGH"));
+      } else if (i < 12) {
+        BOOST_CHECK (str == reader->normalize("1-URGENT"));
+      } else if (i == 12) {
+        BOOST_CHECK (str == reader->normalize("4-NOT SPECI"));
+      } else if (i < 15) {
+        BOOST_CHECK (str == reader->normalize("5-LOW"));
+      } else {
+        BOOST_CHECK (str == reader->normalize("3-MEDIUM"));
+      }
+    }
   }
 
   {
@@ -419,6 +510,14 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     BOOST_CHECK_EQUAL (bitmap->bitmap[0], 0);
     BOOST_CHECK_EQUAL (bitmap->bitmap[1], 0);
     BOOST_CHECK_EQUAL (bitmap->matchedCount, 0);
+
+    Lineorder l;
+    char buffer[20 * sizeof(l.shippriority)];
+    reader->getDecompressedData(PositionRange (0, 20), buffer, 20 * sizeof(l.shippriority));
+    for (int i = 0; i < 20; ++i) {
+      std::string str(buffer + i * sizeof(l.shippriority), sizeof(l.shippriority));
+      BOOST_CHECK (str == reader->normalize("0"));
+    }
   }
 
   {
@@ -461,6 +560,16 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     BOOST_CHECK_EQUAL (bitmap->byteLength, 1);
     BOOST_CHECK_EQUAL (bitmap->bitmap[0], 0x38);
     BOOST_CHECK_EQUAL (bitmap->matchedCount, 3);
+
+    Customer c;
+    char buffer[6 * sizeof(c.nation)];
+    reader->getDecompressedData(PositionRange (0, 6), buffer, 6 * sizeof(c.nation));
+    BOOST_CHECK (std::string(buffer + 0 * sizeof(c.nation), sizeof(c.nation)) == reader->normalize("UNITED STATES"));
+    BOOST_CHECK (std::string(buffer + 1 * sizeof(c.nation), sizeof(c.nation)) == reader->normalize("CHINA"));
+    BOOST_CHECK (std::string(buffer + 2 * sizeof(c.nation), sizeof(c.nation)) == reader->normalize("VIETNAM"));
+    BOOST_CHECK (std::string(buffer + 3 * sizeof(c.nation), sizeof(c.nation)) == reader->normalize("EGYPT"));
+    BOOST_CHECK (std::string(buffer + 4 * sizeof(c.nation), sizeof(c.nation)) == reader->normalize("INDONESIA"));
+    BOOST_CHECK (std::string(buffer + 5 * sizeof(c.nation), sizeof(c.nation)) == reader->normalize("JORDAN"));
   }
 
   {
@@ -489,6 +598,16 @@ BOOST_AUTO_TEST_CASE(storage_cstore_dictionary) {
     BOOST_CHECK_EQUAL (bitmap->byteLength, 1);
     BOOST_CHECK_EQUAL (bitmap->bitmap[0], 0x3a);
     BOOST_CHECK_EQUAL (bitmap->matchedCount, 4);
+
+    Customer c;
+    char buffer[6 * sizeof(c.city)];
+    reader->getDecompressedData(PositionRange (0, 6), buffer, 6 * sizeof(c.city));
+    BOOST_CHECK (std::string(buffer + 0 * sizeof(c.city), sizeof(c.city)) == reader->normalize("UNITED ST8"));
+    BOOST_CHECK (std::string(buffer + 1 * sizeof(c.city), sizeof(c.city)) == reader->normalize("CHINA    6"));
+    BOOST_CHECK (std::string(buffer + 2 * sizeof(c.city), sizeof(c.city)) == reader->normalize("VIETNAM  2"));
+    BOOST_CHECK (std::string(buffer + 3 * sizeof(c.city), sizeof(c.city)) == reader->normalize("EGYPT    6"));
+    BOOST_CHECK (std::string(buffer + 4 * sizeof(c.city), sizeof(c.city)) == reader->normalize("INDONESIA1"));
+    BOOST_CHECK (std::string(buffer + 5 * sizeof(c.city), sizeof(c.city)) == reader->normalize("JORDAN   9"));
   }
   BOOST_TEST_MESSAGE("===Tested dictionary compressed CStore column.");
 }
@@ -566,6 +685,19 @@ BOOST_AUTO_TEST_CASE(storage_cstore_rle) {
   BOOST_CHECK_EQUAL (ret.size(), 1);
   BOOST_CHECK_EQUAL (ret[0].begin, 3);
   BOOST_CHECK_EQUAL (ret[0].end, 6);
+
+  Lineorder l;
+  int32_t buffer[20];
+  reader->getDecompressedData(PositionRange (0, 20), buffer, 20 * sizeof(int32_t));
+  for (int i = 0; i < 20; ++i) {
+    int correct = 1;
+    if (i >= 3) ++correct;
+    if (i >= 7) ++correct;
+    if (i >= 12) ++correct;
+    if (i >= 13) ++correct;
+    if (i >= 15) ++correct;
+    BOOST_CHECK_EQUAL (buffer[i], correct);
+  }
 
   BOOST_TEST_MESSAGE("===Tested RLE CStore column.");
 }
@@ -1210,6 +1342,11 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_btree) {
     std::vector<std::string> names;
     std::vector<int> counts;
     int totalCount = 0;
+    int64_t totalRev = 0;
+    std::map<int32_t, int> yearmonthNumMap;
+    std::map<std::string, int> sRegionMap;
+    std::map<std::string, int> cCityMap;
+    std::map<std::string, int> pMfgrMap;
     for (size_t i = 0; i < 2 * 3; ++i) {
       gen.generateNextBatch();
       size_t batchSize = gen.getCurrentBatchSize();
@@ -1218,6 +1355,12 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_btree) {
       for (size_t j = 0; j < batchSize; ++j) {
         const MVProjection &m = mb[j];
         fracture.insert(&(m.key), &m);
+        totalRev += m.l_revenue;
+        countDistinct<int32_t> (yearmonthNumMap, m.key.d_yearmonthnum);
+        countDistinctString (sRegionMap, m.key.s_region, sizeof(m.key.s_region));
+        countDistinctString (cCityMap, m.key.c_city, sizeof(m.key.c_city));
+        countDistinctString (pMfgrMap, m.p_mfgr, sizeof(m.p_mfgr));
+        ++totalCount;
       }
       fracture.finishInserts();
       stringstream str;
@@ -1228,7 +1371,6 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_btree) {
       BOOST_CHECK_EQUAL (sig.totalTupleCount, batchSize);
       counts.push_back(batchSize);
       BOOST_TEST_MESSAGE("-tuples[" << i << "]=" << batchSize);
-      totalCount += batchSize;
     }
     BOOST_TEST_MESSAGE("-made fractures");
     BOOST_CHECK_EQUAL (family->getOnDiskFractures().size(), 2 * 3);
@@ -1250,10 +1392,36 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_btree) {
     const FFileSignature &sig = engine.getSignatureSet().getFileSignature(newName);
     BOOST_CHECK_EQUAL (family->getOnDiskFractures().size(), 1);
     BOOST_CHECK_EQUAL (sig.totalTupleCount, totalCount);
+
+    BOOST_TEST_MESSAGE("-reading the merged btree..");
+    FReadOnlyDiskBTree merged (engine.getBufferPool(), sig);
+    int finalCount = 0;
+    int64_t totalRev2 = 0;
+    std::map<int32_t, int> yearmonthNumMap2;
+    std::map<std::string, int> sRegionMap2;
+    std::map<std::string, int> cCityMap2;
+    std::map<std::string, int> pMfgrMap2;
+    for (FReadOnlyDiskBTree::LeafPageIterator iter = merged.scanLeafPages(); iter.hasCurrent(); ++iter) {
+      const MVProjection &m = *reinterpret_cast<const MVProjection *> (*iter);
+      totalRev2 += m.l_revenue;
+      countDistinct<int32_t> (yearmonthNumMap2, m.key.d_yearmonthnum);
+      countDistinctString (sRegionMap2, m.key.s_region, sizeof(m.key.s_region));
+      countDistinctString (cCityMap2, m.key.c_city, sizeof(m.key.c_city));
+      countDistinctString (pMfgrMap2, m.p_mfgr, sizeof(m.p_mfgr));
+      ++finalCount;
+    }
+    BOOST_CHECK_EQUAL (finalCount, totalCount);
+    BOOST_CHECK_EQUAL (totalRev2, totalRev);
+    BOOST_CHECK (yearmonthNumMap2 == yearmonthNumMap);
+    BOOST_CHECK (sRegionMap2 == sRegionMap);
+    BOOST_CHECK (cCityMap2 == cCityMap);
+    BOOST_CHECK (pMfgrMap2 == pMfgrMap);
   }
 
   BOOST_TEST_MESSAGE("===Tested Fracture Family Merging for BTree.");
 }
+
+
 BOOST_AUTO_TEST_CASE(engine_family_merge_cstore) {
   BOOST_TEST_MESSAGE("===Testing Fracture Family Merging for CStore...");
   {
@@ -1269,6 +1437,10 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_cstore) {
     std::vector<int> counts;
     int totalCount = 0;
     int64_t totalRev = 0;
+    std::map<int32_t, int> yearmonthNumMap;
+    std::map<std::string, int> sRegionMap;
+    std::map<std::string, int> cCityMap;
+    std::map<std::string, int> pMfgrMap;
     for (size_t i = 0; i < 2 * 3; ++i) {
       gen.generateNextBatch();
       size_t batchSize = gen.getCurrentBatchSize();
@@ -1278,6 +1450,11 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_cstore) {
         const MVProjection &m = mb[j];
         fracture.insert(&(m.key), &m);
         totalRev += m.l_revenue;
+        countDistinct<int32_t> (yearmonthNumMap, m.key.d_yearmonthnum);
+        countDistinctString (sRegionMap, m.key.s_region, sizeof(m.key.s_region));
+        countDistinctString (cCityMap, m.key.c_city, sizeof(m.key.c_city));
+        countDistinctString (pMfgrMap, m.p_mfgr, sizeof(m.p_mfgr));
+        ++totalCount;
       }
       fracture.finishInserts();
       stringstream str;
@@ -1291,8 +1468,11 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_cstore) {
       names.push_back (str.str());
       counts.push_back(batchSize);
       BOOST_TEST_MESSAGE("-tuples[" << i << "]=" << batchSize);
-      totalCount += batchSize;
     }
+    outDistinct<int32_t> (yearmonthNumMap);
+    outDistinctString (sRegionMap);
+    outDistinctString (cCityMap);
+    outDistinctString (pMfgrMap);
     BOOST_TEST_MESSAGE("-made fractures");
     BOOST_CHECK_EQUAL (family->getOnDiskFractures().size(), 2 * 3);
   
@@ -1318,6 +1498,7 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_cstore) {
       BOOST_CHECK_EQUAL (signatures[j].totalTupleCount, totalCount);
     }
 
+    BOOST_TEST_MESSAGE("-reading the merged cstore..");
     FReadOnlyCStore cs (engine.getBufferPool(), MV_PROJECTION, engine.getSignatureSet(), TEST_DATA_FOLDER, newName);
     FColumnReader *reader = cs.getColumnReader("l_revenue");
     int32_t *buffer = new int32_t[totalCount];
@@ -1326,8 +1507,28 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_cstore) {
     for (int i = 0; i < totalCount; ++i) {
       sum += buffer[i];
     }
-    BOOST_CHECK_EQUAL (sum, totalRev);
     delete[] buffer;
+    BOOST_CHECK_EQUAL (sum, totalRev);
+
+    MVProjection m;
+    char *bigBuffer = new char[totalCount * 40];
+    cs.getColumnReader("d_yearmonthnum")->getDecompressedData (PositionRange (0, totalCount), bigBuffer, totalCount * 40);
+    std::map<int32_t, int> yearmonthNumMap2 = countDistinctEntries<int32_t> (bigBuffer, totalCount);
+    BOOST_CHECK (yearmonthNumMap == yearmonthNumMap2);
+
+    cs.getColumnReader("s_region")->getDecompressedData (PositionRange (0, totalCount), bigBuffer, totalCount * 40);
+    std::map<std::string, int> sRegionMap2 = countDistinctEntriesString (bigBuffer, sizeof(m.key.s_region), totalCount);
+    BOOST_CHECK (sRegionMap == sRegionMap2);
+
+    cs.getColumnReader("c_city")->getDecompressedData (PositionRange (0, totalCount), bigBuffer, totalCount * 40);
+    std::map<std::string, int> cCityMap2 = countDistinctEntriesString (bigBuffer, sizeof(m.key.c_city), totalCount);
+    BOOST_CHECK (cCityMap == cCityMap2);
+
+    cs.getColumnReader("p_mfgr")->getDecompressedData (PositionRange (0, totalCount), bigBuffer, totalCount * 40);
+    std::map<std::string, int> pMfgrMap2 = countDistinctEntriesString (bigBuffer, sizeof(m.p_mfgr), totalCount);
+    BOOST_CHECK (pMfgrMap == pMfgrMap2);
+
+    delete[] bigBuffer;
   }
 
   BOOST_TEST_MESSAGE("===Tested Fracture Family Merging for CStore.");
