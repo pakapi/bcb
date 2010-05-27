@@ -84,6 +84,9 @@ long long FMainMemoryBTree::size () const {
 void FMainMemoryBTree::traverse(TraversalCallback callback, void *context) const {
   _impl->traverse(callback, context);
 }
+void FMainMemoryBTree::addAllToWriter(FBTreeWriter &writer) const {
+  _impl->addAllToWriter(writer);
+}
 const void* FMainMemoryBTree::getSingleTupleByKey (const void *key) const {
   return _impl->getSingleTupleByKey(key);
 }
@@ -141,24 +144,27 @@ void FMainMemoryBTreeImpl::insertTupleToArray (const void *key, const void *data
 //  Dump to disk
 // ==========================================================================
 
-void dumpLeafPagesCallback (void *context, const void *key, const void *data) {
-  FBTreeWriter *dumpContext = reinterpret_cast<FBTreeWriter*>(context);
-  dumpContext->addTuple (reinterpret_cast<const char*>(data));
-}
-FBTreeWriter::FBTreeWriter(int fileId_, TableType type_, DirectFileOutputStream *fd_, char *buffer_, int bufferSize_, int64_t tupleCount_, int keySize_, int dataSize_)
-  : fileId (fileId_), type(type_), extractFunc(toExtractKeyFromTupleFunc(type)),
-    fd(fd_), buffer(buffer_), bufferSize(bufferSize_), bufferedPages (0),
+FBTreeWriter::FBTreeWriter(FFileSignature &signature_, TableType type_, char *buffer_, int bufferSize_, int64_t tupleCount_, int keySize_, int dataSize_)
+  : signature(signature_), fileId (signature.fileId), type(type_), extractFunc(toExtractKeyFromTupleFunc(type)),
+    buffer(buffer_), bufferSize(bufferSize_), bufferedPages (0),
     currentPageId (0), currentPageOffset (0), currentTuple (0), tupleCount(tupleCount_),
     keySize(keySize_), dataSize(dataSize_),
     entryPerLeafPage ((FDB_PAGE_SIZE - sizeof (FPageHeader)) / dataSize),
     entryPerNonLeafPage (FDB_PAGE_SIZE - sizeof (FPageHeader) / (keySize + sizeof(int))),
     leafPageCount (0), rootPageStart (0), rootPageCount (0), rootPageLevel (0) {
+  assert (signature.fileId > 0);
+  assert (signature.getFilepath().size() > 0);
+  if (std::remove(signature.getFilepath().c_str()) == 0) {
+    LOG(INFO) << "deleted existing file " << signature.getFilepath() << ".";
+  }
+  fd = new DirectFileOutputStream(signature.getFilepath(), FDB_USE_DIRECT_IO);
   ::memset (buffer, 0, bufferSize * FDB_PAGE_SIZE);
   keyBuffer = new char[keySize];
   ::memset (keyBuffer, 0, keySize);
   pageSignatures.reserve ((tupleCount / entryPerLeafPage) + 10);
 }
 FBTreeWriter::~FBTreeWriter() {
+  delete fd;
   delete[] keyBuffer;
 }
 
@@ -313,9 +319,10 @@ void FBTreeWriter::finishWriting () {
   // done. flush and close
   fd->sync();
   fd->close();
+  updateFileSignature ();
 }
 
-void FBTreeWriter::updateFileSignature(FFileSignature &signature) const {
+void FBTreeWriter::updateFileSignature() {
   signature.totalTupleCount = tupleCount;
   signature.keyEntrySize = keySize;
   signature.leafEntrySize = dataSize;
@@ -337,20 +344,12 @@ void FMainMemoryBTreeImpl::dumpToNewRowStoreFile (FFileSignature &signature) con
 
   StopWatch watch;
   watch.init();
-  if (std::remove((filepath).c_str()) == 0) {
-    LOG(INFO) << "deleted existing file " << (filepath) << ".";
-  }
-
-  // dump the btree. start from leaf pages
-  scoped_ptr<DirectFileOutputStream> fd(new DirectFileOutputStream(filepath, FDB_USE_DIRECT_IO));
-
-  // use the traverse method of BTree to write down leaf pages
   assert (FDB_PAGE_SIZE % FDB_DIRECT_IO_ALIGNMENT == 0);
   ScopedMemoryForIO bufferPtr(FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE, FDB_DIRECT_IO_ALIGNMENT, FDB_USE_DIRECT_IO);
-  FBTreeWriter context (signature.fileId, _tableType, fd.get(), reinterpret_cast<char*>(bufferPtr.get()), FDB_DISK_WRITE_BUFFER_PAGES, size(), getKeySize(), getDataSize());
-  traverse(dumpLeafPagesCallback, &context);
+  FBTreeWriter context (signature, _tableType, reinterpret_cast<char*>(bufferPtr.get()), FDB_DISK_WRITE_BUFFER_PAGES, size(), getKeySize(), getDataSize());
+  addAllToWriter(context);
   context.finishWriting();
-  context.updateFileSignature(signature);
+  signature = context.signature;
 
   watch.stop();
   LOG(INFO) << "completed writing. " << watch.getElapsed() << " micsosec";
@@ -606,7 +605,7 @@ void FReadOnlyDiskBTreeImpl::checkNonLeafPageHeader(const FPageHeader *header, i
   assert (header->root == (currentLevel == _signature.rootPageLevel));
   assert (header->level == currentLevel);
   assert (header->fileId == _signature.fileId);
-  assert ((int) header->entrySize == _signature.keyEntrySize + sizeof(int));
+  assert (header->entrySize == (int) (_signature.keyEntrySize + sizeof(int)));
   assert (header->count > 0);
 }
 

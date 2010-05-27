@@ -1290,6 +1290,7 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_cstore) {
     std::vector<std::string> names;
     std::vector<int> counts;
     int totalCount = 0;
+    int64_t totalRev = 0;
     for (size_t i = 0; i < 2 * 3; ++i) {
       gen.generateNextBatch();
       size_t batchSize = gen.getCurrentBatchSize();
@@ -1298,6 +1299,7 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_cstore) {
       for (size_t j = 0; j < batchSize; ++j) {
         const MVProjection &m = mb[j];
         fracture.insert(&(m.key), &m);
+        totalRev += m.l_revenue;
       }
       fracture.finishInserts();
       stringstream str;
@@ -1337,6 +1339,17 @@ BOOST_AUTO_TEST_CASE(engine_family_merge_cstore) {
     for (size_t j = 0; j < signatures.size(); ++j) {
       BOOST_CHECK_EQUAL (signatures[j].totalTupleCount, totalCount);
     }
+
+    FReadOnlyCStore cs (engine.getBufferPool(), MV_PROJECTION, engine.getSignatureSet(), TEST_DATA_FOLDER, newName);
+    FColumnReader *reader = cs.getColumnReader("l_revenue");
+    int32_t *buffer = new int32_t[totalCount];
+    reader->getDecompressedData (PositionRange (0, totalCount), buffer, sizeof(int32_t) * totalCount);
+    int64_t sum = 0;
+    for (int i = 0; i < totalCount; ++i) {
+      sum += buffer[i];
+    }
+    BOOST_CHECK_EQUAL (sum, totalRev);
+    delete[] buffer;
   }
 
   BOOST_TEST_MESSAGE("===Tested Fracture Family Merging for CStore.");

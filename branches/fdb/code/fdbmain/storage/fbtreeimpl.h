@@ -25,6 +25,7 @@ public:
   virtual void finishInserts () = 0;
   virtual const void* getSingleTupleByKey (const void *key) const = 0;
   virtual void traverse(TraversalCallback callback, void *context) const = 0;
+  virtual void addAllToWriter(FBTreeWriter &writer) const = 0;
   void dumpToNewRowStoreFile (FFileSignature &signature) const;
   int64_t size () const { return _tuples; }
   int getKeySize() const { return _keySize; }
@@ -49,6 +50,54 @@ protected:
 
   char *_array;
   int64_t _tuples;
+};
+
+struct BTreePageSignature {
+  int pageId;
+  int64_t beginningPos;
+  std::string firstKey;
+};
+
+// context object for callback function in disk dump
+class DirectFileOutputStream;
+class FBTreeWriter {
+public:
+  FBTreeWriter(FFileSignature &signature_, TableType type_, char *buffer_, int bufferSize_, int64_t tupleCount_, int keySize_, int dataSize_);
+  ~FBTreeWriter();
+  void addTuple (const char *data);
+
+  void flushIfFull ();
+  void flush();
+  void flipPage();
+  void writePageHeader (int level, bool root, int entrySize, int64_t beginningPos, int64_t remainingCount, int entryPerPage);
+
+  void dumpNonLeafPages (int currentLevel);
+  void finishWriting ();
+  void updateFileSignature();
+
+  FFileSignature &signature;
+  const int fileId;
+  const TableType type;
+  const ExtractKeyFromTupleFunc extractFunc;
+  char *keyBuffer;
+  DirectFileOutputStream *fd;
+  char *buffer;
+  const int bufferSize;
+  int bufferedPages;
+  int currentPageId;
+  int currentPageOffset;
+  int64_t currentTuple;
+  const int64_t tupleCount;
+  const int keySize;
+  const int dataSize;
+  const int entryPerLeafPage;
+  const int entryPerNonLeafPage;
+  int leafPageCount;
+  int rootPageStart;
+  int rootPageCount;
+  int rootPageLevel;
+  int totalPageCount;
+  std::vector<BTreePageSignature> pageSignatures;
 };
 
 // always-sorted version
@@ -80,6 +129,11 @@ public:
   void traverse(TraversalCallback callback, void *context) const {
     for (MapConstIter iter = _map.begin(); iter != _map.end(); ++iter) {
       callback(context, &(iter.key()), iter.data());
+    }
+  }
+  void addAllToWriter(FBTreeWriter &writer) const {
+    for (MapConstIter iter = _map.begin(); iter != _map.end(); ++iter) {
+      writer.addTuple(reinterpret_cast<const char*>(iter.data()));
     }
   }
   bool isSortedBuffer() const { return true; }
@@ -143,6 +197,12 @@ public:
       callback(context, &(_sortedKeys[i]._key), _sortedKeys[i]._data);
     }
   }
+  void addAllToWriter(FBTreeWriter &writer) const {
+    assert (_finishedInserts);
+    for (size_t i = 0; i < _tuples; ++i) {
+      writer.addTuple(reinterpret_cast<const char*>(_sortedKeys[i]._data));
+    }
+  }
   bool isSortedBuffer() const { return false; }
   void scanTuplesGreaterEqual (TupleCallback callback, void *context, const char *key) const {
     assert (false);
@@ -150,53 +210,6 @@ public:
   }
 };
 
-
-struct BTreePageSignature {
-  int pageId;
-  int64_t beginningPos;
-  std::string firstKey;
-};
-
-// context object for callback function in disk dump
-class DirectFileOutputStream;
-class FBTreeWriter {
-public:
-  FBTreeWriter(int fileId_, TableType type_, DirectFileOutputStream *fd_, char *buffer_, int bufferSize_, int64_t tupleCount_, int keySize_, int dataSize_);
-  ~FBTreeWriter();
-  void addTuple (const char *data);
-
-  void flushIfFull ();
-  void flush();
-  void flipPage();
-  void writePageHeader (int level, bool root, int entrySize, int64_t beginningPos, int64_t remainingCount, int entryPerPage);
-
-  void dumpNonLeafPages (int currentLevel);
-  void finishWriting ();
-  void updateFileSignature(FFileSignature &signature) const;
-
-  const int fileId;
-  const TableType type;
-  const ExtractKeyFromTupleFunc extractFunc;
-  char *keyBuffer;
-  DirectFileOutputStream *fd;
-  char *buffer;
-  const int bufferSize;
-  int bufferedPages;
-  int currentPageId;
-  int currentPageOffset;
-  int64_t currentTuple;
-  const int64_t tupleCount;
-  const int keySize;
-  const int dataSize;
-  const int entryPerLeafPage;
-  const int entryPerNonLeafPage;
-  int leafPageCount;
-  int rootPageStart;
-  int rootPageCount;
-  int rootPageLevel;
-  int totalPageCount;
-  std::vector<BTreePageSignature> pageSignatures;
-};
 
 struct FPageHeader;
 // pimple class for FReadOnlyDiskBTree

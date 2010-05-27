@@ -28,6 +28,7 @@ struct FFileSignature;
 // This BTree is just for maintaining a temporary on-memory BTree structure
 // and will be passed as aparameter when flushing to disk (see FSignatureSet::dumpToNewFile()).
 typedef void (*TraversalCallback) (void *context, const void *key, const void *data);
+class FBTreeWriter;
 class FMainMemoryBTree {
 public:
   // @maxSize maximum number of tuples
@@ -52,6 +53,7 @@ public:
 
   // traverses all entries in this btree, calls back the function for each entry with given context object.
   void traverse(TraversalCallback callback, void *context) const;
+  void addAllToWriter (FBTreeWriter &writer) const; // for dumping only
 
   // dumps this BTree to a new file in row-store format.
   // properties of signature will be set in this method.
