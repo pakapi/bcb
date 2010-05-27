@@ -3,12 +3,12 @@
 
 #include "ffilesig.h"
 #include "fbtree.h"
+#include "fkeycomp.h"
 #include <algorithm>
 #include <string.h>
 #include <stdint.h>
 #include <vector>
 #include <stx/btree_map.h>
-#include <glog/logging.h>
 
 namespace fdb {
 
@@ -148,6 +148,54 @@ public:
     assert (false);
     throw std::exception();
   }
+};
+
+
+struct BTreePageSignature {
+  int pageId;
+  int64_t beginningPos;
+  std::string firstKey;
+};
+
+// context object for callback function in disk dump
+class DirectFileOutputStream;
+class FBTreeWriter {
+public:
+  FBTreeWriter(int fileId_, TableType type_, DirectFileOutputStream *fd_, char *buffer_, int bufferSize_, int64_t tupleCount_, int keySize_, int dataSize_);
+  ~FBTreeWriter();
+  void addTuple (const char *data);
+
+  void flushIfFull ();
+  void flush();
+  void flipPage();
+  void writePageHeader (int level, bool root, int entrySize, int64_t beginningPos, int64_t remainingCount, int entryPerPage);
+
+  void dumpNonLeafPages (int currentLevel);
+  void finishWriting ();
+  void updateFileSignature(FFileSignature &signature) const;
+
+  const int fileId;
+  const TableType type;
+  const ExtractKeyFromTupleFunc extractFunc;
+  char *keyBuffer;
+  DirectFileOutputStream *fd;
+  char *buffer;
+  const int bufferSize;
+  int bufferedPages;
+  int currentPageId;
+  int currentPageOffset;
+  int64_t currentTuple;
+  const int64_t tupleCount;
+  const int keySize;
+  const int dataSize;
+  const int entryPerLeafPage;
+  const int entryPerNonLeafPage;
+  int leafPageCount;
+  int rootPageStart;
+  int rootPageCount;
+  int rootPageLevel;
+  int totalPageCount;
+  std::vector<BTreePageSignature> pageSignatures;
 };
 
 struct FPageHeader;

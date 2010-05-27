@@ -137,185 +137,197 @@ void FMainMemoryBTreeImpl::insertTupleToArray (const void *key, const void *data
   ++_tuples;
 }
 
-struct PageSignature {
-  int pageId;
-  int64_t beginningPos;
-  string firstKey;
-};
-
-// context object for callback function in disk dump
-struct DumpContext {
-  int fileId;
-  DirectFileOutputStream *fd;
-  char *buffer;
-  int bufferedPages;
-  int currentPageId;
-  int currentPageOffset;
-  long long currentEntry;
-  long long entryCount;
-  int keySize;
-  int dataSize;
-  int entryPerLeafPage;
-  vector<PageSignature> pageSignatures;
-};
+// ==========================================================================
+//  Dump to disk
+// ==========================================================================
 
 void dumpLeafPagesCallback (void *context, const void *key, const void *data) {
-  DumpContext *dumpContext = reinterpret_cast<DumpContext*>(context);
-  assert (dumpContext->currentEntry < dumpContext->entryCount);
+  FBTreeWriter *dumpContext = reinterpret_cast<FBTreeWriter*>(context);
+  dumpContext->addTuple (reinterpret_cast<const char*>(data));
+}
+FBTreeWriter::FBTreeWriter(int fileId_, TableType type_, DirectFileOutputStream *fd_, char *buffer_, int bufferSize_, int64_t tupleCount_, int keySize_, int dataSize_)
+  : fileId (fileId_), type(type_), extractFunc(toExtractKeyFromTupleFunc(type)),
+    fd(fd_), buffer(buffer_), bufferSize(bufferSize_), bufferedPages (0),
+    currentPageId (0), currentPageOffset (0), currentTuple (0), tupleCount(tupleCount_),
+    keySize(keySize_), dataSize(dataSize_),
+    entryPerLeafPage ((FDB_PAGE_SIZE - sizeof (FPageHeader)) / dataSize),
+    entryPerNonLeafPage (FDB_PAGE_SIZE - sizeof (FPageHeader) / (keySize + sizeof(int))),
+    leafPageCount (0), rootPageStart (0), rootPageCount (0), rootPageLevel (0) {
+  ::memset (buffer, 0, bufferSize * FDB_PAGE_SIZE);
+  keyBuffer = new char[keySize];
+  ::memset (keyBuffer, 0, keySize);
+  pageSignatures.reserve ((tupleCount / entryPerLeafPage) + 10);
+}
+FBTreeWriter::~FBTreeWriter() {
+  delete[] keyBuffer;
+}
+
+// write a page header.
+void FBTreeWriter::writePageHeader (int level, bool root, int entrySize, int64_t beginningPos, int64_t remainingCount, int entryPerPage) {
+  FPageHeader *header = reinterpret_cast<FPageHeader*> (buffer + (FDB_PAGE_SIZE * bufferedPages));
+  header->magicNumber = MAGIC_NUMBER;
+  header->fileId = fileId;
+  header->pageId = currentPageId;
+  header->level = level;
+  header->root = root;
+  header->entrySize = entrySize;
+  header->beginningPos = beginningPos;
+  if (remainingCount >= entryPerPage) {
+    header->count = entryPerPage;
+    header->lastSibling = false;
+    VLOG(2) << "more page!";
+  } else {
+    // last leaf page!
+    header->count = remainingCount;
+    header->lastSibling = true;
+    VLOG(2) << "last page!";
+  }
+  currentPageOffset = sizeof (FPageHeader);
+}
+void FBTreeWriter::addTuple (const char *data) {
+  assert (currentTuple < tupleCount);
 
   // do we need a new page?
-  if (FDB_PAGE_SIZE - dumpContext->currentPageOffset < dumpContext->dataSize) {
-    ++(dumpContext->currentPageId);
-    dumpContext->currentPageOffset = 0;
-    ++(dumpContext->bufferedPages);
+  if (FDB_PAGE_SIZE - currentPageOffset < dataSize) {
+    flipPage();
   }
 
-  if (dumpContext->currentPageOffset == 0) {
+  if (currentPageOffset == 0) {
     VLOG(2) << "new page!";
+    flushIfFull ();
 
-    // check if we need to flush buffered pages
-    assert (dumpContext->bufferedPages <= FDB_DISK_WRITE_BUFFER_PAGES);
-    if (dumpContext->bufferedPages == FDB_DISK_WRITE_BUFFER_PAGES) {
-      VLOG(2) << "flush!";
-      dumpContext->fd->write (dumpContext->buffer, FDB_PAGE_SIZE * dumpContext->bufferedPages);
-      dumpContext->bufferedPages = 0;
-      ::memset (dumpContext->buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
-    }
-
-    // write a page header.
-    FPageHeader *header = reinterpret_cast<FPageHeader*> (
-      dumpContext->buffer + (FDB_PAGE_SIZE * dumpContext->bufferedPages));
-    header->magicNumber = MAGIC_NUMBER;
-    header->fileId = dumpContext->fileId;
-    header->pageId = dumpContext->currentPageId;
-    header->level = 0;
-    header->root = false;
-    header->entrySize = dumpContext->dataSize;
-    header->beginningPos = ((int64_t) dumpContext->currentPageId) * ((int64_t) dumpContext->entryPerLeafPage);
-    int remainingCount = dumpContext->entryCount - dumpContext->currentEntry;
-    if (remainingCount >= dumpContext->entryPerLeafPage) {
-      header->count = dumpContext->entryPerLeafPage;
-      header->lastSibling = false;
-      VLOG(2) << "more page!";
-    } else {
-      // last leaf page!
-      header->count = remainingCount;
-      header->lastSibling = true;
-      VLOG(2) << "last page!";
-    }
-    dumpContext->currentPageOffset = sizeof (FPageHeader);
+    int64_t beginningPos = ((int64_t) currentPageId) * ((int64_t) entryPerLeafPage);
+    writePageHeader (0, false, dataSize, beginningPos, tupleCount - currentTuple, entryPerLeafPage);
 
     // adds this new page to the signature list.
-    PageSignature sig;
-    sig.beginningPos = header->beginningPos;
-    sig.firstKey.assign(reinterpret_cast<const char*>(key), dumpContext->keySize);
-    sig.pageId = dumpContext->currentPageId;
-    dumpContext->pageSignatures.push_back (sig);
+    BTreePageSignature sig;
+    sig.beginningPos = beginningPos;
+    extractFunc(data, keyBuffer);
+    sig.firstKey.assign(keyBuffer, keySize);
+    sig.pageId = currentPageId;
+    pageSignatures.push_back (sig);
   }
 
   // write tuple data
-  ::memcpy(dumpContext->buffer + (FDB_PAGE_SIZE * dumpContext->bufferedPages) + dumpContext->currentPageOffset, data, dumpContext->dataSize);
-  (dumpContext->currentPageOffset) += dumpContext->dataSize;
-  ++(dumpContext->currentEntry);
+  ::memcpy(buffer + (FDB_PAGE_SIZE * bufferedPages) + currentPageOffset, data, dataSize);
+  currentPageOffset += dataSize;
+  ++currentTuple;
 }
 
-void dumpNonLeafPages (int currentLevel, DumpContext *dumpContext,
-  int &rootPageStart, int &rootPageCount, int &rootPageLevel) {
-  int entryPerNonLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / (dumpContext->keySize + sizeof(int));
-  vector<PageSignature> higherPageSignatures;
-  dumpContext->bufferedPages = 0;
-  dumpContext->currentPageOffset = 0;
-  dumpContext->currentEntry = 0;
-  ::memset (dumpContext->buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
-  int entryCount = dumpContext->pageSignatures.size();
-  dumpContext->entryCount = entryCount;
+// check if we need to flush buffered pages
+void FBTreeWriter::flushIfFull () {
+  assert (bufferedPages <= bufferSize);
+  if (bufferedPages == bufferSize) {
+    flush();
+  }
+}
+void FBTreeWriter::flush() {
+  if (bufferedPages > 0) {
+    VLOG(2) << "flush!";
+    fd->write (buffer, FDB_PAGE_SIZE * bufferedPages);
+    bufferedPages = 0;
+    ::memset (buffer, 0, bufferSize * FDB_PAGE_SIZE);
+  }
+}
+void FBTreeWriter::flipPage() {
+  if (currentPageOffset > 0) {
+    ++currentPageId;
+    currentPageOffset = 0;
+    ++bufferedPages;
+  }
+}
+
+void FBTreeWriter::dumpNonLeafPages (int currentLevel) {
+  vector<BTreePageSignature> oldPageSignatures (pageSignatures);
+  pageSignatures.clear();
+  bufferedPages = 0;
+  currentPageOffset = 0;
+  ::memset (buffer, 0, bufferSize * FDB_PAGE_SIZE);
+  int currentEntry = 0;
+  int entryCount = oldPageSignatures.size();
 
   int pageCount = entryCount / entryPerNonLeafPage + (entryCount % entryPerNonLeafPage != 0 ? 1 : 0);
   bool root = (pageCount <= FDB_MAX_ROOT_PAGES);
   if (root) {
-    rootPageStart = dumpContext->currentPageId;
+    rootPageStart = currentPageId;
     rootPageCount = pageCount;
   }
 
   for (int i = 0; i < entryCount; ++i) {
-    const PageSignature &cursig = dumpContext->pageSignatures[i];
+    const BTreePageSignature &cursig = oldPageSignatures[i];
 
     // do we need a new page?
-    if (FDB_PAGE_SIZE - dumpContext->currentPageOffset < (int) (dumpContext->keySize + sizeof(int))) {
-      ++(dumpContext->currentPageId);
-      dumpContext->currentPageOffset = 0;
-      ++(dumpContext->bufferedPages);
+    if (FDB_PAGE_SIZE - currentPageOffset < (int) (keySize + sizeof(int))) {
+      flipPage();
     }
 
-    if (dumpContext->currentPageOffset == 0) {
+    if (currentPageOffset == 0) {
       VLOG(2) << "new page!";
+      flushIfFull ();
 
-      // check if we need to flush buffered pages
-      assert (dumpContext->bufferedPages <= FDB_DISK_WRITE_BUFFER_PAGES);
-      if (dumpContext->bufferedPages == FDB_DISK_WRITE_BUFFER_PAGES) {
-        VLOG(2) << "flush!";
-        dumpContext->fd->write (dumpContext->buffer, FDB_PAGE_SIZE * dumpContext->bufferedPages);
-        dumpContext->bufferedPages = 0;
-        ::memset (dumpContext->buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
-      }
-
-      // write a page header.
-      FPageHeader *header = reinterpret_cast<FPageHeader*> (
-        dumpContext->buffer + (FDB_PAGE_SIZE * dumpContext->bufferedPages));
-      header->magicNumber = MAGIC_NUMBER;
-      header->fileId = dumpContext->fileId;
-      header->pageId = dumpContext->currentPageId;
-      header->level = currentLevel;
-      header->root = root;
-      header->entrySize = dumpContext->keySize;
-      header->beginningPos = cursig.beginningPos;
-      int remainingCount = dumpContext->entryCount - dumpContext->currentEntry;
-      if (remainingCount >= entryPerNonLeafPage) {
-        header->count = entryPerNonLeafPage;
-        header->lastSibling = false;
-        VLOG(2) << "more page!";
-      } else {
-        header->count = remainingCount;
-        header->lastSibling = true;
-        VLOG(2) << "last page!";
-      }
-      dumpContext->currentPageOffset = sizeof (FPageHeader);
+      writePageHeader (currentLevel, root, keySize + sizeof(int), cursig.beginningPos, entryCount - currentEntry, entryPerNonLeafPage);
 
       // adds this new page to the signature list.
-      PageSignature sig;
-      sig.beginningPos = header->beginningPos;
+      BTreePageSignature sig;
+      sig.beginningPos = cursig.beginningPos;
       sig.firstKey = cursig.firstKey;
-      sig.pageId = dumpContext->currentPageId;
-      higherPageSignatures.push_back (sig);
+      sig.pageId = currentPageId;
+      pageSignatures.push_back (sig);
     }
 
     // write page entries
-    ::memcpy(dumpContext->buffer + (FDB_PAGE_SIZE * dumpContext->bufferedPages) + dumpContext->currentPageOffset, cursig.firstKey.data(), dumpContext->keySize);
-    (dumpContext->currentPageOffset) += dumpContext->keySize;
-    ::memcpy(dumpContext->buffer + (FDB_PAGE_SIZE * dumpContext->bufferedPages) + dumpContext->currentPageOffset, &(cursig.pageId), sizeof(int));
-    (dumpContext->currentPageOffset) += sizeof(int);
-    ++(dumpContext->currentEntry);
+    ::memcpy(buffer + (FDB_PAGE_SIZE * bufferedPages) + currentPageOffset, cursig.firstKey.data(), keySize);
+    currentPageOffset += keySize;
+    ::memcpy(buffer + (FDB_PAGE_SIZE * bufferedPages) + currentPageOffset, &(cursig.pageId), sizeof(int));
+    currentPageOffset += sizeof(int);
+    ++currentEntry;
   }
 
   VLOG(2) << "flushing last pages...";
-  if (dumpContext->currentPageOffset > 0) {
-    ++(dumpContext->bufferedPages);
-    dumpContext->currentPageOffset = 0;
-    ++(dumpContext->currentPageId);
-  }
-  if (dumpContext->bufferedPages > 0) {
-    dumpContext->fd->write(dumpContext->buffer, FDB_PAGE_SIZE * dumpContext->bufferedPages);
-  }
+  flipPage();
+  flush ();
   if (root) {
     VLOG(2) << "last non-leaf level";
-    assert (dumpContext->currentPageId == rootPageStart + rootPageCount);
+    assert (currentPageId == rootPageStart + rootPageCount);
     rootPageLevel = currentLevel;
   } else {
     VLOG(2) << "recurse for higher level";
-    dumpContext->pageSignatures = higherPageSignatures;
-    dumpNonLeafPages (currentLevel + 1, dumpContext, rootPageStart, rootPageCount, rootPageLevel);
+    dumpNonLeafPages (currentLevel + 1);
   }
 }
+
+void FBTreeWriter::finishWriting () {
+  // flush last leaf pages
+  flipPage();
+  flush();
+  leafPageCount = pageSignatures.size();
+  assert (leafPageCount == currentPageId);
+  LOG(INFO) << "finished writing " << leafPageCount << " leaf pages.";
+
+  // then, construct non-leaf pages from context.pageSignatures
+  dumpNonLeafPages(1);
+
+  totalPageCount = currentPageId;
+  LOG(INFO) << "finished writing " << totalPageCount << " pages in total(" << (totalPageCount - leafPageCount) << " non-leaf pages).";
+
+  // done. flush and close
+  fd->sync();
+  fd->close();
+}
+
+void FBTreeWriter::updateFileSignature(FFileSignature &signature) const {
+  signature.totalTupleCount = tupleCount;
+  signature.keyEntrySize = keySize;
+  signature.leafEntrySize = dataSize;
+  signature.keyCompareFuncType = toKeyCompareFuncType(type);
+  signature.pageCount = totalPageCount;
+  signature.leafPageCount = leafPageCount;
+  signature.rootPageStart = rootPageStart;
+  signature.rootPageCount = rootPageCount;
+  signature.rootPageLevel = rootPageLevel;
+  signature.tableType = type;
+}
+
 
 void FMainMemoryBTreeImpl::dumpToNewRowStoreFile (FFileSignature &signature) const {
   assert (signature.fileId > 0);
@@ -335,57 +347,10 @@ void FMainMemoryBTreeImpl::dumpToNewRowStoreFile (FFileSignature &signature) con
   // use the traverse method of BTree to write down leaf pages
   assert (FDB_PAGE_SIZE % FDB_DIRECT_IO_ALIGNMENT == 0);
   ScopedMemoryForIO bufferPtr(FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE, FDB_DIRECT_IO_ALIGNMENT, FDB_USE_DIRECT_IO);
-  void *buffer = bufferPtr.get();
-  ::memset (buffer, 0, FDB_DISK_WRITE_BUFFER_PAGES * FDB_PAGE_SIZE);
-  DumpContext context;
-  context.fileId = signature.fileId;
-  context.fd = fd.get();
-  context.buffer = (char*) buffer;
-  context.bufferedPages = 0;
-  context.currentPageId = 0;
-  context.currentPageOffset = 0;
-  context.currentEntry = 0;
-  context.entryCount = size();
-  context.keySize = getKeySize();
-  context.dataSize = getDataSize();
-  context.entryPerLeafPage = (FDB_PAGE_SIZE - sizeof (FPageHeader)) / context.dataSize;
-  context.pageSignatures.reserve ((context.entryCount / context.entryPerLeafPage) + 10);
+  FBTreeWriter context (signature.fileId, _tableType, fd.get(), reinterpret_cast<char*>(bufferPtr.get()), FDB_DISK_WRITE_BUFFER_PAGES, size(), getKeySize(), getDataSize());
   traverse(dumpLeafPagesCallback, &context);
-
-  // flush last leaf pages
-  if (context.currentPageOffset > 0) {
-    ++(context.bufferedPages);
-    context.currentPageOffset = 0;
-    ++(context.currentPageId);
-  }
-  if (context.bufferedPages > 0) {
-    fd->write (buffer, FDB_PAGE_SIZE * context.bufferedPages);
-  }
-  int leafPageCount = context.pageSignatures.size();
-  assert (leafPageCount == context.currentPageId);
-  LOG(INFO) << "finished writing " << leafPageCount << " leaf pages.";
-
-  // then, construct non-leaf pages from context.pageSignatures
-  int rootPageStart = 0, rootPageCount = 0, rootPageLevel = 0;
-  dumpNonLeafPages(1, &context, rootPageStart, rootPageCount, rootPageLevel);
-
-  int totalPageCount = context.currentPageId;
-  LOG(INFO) << "finished writing " << totalPageCount << " pages in total(" << (totalPageCount - leafPageCount) << " non-leaf pages).";
-
-  // done. flush and close
-  fd->sync();
-  fd->close();
-
-  signature.totalTupleCount = size();
-  signature.keyEntrySize = getKeySize();
-  signature.leafEntrySize = getDataSize();
-  signature.keyCompareFuncType = toKeyCompareFuncType(getTableType());
-  signature.pageCount = totalPageCount;
-  signature.leafPageCount = leafPageCount;
-  signature.rootPageStart = rootPageStart;
-  signature.rootPageCount = rootPageCount;
-  signature.rootPageLevel = rootPageLevel;
-  signature.tableType = getTableType();
+  context.finishWriting();
+  context.updateFileSignature(signature);
 
   watch.stop();
   LOG(INFO) << "completed writing. " << watch.getElapsed() << " micsosec";
@@ -456,9 +421,8 @@ int FReadOnlyDiskBTreeImpl::getFirstMatchingLeafPageId(
     const FPageHeader *header = reinterpret_cast<const FPageHeader*>(data);
     checkNonLeafPageHeader (header, pageId, currentLevel);
     for (int j = 0; j < header->count; ++j) {
-      int offset = sizeof(FPageHeader) + j * (header->entrySize + sizeof(int));
-      const char *curKey = data + offset;
-      int pointedPageId = *(reinterpret_cast<const int*>(data + offset + header->entrySize));
+      const char *curKey = data + sizeof(FPageHeader) + j * (header->entrySize);
+      int pointedPageId = *(reinterpret_cast<const int*>(curKey + _signature.keyEntrySize));
       assert (pointedPageId >= 0);
       int compResult = _compfunc (key, curKey);
       if (compResult > 0) {
@@ -642,7 +606,7 @@ void FReadOnlyDiskBTreeImpl::checkNonLeafPageHeader(const FPageHeader *header, i
   assert (header->root == (currentLevel == _signature.rootPageLevel));
   assert (header->level == currentLevel);
   assert (header->fileId == _signature.fileId);
-  assert (header->entrySize == _signature.keyEntrySize);
+  assert ((int) header->entrySize == _signature.keyEntrySize + sizeof(int));
   assert (header->count > 0);
 }
 
